@@ -1,0 +1,24 @@
+package com.restaurant.crm.modules.identity.dto.response;
+
+import com.fsoft.erp.modules.identity.entity.Permission;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class RoleResponse {
+    String id;
+    String roleName;
+    Set<Permission> permissions;
+}
