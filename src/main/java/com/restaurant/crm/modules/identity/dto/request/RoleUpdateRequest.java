@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.identity.dto.request;
 
-import com.fsoft.erp.modules.identity.constants.role.RoleConstants;
+import com.restaurant.crm.modules.identity.constants.role.RoleConstants;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,7 @@
 package com.restaurant.crm.modules.identity.dto.request;
 
-import com.fsoft.erp.modules.identity.constants.user.UserConstants;
-import com.fsoft.erp.modules.identity.constants.user.UserErrorCodeConstants;
+import com.restaurant.crm.modules.identity.constants.user.UserConstants;
+import com.restaurant.crm.modules.identity.constants.user.UserErrorCodeConstants;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

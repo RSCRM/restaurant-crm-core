@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.identity.dto.response;
 
-import com.fsoft.erp.modules.identity.enums.UserStatus;
+import com.restaurant.crm.modules.identity.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

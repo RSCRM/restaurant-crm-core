@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.identity.dto.request;
 
-import com.fsoft.erp.modules.identity.enums.UserStatus;
+import com.restaurant.crm.modules.identity.enums.UserStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
