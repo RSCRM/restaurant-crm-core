@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface OrganizationBranchRepository extends JpaRepository<OrganizationBranch, String> {
     Optional<OrganizationBranch> findByIdAndOrganization_Owner_Id(String branchId, String ownerId);
+
+    long countByOrganization_Id(String organizationId);
 }

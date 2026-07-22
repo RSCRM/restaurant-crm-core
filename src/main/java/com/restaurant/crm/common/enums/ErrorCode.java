@@ -62,6 +62,9 @@ public enum ErrorCode {
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
     ORG_ROLE_NOT_FOUND("ORG_ROLE_1000", "Organization role not found", HttpStatus.NOT_FOUND),
 
+    // ==== LICENSE ERRORS ====
+    LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
+
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),
     PROJECT_CODE_EXISTS("PROJ_1001", "Project code already exists", HttpStatus.BAD_REQUEST),
