@@ -60,6 +60,17 @@ public enum ErrorCode {
     ALLOCATION_PROJECT_COMPLETED("ALLOC_1002", "Cannot allocate to a completed project", HttpStatus.BAD_REQUEST),
     ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
 
+    // ==== ORDER ERRORS ====
+    ORDER_BRANCH_ID_REQUIRED("ORDER_1000", "Branch id is required", HttpStatus.BAD_REQUEST),
+    ORDER_TABLE_ID_REQUIRED("ORDER_1001", "Table id is required for dine-in order", HttpStatus.BAD_REQUEST),
+    ORDER_BRANCH_NOT_FOUND("ORDER_1002", "Branch not found", HttpStatus.NOT_FOUND),
+    ORDER_TABLE_NOT_FOUND("ORDER_1003", "Table not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_NOT_FOUND("ORDER_1004", "Order not found", HttpStatus.NOT_FOUND),
+    ORDER_ITEM_NOT_FOUND("ORDER_1005", "Order item not found", HttpStatus.NOT_FOUND),
+    ORDER_PRODUCT_NOT_FOUND("ORDER_1006", "Product not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_COMBO_NOT_FOUND("ORDER_1007", "Combo not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1008", "Modifier option not found", HttpStatus.NOT_FOUND),
+
     ;
 
     String code;
