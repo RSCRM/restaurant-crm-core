@@ -8,6 +8,7 @@ import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.erp.constants.org_permission.PredefinedOrgPermission;
 import com.restaurant.crm.modules.erp.constants.org_role.PredefinedOrgRole;
+import com.restaurant.crm.modules.erp.dto.request.BranchManagerAssignmentRequest;
 import com.restaurant.crm.modules.erp.dto.request.BranchManagerCreationRequest;
 import com.restaurant.crm.modules.erp.dto.request.BranchManagerUpdateRequest;
 import com.restaurant.crm.modules.erp.dto.response.BranchManagerResponse;
@@ -182,6 +183,34 @@ public class BranchManagerServiceImpl implements BranchManagerService {
 
     @Override
     @Transactional
+    public BranchManagerResponse assignToBranch(String branchId, BranchManagerAssignmentRequest request) {
+        String ownerId = getCurrentOwnerId();
+        OrganizationBranch targetBranch = findBranch(branchId, ownerId);
+        Employee branchManager = findBranchManager(request.getBranchManagerId(), ownerId);
+
+        if (!EmployeeStatus.ACTIVE.equals(branchManager.getStatus()) || !branchManager.getUser().isEnabled()) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
+        }
+
+        if (targetBranch.getManager() != null
+                && targetBranch.getManager().getId().equals(branchManager.getId())) {
+            return branchManagerMapper.toBranchManagerResponse(branchManager);
+        }
+
+        ensureBranchHasNoOtherActiveManager(targetBranch.getId(), branchManager.getId());
+        clearCurrentBranchAssignment(branchManager);
+
+        branchManager.setBranch(targetBranch);
+        branchManager.setOrgRole(getOrCreateBranchManagerRole(targetBranch.getOrganization()));
+        targetBranch.setManager(branchManager);
+        branchRepository.save(targetBranch);
+
+        Employee assigned = employeeRepository.save(branchManager);
+        return branchManagerMapper.toBranchManagerResponse(assigned);
+    }
+
+    @Override
+    @Transactional
     public void deleteById(String branchManagerId) {
         Employee employee = findBranchManager(branchManagerId, getCurrentOwnerId());
         employee.setStatus(EmployeeStatus.INACTIVE);
@@ -257,11 +286,7 @@ public class BranchManagerServiceImpl implements BranchManagerService {
     }
 
     private void moveToBranch(Employee employee, String branchId, EmployeeStatus targetStatus, String ownerId) {
-        OrganizationBranch oldBranch = employee.getBranch();
-        if (oldBranch.getManager() != null && oldBranch.getManager().getId().equals(employee.getId())) {
-            oldBranch.setManager(null);
-            branchRepository.save(oldBranch);
-        }
+        clearCurrentBranchAssignment(employee);
 
         OrganizationBranch newBranch = findBranch(branchId, ownerId);
         employee.setBranch(newBranch);
@@ -294,6 +319,14 @@ public class BranchManagerServiceImpl implements BranchManagerService {
 
         if (existed) {
             throw new AppException(ErrorCode.BRANCH_MANAGER_ALREADY_ASSIGNED);
+        }
+    }
+
+    private void clearCurrentBranchAssignment(Employee employee) {
+        OrganizationBranch currentBranch = employee.getBranch();
+        if (currentBranch.getManager() != null && currentBranch.getManager().getId().equals(employee.getId())) {
+            currentBranch.setManager(null);
+            branchRepository.save(currentBranch);
         }
     }
 

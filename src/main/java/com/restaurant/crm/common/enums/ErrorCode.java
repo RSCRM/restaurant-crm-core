@@ -56,6 +56,7 @@ public enum ErrorCode {
     BRANCH_MANAGER_NOT_FOUND("BRANCH_MANAGER_1000", "Branch manager not found", HttpStatus.NOT_FOUND),
     BRANCH_MANAGER_ALREADY_ASSIGNED("BRANCH_MANAGER_1001", "Branch already has an active manager", HttpStatus.BAD_REQUEST),
     BRANCH_MANAGER_INVALID_REQUEST("BRANCH_MANAGER_1002", "Branch manager request is invalid", HttpStatus.BAD_REQUEST),
+    BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1003", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
 
     // ==== ORGANIZATION AUTHORIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
