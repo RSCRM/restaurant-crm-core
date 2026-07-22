@@ -12,6 +12,7 @@ public class OrganizationBranchConstants {
     public static final String COL_BRANCH_NAME = "branch_name";
     public static final String COL_ADDRESS = "address";
     public static final String COL_PHONE = "phone";
+    public static final String COL_STATUS = "status";
 
     //======= OrganizationBranch column definition ========
     public static final String BRANCH_NAME_DEFINITION = "VARCHAR(100)";
