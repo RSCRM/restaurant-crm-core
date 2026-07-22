@@ -47,7 +47,7 @@ public class AdminInitializer implements ApplicationRunner {
             User admin = User.builder()
                     .username(adminProperties.getUsername())
                     .password(passwordEncoder.encode(adminProperties.getPassword()))
-                    .email(adminProperties.getUsername() + "@admin.local")
+                    .email(adminProperties.getUsername())
                     .enabled(true)
                     .status(UserStatus.ACTIVE)
                     .roles(Set.of(adminRole))
@@ -60,3 +60,4 @@ public class AdminInitializer implements ApplicationRunner {
         }
     }
 }
+
