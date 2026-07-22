@@ -18,6 +18,12 @@ public class StartDefinedPermission {
     public static final String USER_UPDATE = "USER_UPDATE";
     public static final String USER_DELETE = "USER_DELETE";
 
+    // Branch Manager Permissions
+    public static final String BRANCH_MANAGER_VIEW = "BRANCH_MANAGER_VIEW";
+    public static final String BRANCH_MANAGER_CREATE = "BRANCH_MANAGER_CREATE";
+    public static final String BRANCH_MANAGER_UPDATE = "BRANCH_MANAGER_UPDATE";
+    public static final String BRANCH_MANAGER_DELETE = "BRANCH_MANAGER_DELETE";
+
     private StartDefinedPermission() {
     }
 }

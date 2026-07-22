@@ -69,6 +69,20 @@ public class PermissionInitializer implements ApplicationRunner {
                         .build(),
                 Permission.builder()
                         .permissionName(StartDefinedPermission.USER_DELETE)
+                        .build(),
+
+                // ===== BRANCH MANAGER =====
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.BRANCH_MANAGER_VIEW)
+                        .build(),
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.BRANCH_MANAGER_CREATE)
+                        .build(),
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.BRANCH_MANAGER_UPDATE)
+                        .build(),
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.BRANCH_MANAGER_DELETE)
                         .build()
         );
     }

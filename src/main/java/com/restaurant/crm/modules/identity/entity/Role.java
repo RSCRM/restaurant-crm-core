@@ -5,6 +5,8 @@ import com.restaurant.crm.modules.identity.constants.role.RoleConstants;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -36,5 +38,8 @@ public class Role extends BaseEntity {
         String roleName;
 
         @ManyToMany(fetch = FetchType.LAZY)
+        @JoinTable(name = RoleConstants.TABLE_ROLE_PERMISSION,
+                joinColumns = @JoinColumn(name = RoleConstants.COL_ROLE_ID),
+                inverseJoinColumns = @JoinColumn(name = RoleConstants.COL_PERMISSION_ID))
         Set<Permission> permissions;
 }

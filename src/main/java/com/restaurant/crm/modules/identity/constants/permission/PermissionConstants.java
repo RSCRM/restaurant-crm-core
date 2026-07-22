@@ -4,7 +4,7 @@ public class PermissionConstants {
     private PermissionConstants() {}
 
     //======= Permission table name ========
-    public static final String TABLE_PERMISSION = "permissions";
+    public static final String TABLE_PERMISSION = "system_permissions";
 
     //======= Permission column name ========
     public static final String COL_PERMISSION_NAME = "permission_name";

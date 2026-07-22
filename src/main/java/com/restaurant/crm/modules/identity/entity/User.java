@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.identity.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
+import com.restaurant.crm.modules.identity.constants.role.RoleConstants;
 import com.restaurant.crm.modules.identity.constants.user.UserConstants;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
 import jakarta.persistence.Column;
@@ -66,8 +67,8 @@ public class User extends BaseEntity {
         boolean enabled = false;
 
         @ManyToMany(fetch = FetchType.LAZY)
-        @JoinTable(name = "user_roles",
-                joinColumns = @JoinColumn(name = "user_id"),
-                inverseJoinColumns = @JoinColumn(name = "role_id"))
+        @JoinTable(name = RoleConstants.TABLE_USER_ROLE,
+                joinColumns = @JoinColumn(name = RoleConstants.COL_USER_ID),
+                inverseJoinColumns = @JoinColumn(name = RoleConstants.COL_ROLE_ID))
         Set<Role> roles;
 }

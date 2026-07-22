@@ -84,6 +84,16 @@ public class RoleInitializer implements ApplicationRunner {
         permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.USER_DELETE)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
 
+        // Branch manager permissions
+        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_VIEW)
+                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
+        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_CREATE)
+                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
+        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_UPDATE)
+                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
+        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_DELETE)
+                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
+
         return permissions;
     }
 }
