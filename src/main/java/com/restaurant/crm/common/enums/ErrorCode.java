@@ -19,8 +19,12 @@ public enum ErrorCode {
     AUTH_GENERATION_FAIL("AUTH_1002", "Generation JWT fail", HttpStatus.INTERNAL_SERVER_ERROR),
     JWT_CLAIM_MISSING("AUTH_1003", "JWT claim is missing or invalid", HttpStatus.UNAUTHORIZED),
     EMAIL_ALREADY_EXISTS("AUTH_1005", "Email already exists", HttpStatus.BAD_REQUEST),
+<<<<<<< HEAD
     AUTH_INVALID_TOKEN_TYPE("AUTH_1006", "Invalid token type", HttpStatus.UNAUTHORIZED),
     AUTH_CONTEXT_NOT_FOUND("AUTH_1007", "Context not found for user", HttpStatus.NOT_FOUND),
+=======
+    AUTH_TOKEN_REVOKED("AUTH_1006", "Access token has been revoked", HttpStatus.UNAUTHORIZED),
+>>>>>>> be38cfc (feat/ impl logout function)
 
     // ==== USER ERRORS ====
     USER_USERNAME_NOT_FOUND("USER_1000", "User not found with given username", HttpStatus.NOT_FOUND),
