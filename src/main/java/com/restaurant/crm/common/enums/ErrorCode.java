@@ -59,7 +59,32 @@ public enum ErrorCode {
     ALLOCATION_EXCEEDED("ALLOC_1001", "Employee allocation exceeds 100%", HttpStatus.BAD_REQUEST),
     ALLOCATION_PROJECT_COMPLETED("ALLOC_1002", "Cannot allocate to a completed project", HttpStatus.BAD_REQUEST),
     ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
+    // ==== BOOKING ERRORS ====
+    BOOKING_NOT_FOUND("BOOKING_1000", "Booking not found", HttpStatus.NOT_FOUND),
+    // ==== CUSTOMER ERRORS ====
+    CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
+    CUSTOMER_PHONE_REQUIRED("CUST_1001", "Phone number is required", HttpStatus.BAD_REQUEST),
+    CUSTOMER_PHONE_INVALID("CUST_1002", "Phone number must be between 9 and 15 digits", HttpStatus.BAD_REQUEST),
 
+    // ==== RESTAURANT ERRORS ====
+    RESTAURANT_ID_REQUIRED("REST_1000", "Restaurant ID is required", HttpStatus.BAD_REQUEST),
+
+    // ==== LOYALTY ERRORS ====
+    CUSTOMER_POINT_NOT_FOUND("LOY_1000", "Customer point wallet not found", HttpStatus.NOT_FOUND),
+    CUSTOMER_POINT_INSUFFICIENT("LOY_1001", "Insufficient customer points", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_FOUND("LOY_1002", "Voucher not found", HttpStatus.NOT_FOUND),
+    VOUCHER_INACTIVE("LOY_1003", "Voucher is inactive", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_NOT_FOUND("LOY_1004", "Customer voucher not found", HttpStatus.NOT_FOUND),
+    CUSTOMER_VOUCHER_ALREADY_USED("LOY_1005", "Voucher has already been used", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_MIN_BILL_NOT_MET("LOY_1006", "Minimum bill amount not met", HttpStatus.BAD_REQUEST),
+    VOUCHER_TITLE_REQUIRED("LOY_1007", "Voucher title is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_DISCOUNT_REQUIRED("LOY_1008", "Voucher discount percent is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_DISCOUNT_INVALID("LOY_1009", "Voucher discount percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
+    VOUCHER_MIN_BILL_REQUIRED("LOY_1010", "Voucher minimum bill amount is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_MIN_BILL_INVALID("LOY_1011", "Voucher minimum bill amount cannot be negative", HttpStatus.BAD_REQUEST),
+    VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
+    VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
     ;
 
     String code;
