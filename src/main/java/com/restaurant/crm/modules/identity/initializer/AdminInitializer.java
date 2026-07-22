@@ -7,8 +7,10 @@ import com.restaurant.crm.common.properties.AdminProperties;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.entity.UserProfile;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
+import com.restaurant.crm.modules.identity.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Set;
 
@@ -30,6 +33,7 @@ import java.util.Set;
 @Slf4j
 public class AdminInitializer implements ApplicationRunner {
     UserRepository usersRepository;
+    UserProfileRepository userProfileRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
     AdminProperties adminProperties;
@@ -39,12 +43,11 @@ public class AdminInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         log.info("Initializing admin ...");
 
-        boolean existed = usersRepository.existsByUsername(adminProperties.getUsername());
-        if (!existed) {
+        User admin = usersRepository.findByUsername(adminProperties.getUsername()).orElseGet(() -> {
             Role adminRole = roleRepository.findByRoleName(PredefinedRole.ADMIN_ROLE)
                     .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
-            User admin = User.builder()
+            User createdAdmin = User.builder()
                     .username(adminProperties.getUsername())
                     .password(passwordEncoder.encode(adminProperties.getPassword()))
                     .email(adminProperties.getUsername() + "@admin.local")
@@ -52,11 +55,19 @@ public class AdminInitializer implements ApplicationRunner {
                     .status(UserStatus.ACTIVE)
                     .roles(Set.of(adminRole))
                     .build();
-            usersRepository.save(admin);
+            User savedAdmin = usersRepository.save(createdAdmin);
 
-            log.info("Admin has been created with username {}", admin.getUsername());
-        } else {
-            log.info("Admin already exists with username {}", adminProperties.getUsername());
-        }
+            log.info("Admin has been created with username {}", savedAdmin.getUsername());
+            return savedAdmin;
+        });
+
+        userProfileRepository.findByUser_Id(admin.getId()).orElseGet(() ->
+                userProfileRepository.save(UserProfile.builder()
+                        .user(admin)
+                        .fullName(adminProperties.getFullName())
+                        .phone(StringUtils.hasText(adminProperties.getPhone())
+                                ? adminProperties.getPhone()
+                                : null)
+                        .build()));
     }
 }

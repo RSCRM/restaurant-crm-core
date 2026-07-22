@@ -9,12 +9,16 @@ import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.dto.request.UserCreationRequest;
 import com.restaurant.crm.modules.identity.dto.request.UserRolesUpdateRequest;
+import com.restaurant.crm.modules.identity.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.identity.dto.response.UserResponse;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.entity.UserProfile;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
+import com.restaurant.crm.modules.identity.mapper.UserProfileMapper;
 import com.restaurant.crm.modules.identity.mapper.UserMapper;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
+import com.restaurant.crm.modules.identity.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.service.interfaces.UserService;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
@@ -40,12 +44,16 @@ public class UserServiceImpl implements UserService {
     UserRepository usersRepository;
     RoleRepository roleRepository;
     UserMapper userMapper;
+    UserProfileRepository userProfileRepository;
+    UserProfileMapper userProfileMapper;
     PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public UserResponse create(UserCreationRequest request) {
         validateUsernameExisted(request.getUsername());
+        validateEmailExisted(request.getEmail());
+        validatePhoneExisted(request.getPhone());
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
@@ -55,6 +63,11 @@ public class UserServiceImpl implements UserService {
         user.setRoles(new HashSet<>(Set.of(userRole)));
 
         User userSaved = usersRepository.save(user);
+        userProfileRepository.save(UserProfile.builder()
+                .user(userSaved)
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
+                .build());
 
         return userMapper.toUserResponse(userSaved);
     }
@@ -94,16 +107,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getMyInfo() {
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyInfo() {
         String userId = AuthUtils.getCurrentUserId();
-        if (userId == null) {
-            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
-        }
-
         User user = usersRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHENTICATED));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        UserProfile profile = userProfileRepository.findByUser_Id(userId).orElse(null);
 
-        return userMapper.toUserResponse(user);
+        return userProfileMapper.toUserProfileResponse(user, profile);
     }
 
     @Override
@@ -115,8 +126,19 @@ public class UserServiceImpl implements UserService {
 
     private void validateUsernameExisted(String username) {
         if (usersRepository.existsByUsername(username)) {
-            // TODO: bổ sung ErrorCode riêng cho user khi mở rộng ErrorCode
-            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+            throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
+        }
+    }
+
+    private void validateEmailExisted(String email) {
+        if (usersRepository.existsByEmail(email)) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+    }
+
+    private void validatePhoneExisted(String phone) {
+        if (userProfileRepository.existsByPhone(phone)) {
+            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
     }
 }

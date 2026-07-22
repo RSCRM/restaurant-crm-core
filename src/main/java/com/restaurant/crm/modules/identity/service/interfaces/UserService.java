@@ -4,6 +4,7 @@ import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.identity.dto.request.UserCreationRequest;
 import com.restaurant.crm.modules.identity.dto.request.UserRolesUpdateRequest;
+import com.restaurant.crm.modules.identity.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.identity.dto.response.UserResponse;
 
 public interface UserService {
@@ -14,7 +15,7 @@ public interface UserService {
 
     UserResponse updateRoles(String userId, UserRolesUpdateRequest request);
 
-    UserResponse getMyInfo();
+    UserProfileResponse getMyInfo();
 
     void deleteById(String userId);
 
