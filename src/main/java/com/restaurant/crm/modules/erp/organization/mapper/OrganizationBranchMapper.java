@@ -3,7 +3,7 @@ package com.restaurant.crm.modules.erp.organization.mapper;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
-import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.shared.entity.OrganizationBranch;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

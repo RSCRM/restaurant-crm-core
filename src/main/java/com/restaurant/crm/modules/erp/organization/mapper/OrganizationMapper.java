@@ -3,7 +3,7 @@ package com.restaurant.crm.modules.erp.organization.mapper;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationResponse;
-import com.restaurant.crm.modules.erp.organization.entity.Organization;
+import com.restaurant.crm.modules.erp.shared.entity.Organization;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

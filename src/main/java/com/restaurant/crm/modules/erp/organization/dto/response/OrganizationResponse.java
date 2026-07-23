@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.erp.organization.dto.response;
 
-import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
+import com.restaurant.crm.modules.erp.shared.enums.OrganizationStatus;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

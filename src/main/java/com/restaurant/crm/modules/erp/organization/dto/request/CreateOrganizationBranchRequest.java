@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.erp.organization.dto.request;
 
-import com.restaurant.crm.modules.erp.organization.constants.OrganizationBranchConstants;
+import com.restaurant.crm.modules.erp.shared.constants.organization_branch.OrganizationBranchConstants;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;

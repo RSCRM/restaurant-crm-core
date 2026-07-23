@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.erp.organization.dto.request;
 
-import com.restaurant.crm.modules.erp.organization.constants.OrganizationConstants;
+import com.restaurant.crm.modules.erp.shared.constants.organization.OrganizationConstants;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -14,33 +14,23 @@ import lombok.experimental.FieldDefaults;
 public class UpdateOrganizationRequest {
 
 
-    @Size(
-            max = OrganizationConstants.MAX_CHARS_ORGANIZATION_NAME
-    )
+    @Size(max = OrganizationConstants.MAX_CHARS_ORGANIZATION_NAME)
     String organizationName;
 
 
-    @Size(
-            max = OrganizationConstants.MAX_CHARS_TAX_CODE
-    )
+    @Size(max = OrganizationConstants.MAX_CHARS_TAX_CODE)
     String taxCode;
 
 
-    @Size(
-            max = OrganizationConstants.MAX_CHARS_ADDRESS
-    )
+    @Size(max = OrganizationConstants.MAX_CHARS_ADDRESS)
     String address;
 
 
-    @Size(
-            max = OrganizationConstants.MAX_CHARS_PHONE
-    )
+    @Size(max = OrganizationConstants.MAX_CHARS_PHONE)
     String phone;
 
 
     @Email
-    @Size(
-            max = OrganizationConstants.MAX_CHARS_EMAIL
-    )
+    @Size(max = OrganizationConstants.MAX_CHARS_EMAIL)
     String email;
 }
