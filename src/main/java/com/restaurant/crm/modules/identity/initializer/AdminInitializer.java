@@ -7,11 +7,12 @@ import com.restaurant.crm.common.properties.AdminProperties;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.entity.UserProfile;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
-import com.restaurant.crm.modules.identity.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,7 +23,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.Set;
 
@@ -64,10 +64,8 @@ public class AdminInitializer implements ApplicationRunner {
         userProfileRepository.findByUser_Id(admin.getId()).orElseGet(() ->
                 userProfileRepository.save(UserProfile.builder()
                         .user(admin)
-                        .fullName(adminProperties.getFullName())
-                        .phone(StringUtils.hasText(adminProperties.getPhone())
-                                ? adminProperties.getPhone()
-                                : null)
+                        .fullName(UserProfileConstants.DEFAULT_ADMIN_FULL_NAME)
+                        .phone(UserProfileConstants.DEFAULT_ADMIN_PHONE)
                         .build()));
     }
 }

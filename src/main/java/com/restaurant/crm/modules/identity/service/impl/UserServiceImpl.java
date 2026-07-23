@@ -9,19 +9,16 @@ import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.dto.request.UserCreationRequest;
 import com.restaurant.crm.modules.identity.dto.request.UserRolesUpdateRequest;
-import com.restaurant.crm.modules.identity.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.identity.dto.response.UserResponse;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.entity.UserProfile;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
-import com.restaurant.crm.modules.identity.mapper.UserProfileMapper;
 import com.restaurant.crm.modules.identity.mapper.UserMapper;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
-import com.restaurant.crm.modules.identity.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.service.interfaces.UserService;
-import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -45,7 +42,6 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
     UserMapper userMapper;
     UserProfileRepository userProfileRepository;
-    UserProfileMapper userProfileMapper;
     PasswordEncoder passwordEncoder;
 
     @Override
@@ -104,17 +100,6 @@ public class UserServiceImpl implements UserService {
 
         User updated = usersRepository.save(user);
         return userMapper.toUserResponse(updated);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public UserProfileResponse getMyInfo() {
-        String userId = AuthUtils.getCurrentUserId();
-        User user = usersRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        UserProfile profile = userProfileRepository.findByUser_Id(userId).orElse(null);
-
-        return userProfileMapper.toUserProfileResponse(user, profile);
     }
 
     @Override

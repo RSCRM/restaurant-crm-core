@@ -2,7 +2,8 @@ package com.restaurant.crm.modules.identity.dto.request;
 
 import com.restaurant.crm.modules.identity.constants.user.UserConstants;
 import com.restaurant.crm.modules.identity.constants.user.UserErrorCodeConstants;
-import com.restaurant.crm.modules.identity.constants.user.UserProfileConstants;
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
+import com.restaurant.crm.modules.profile.constants.UserProfileErrorCodeConstants;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -43,16 +44,16 @@ public class UserCreationRequest {
     @Email(message = UserErrorCodeConstants.USER_EMAIL_INVALID)
     String email;
 
-    @NotNull(message = UserErrorCodeConstants.USER_FULL_NAME_INVALID)
-    @NotBlank(message = UserErrorCodeConstants.USER_FULL_NAME_INVALID)
+    @NotNull(message = UserProfileErrorCodeConstants.USER_FULL_NAME_INVALID)
+    @NotBlank(message = UserProfileErrorCodeConstants.USER_FULL_NAME_INVALID)
     @Size(min = UserProfileConstants.MIN_CHARS_FULL_NAME,
             max = UserProfileConstants.MAX_CHARS_FULL_NAME,
-            message = UserErrorCodeConstants.USER_FULL_NAME_INVALID)
+            message = UserProfileErrorCodeConstants.USER_FULL_NAME_INVALID)
     String fullName;
 
-    @NotNull(message = UserErrorCodeConstants.USER_PHONE_INVALID)
-    @NotBlank(message = UserErrorCodeConstants.USER_PHONE_INVALID)
+    @NotNull(message = UserProfileErrorCodeConstants.USER_PHONE_INVALID)
+    @NotBlank(message = UserProfileErrorCodeConstants.USER_PHONE_INVALID)
     @Pattern(regexp = UserProfileConstants.PHONE_PATTERN,
-            message = UserErrorCodeConstants.USER_PHONE_INVALID)
+            message = UserProfileErrorCodeConstants.USER_PHONE_INVALID)
     String phone;
 }

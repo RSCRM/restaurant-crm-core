@@ -1,6 +1,6 @@
-package com.restaurant.crm.modules.identity.repository;
+package com.restaurant.crm.modules.profile.repository;
 
-import com.restaurant.crm.modules.identity.entity.UserProfile;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

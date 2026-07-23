@@ -1,7 +1,8 @@
-package com.restaurant.crm.modules.identity.entity;
+package com.restaurant.crm.modules.profile.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.identity.constants.user.UserProfileConstants;
+import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

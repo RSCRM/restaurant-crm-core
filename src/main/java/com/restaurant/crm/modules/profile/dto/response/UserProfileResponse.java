@@ -1,5 +1,6 @@
-package com.restaurant.crm.modules.identity.dto.response;
+package com.restaurant.crm.modules.profile.dto.response;
 
+import com.restaurant.crm.modules.identity.dto.response.RoleResponse;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

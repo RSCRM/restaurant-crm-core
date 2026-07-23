@@ -2,10 +2,11 @@ package com.restaurant.crm.modules.identity.initializer;
 
 import com.restaurant.crm.common.properties.AdminProperties;
 import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.entity.UserProfile;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
-import com.restaurant.crm.modules.identity.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -46,7 +47,6 @@ class AdminInitializerTest {
     void createsMissingProfileForExistingAdmin() {
         User admin = User.builder().id("admin-1").username("admin").build();
         when(adminProperties.getUsername()).thenReturn("admin");
-        when(adminProperties.getFullName()).thenReturn("System Admin");
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
         when(userProfileRepository.findByUser_Id("admin-1")).thenReturn(Optional.empty());
         when(userProfileRepository.save(any(UserProfile.class)))
@@ -57,7 +57,7 @@ class AdminInitializerTest {
         ArgumentCaptor<UserProfile> captor = ArgumentCaptor.forClass(UserProfile.class);
         verify(userProfileRepository).save(captor.capture());
         assertSame(admin, captor.getValue().getUser());
-        assertEquals("System Admin", captor.getValue().getFullName());
+        assertEquals(UserProfileConstants.DEFAULT_ADMIN_FULL_NAME, captor.getValue().getFullName());
         assertNull(captor.getValue().getPhone());
     }
 }

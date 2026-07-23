@@ -1,8 +1,8 @@
-package com.restaurant.crm.modules.identity.mapper;
+package com.restaurant.crm.modules.profile.mapper;
 
-import com.restaurant.crm.modules.identity.dto.response.UserProfileResponse;
+import com.restaurant.crm.modules.profile.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.entity.UserProfile;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

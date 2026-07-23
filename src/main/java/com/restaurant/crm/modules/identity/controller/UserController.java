@@ -8,7 +8,6 @@ import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.identity.dto.request.UserCreationRequest;
 import com.restaurant.crm.modules.identity.dto.request.UserRolesUpdateRequest;
-import com.restaurant.crm.modules.identity.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.identity.dto.response.UserResponse;
 import com.restaurant.crm.modules.identity.service.interfaces.UserService;
 import jakarta.validation.Valid;
@@ -78,17 +77,6 @@ public class UserController {
         ApiResponse<UserResponse> response = ApiResponse.<UserResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(userService.updateRoles(userId, request))
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserProfileResponse>> getMyInfo() {
-        ApiResponse<UserProfileResponse> response = ApiResponse.<UserProfileResponse>builder()
-                .success(ApiConstant.SUCCESS)
-                .data(userService.getMyInfo())
                 .build();
 
         return ResponseEntity.ok(response);

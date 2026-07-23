@@ -10,6 +10,4 @@ public class UserErrorCodeConstants {
     public static final String USER_USERNAME_INVALID = "USER_USERNAME_INVALID";
     public static final String USER_PASSWORD_INVALID = "USER_PASSWORD_INVALID";
     public static final String USER_EMAIL_INVALID = "USER_EMAIL_INVALID";
-    public static final String USER_FULL_NAME_INVALID = "USER_FULL_NAME_INVALID";
-    public static final String USER_PHONE_INVALID = "USER_PHONE_INVALID";
 }
