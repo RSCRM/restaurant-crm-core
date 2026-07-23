@@ -37,7 +37,7 @@ public class AdminInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing admin ...");
+         log.info("Initializing admin ...");
 
         boolean existed = usersRepository.existsByUsername(adminProperties.getUsername());
         if (!existed) {
