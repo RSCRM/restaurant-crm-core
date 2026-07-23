@@ -5,5 +5,5 @@ import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 
 public interface OrderService {
 
-    CreateOrderResponse create(String branchId, CreateOrderRequestDto request);
+    CreateOrderResponse create(CreateOrderRequestDto request);
 }

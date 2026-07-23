@@ -12,7 +12,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,12 +25,11 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(
-            @RequestHeader("X-Branch-Id") String branchId,
             @Valid @RequestBody CreateOrderRequestDto request
     ) {
         ApiResponse<CreateOrderResponse> response = ApiResponse.<CreateOrderResponse>builder()
                 .success(ApiConstant.SUCCESS)
-                .data(orderService.create(branchId, request))
+                .data(orderService.create(request))
                 .build();
 
         return ResponseEntity.ok(response);

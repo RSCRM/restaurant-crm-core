@@ -2,6 +2,13 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.product.entity.Product;
+import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemModifierRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
@@ -16,7 +23,7 @@ import com.restaurant.crm.modules.erp.order.repository.OrderItemModifierReposito
 import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderService;
-import jakarta.persistence.EntityManager;
+import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,22 +44,22 @@ public class OrderServiceImpl implements OrderService {
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
     OrderItemModifierRepository orderItemModifierRepository;
-    EntityManager entityManager;
+    OrganizationBranchRepository organizationBranchRepository;
+    ProductRepository productRepository;
+    ComboRepository comboRepository;
+    ModifierOptionRepository modifierOptionRepository;
+    RestaurantTableRepository restaurantTableRepository;
 
     @Override
     @Transactional
-    public CreateOrderResponse create(String branchId, CreateOrderRequestDto request) {
+    public CreateOrderResponse create(CreateOrderRequestDto request) {
+        String branchId = request.getBranchId();
+
         if (!StringUtils.hasText(branchId)) {
             throw new AppException(ErrorCode.ORDER_BRANCH_ID_REQUIRED);
         }
 
-        // NOTE: Branch validation currently reaches outside the order module because
-        // a dedicated branch domain/repository has not been introduced yet.
-        Number branchCount = (Number) entityManager.createNativeQuery(
-                        "select count(1) from organization_branches where branch_id = :branchId")
-                .setParameter("branchId", branchId)
-                .getSingleResult();
-        if (branchCount.longValue() == 0) {
+        if (!organizationBranchRepository.existsById(branchId)) {
             throw new AppException(ErrorCode.ORDER_BRANCH_NOT_FOUND);
         }
 
@@ -61,20 +68,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new AppException(ErrorCode.ORDER_TABLE_ID_REQUIRED);
             }
 
-            // NOTE: Table validation also depends on tables/areas data that lives
-            // outside the current order module boundary.
-            Number tableCount = (Number) entityManager.createNativeQuery(
-                            """
-                            select count(1)
-                            from restaurant_tables rt
-                            join table_areas ta on ta.area_id = rt.area_id
-                            where rt.table_id = :tableId
-                              and ta.branch_id = :branchId
-                            """)
-                    .setParameter("tableId", request.getTableId())
-                    .setParameter("branchId", branchId)
-                    .getSingleResult();
-            if (tableCount.longValue() == 0) {
+            if (!restaurantTableRepository.existsByIdAndAreaBranchId(request.getTableId(), branchId)) {
                 throw new AppException(ErrorCode.ORDER_TABLE_NOT_FOUND);
             }
         }
@@ -135,40 +129,14 @@ public class OrderServiceImpl implements OrderService {
 
     private BigDecimal resolveUnitPrice(String branchId, String productId, String comboId) {
         if (StringUtils.hasText(productId)) {
-            // NOTE: Product validation/pricing currently reaches outside the order module
-            // because product data is owned by another domain.
-            List<?> productRows = entityManager.createNativeQuery(
-                            """
-                            select price
-                            from products
-                            where product_id = :productId
-                              and branch_id = :branchId
-                            """)
-                    .setParameter("productId", productId)
-                    .setParameter("branchId", branchId)
-                    .getResultList();
-            if (productRows.isEmpty()) {
-                throw new AppException(ErrorCode.ORDER_PRODUCT_NOT_FOUND);
-            }
-            return toBigDecimal(productRows.get(0));
+            Product product = productRepository.findByIdAndBranchId(productId, branchId)
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_PRODUCT_NOT_FOUND));
+            return product.getPrice();
         }
 
-        // NOTE: Combo validation/pricing also depends on data outside the current
-        // order module boundary.
-        List<?> comboRows = entityManager.createNativeQuery(
-                        """
-                        select price
-                        from combos
-                        where combo_id = :comboId
-                          and branch_id = :branchId
-                        """)
-                .setParameter("comboId", comboId)
-                .setParameter("branchId", branchId)
-                .getResultList();
-        if (comboRows.isEmpty()) {
-            throw new AppException(ErrorCode.ORDER_COMBO_NOT_FOUND);
-        }
-        return toBigDecimal(comboRows.get(0));
+        Combo combo = comboRepository.findByIdAndBranchId(comboId, branchId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_COMBO_NOT_FOUND));
+        return combo.getPrice();
     }
 
     private BigDecimal saveOrderItemModifiers(
@@ -182,17 +150,9 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal modifierTotal = BigDecimal.ZERO;
         List<OrderItemModifier> modifiersToSave = new ArrayList<>();
         for (CreateOrderItemModifierRequestDto modifierRequest : modifierRequests) {
-            // NOTE: Modifier option validation/pricing reaches outside the order module
-            // because modifier catalogs are defined in another domain.
-            List<?> modifierRows = entityManager.createNativeQuery(
-                            "select additional_price from modifier_options where modifier_option_id = :modifierOptionId")
-                    .setParameter("modifierOptionId", modifierRequest.getModifierOptionId())
-                    .getResultList();
-            if (modifierRows.isEmpty()) {
-                throw new AppException(ErrorCode.ORDER_MODIFIER_OPTION_NOT_FOUND);
-            }
-
-            BigDecimal additionalPrice = toBigDecimal(modifierRows.get(0));
+            ModifierOption modifierOption = modifierOptionRepository.findById(modifierRequest.getModifierOptionId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_MODIFIER_OPTION_NOT_FOUND));
+            BigDecimal additionalPrice = modifierOption.getAdditionalPrice();
             modifierTotal = modifierTotal.add(
                     additionalPrice.multiply(BigDecimal.valueOf(modifierRequest.getQuantity()))
             );
@@ -207,12 +167,5 @@ public class OrderServiceImpl implements OrderService {
 
         orderItemModifierRepository.saveAll(modifiersToSave);
         return modifierTotal;
-    }
-
-    private BigDecimal toBigDecimal(Object value) {
-        if (value instanceof BigDecimal bigDecimal) {
-            return bigDecimal;
-        }
-        return new BigDecimal(value.toString());
     }
 }
