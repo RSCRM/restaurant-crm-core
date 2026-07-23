@@ -24,4 +24,10 @@ public interface AuthenticationService {
      * @return IntrospectResponse
      */
     IntrospectResponse introspect(IntrospectRequest request) throws ParseException;
+
+    /**
+     * logout - revoke token by adding to Redis blacklist
+     * @param token {String} JWT token from Authorization header
+     */
+    void logout(String token);
 }

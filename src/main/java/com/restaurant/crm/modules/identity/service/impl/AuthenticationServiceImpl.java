@@ -3,6 +3,8 @@ package com.restaurant.crm.modules.identity.service.impl;
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.redis.RedisBlacklistRepository;
+import com.restaurant.crm.common.redis.RedisKeyGenerator;
 import com.restaurant.crm.modules.identity.dto.request.AuthenticationRequest;
 import com.restaurant.crm.modules.identity.dto.request.IntrospectRequest;
 import com.restaurant.crm.modules.identity.dto.response.AuthenticationResponse;
@@ -49,6 +51,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
     RoleRepository roleRepository;
+    RedisBlacklistRepository redisBlacklistRepository;
 
     @NonFinal
     @Value(value = "${security.jwt.signer-key}")
@@ -95,6 +98,40 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } catch (JOSEException e) {
             log.error("Verify token failed", e);
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void logout(String token) {
+        try {
+            // parse & verify JWT signature
+            SignedJWT signedJWT = SignedJWT.parse(token);
+            JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+            boolean verified = signedJWT.verify(verifier);
+            if (!verified) {
+                throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+            }
+
+            // check expiration
+            Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+            if (expirationTime.before(new Date())) {
+                throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+            }
+
+            // calculate remaining TTL
+            long remainingTtlInSeconds = (expirationTime.getTime() - System.currentTimeMillis()) / 1000;
+
+            // hash token & save to Redis blacklist
+            String tokenHash = RedisKeyGenerator.generateBlacklistKey(token);
+            redisBlacklistRepository.save(tokenHash, remainingTtlInSeconds);
+
+            log.info("User {} logout successfully.", signedJWT.getJWTClaimsSet().getSubject());
+        } catch (ParseException e) {
+            log.error("Parse token failed", e);
+            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+        } catch (JOSEException e) {
+            log.error("Verify token failed", e);
+            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
         }
     }
 
