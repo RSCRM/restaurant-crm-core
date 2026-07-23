@@ -3,7 +3,7 @@ package com.restaurant.crm.modules.profile.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.modules.profile.dto.response.UserProfileResponse;
-import com.restaurant.crm.modules.profile.service.ProfileService;
+import com.restaurant.crm.modules.profile.service.interfaces.ProfileService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

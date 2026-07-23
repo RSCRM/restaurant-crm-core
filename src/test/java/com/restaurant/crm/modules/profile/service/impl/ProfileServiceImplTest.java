@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.profile.service;
+package com.restaurant.crm.modules.profile.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ProfileServiceTest {
+class ProfileServiceImplTest {
 
     @Mock
     UserRepository userRepository;
@@ -42,7 +42,7 @@ class ProfileServiceTest {
     @Spy
     UserProfileMapper userProfileMapper = Mappers.getMapper(UserProfileMapper.class);
     @InjectMocks
-    ProfileService profileService;
+    ProfileServiceImpl profileService;
 
     @Test
     void getMyInfoReturnsAuthenticatedUserProfile() {
