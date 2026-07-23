@@ -70,6 +70,9 @@ public enum ErrorCode {
     ORDER_PRODUCT_NOT_FOUND("ORDER_1006", "Product not found in branch", HttpStatus.NOT_FOUND),
     ORDER_COMBO_NOT_FOUND("ORDER_1007", "Combo not found in branch", HttpStatus.NOT_FOUND),
     ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1008", "Modifier option not found", HttpStatus.NOT_FOUND),
+    ORDER_ITEM_STATUS_NOT_MODIFIABLE("ORDER_1009", "Order item status does not allow this modification", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
+    ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Order status does not allow this modification", HttpStatus.BAD_REQUEST),
 
     ;
 
