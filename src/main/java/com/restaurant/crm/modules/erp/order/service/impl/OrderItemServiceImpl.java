@@ -19,6 +19,9 @@ import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import com.restaurant.crm.modules.erp.order.mapper.OrderItemMapper;
 import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderItemService;
+import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
+import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.OrderItemCookingStatusResponse;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
@@ -28,6 +31,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Service implementation for managing order items.
@@ -43,6 +49,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     RestaurantTableRepository restaurantTableRepository;
     NotificationService notificationService;
     SseEmitterService sseEmitterService;
+    CustomerSseService customerSseService;
     OrderItemMapper orderItemMapper;
     NotificationMapper notificationMapper;
 
@@ -61,6 +68,9 @@ public class OrderItemServiceImpl implements OrderItemService {
         if (status == OrderItemStatus.READY_TO_SERVE) {
             triggerReadyToServeNotification(savedItem);
         }
+
+        // Broadcast cooking status update to customer SSE subscribers
+        broadcastOrderCookingStatus(savedItem.getOrder());
 
         return orderItemMapper.toOrderItemResponse(savedItem);
     }
@@ -127,5 +137,49 @@ public class OrderItemServiceImpl implements OrderItemService {
         // Map notification to DTO and broadcast it via SSE
         NotificationResponse responseDto = notificationMapper.toNotificationResponse(notification);
         sseEmitterService.broadcastToBranch(branchId, "READY_TO_SERVE", responseDto, StartDefinedOrgPermission.ORDER_READ);
+    }
+
+    private void broadcastOrderCookingStatus(Order order) {
+        if (order == null || order.getId() == null) {
+            return;
+        }
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        List<OrderItemCookingStatusResponse> itemResponses = new ArrayList<>();
+
+        for (OrderItem item : items) {
+            String itemName = "Unknown Dish";
+            if (item.getProductId() != null) {
+                Product product = productRepository.findById(item.getProductId()).orElse(null);
+                if (product != null) {
+                    itemName = product.getProductName();
+                }
+            } else if (item.getComboId() != null) {
+                Combo combo = comboRepository.findById(item.getComboId()).orElse(null);
+                if (combo != null) {
+                    itemName = combo.getComboName();
+                }
+            }
+
+            itemResponses.add(OrderItemCookingStatusResponse.builder()
+                    .orderItemId(item.getId())
+                    .itemName(itemName)
+                    .quantity(item.getQuantity())
+                    .note(item.getNote())
+                    .status(item.getStatus())
+                    .updatedAt(item.getUpdatedAt())
+                    .build());
+        }
+
+        OrderCookingStatusResponse statusResponse = OrderCookingStatusResponse.builder()
+                .orderId(order.getId())
+                .orderCode(order.getOrderCode())
+                .tableId(order.getTableId())
+                .customerPhone(order.getCustomerPhone())
+                .status(order.getStatus())
+                .items(itemResponses)
+                .updatedAt(order.getUpdatedAt())
+                .build();
+
+        customerSseService.broadcastOrderUpdate(order.getId(), statusResponse);
     }
 }

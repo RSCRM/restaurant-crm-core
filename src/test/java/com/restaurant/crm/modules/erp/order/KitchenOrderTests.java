@@ -9,6 +9,7 @@ import com.restaurant.crm.modules.erp.notification.enums.NotificationType;
 import com.restaurant.crm.modules.erp.notification.mapper.NotificationMapper;
 import com.restaurant.crm.modules.erp.notification.service.interfaces.NotificationService;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
+import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemResponse;
 import com.restaurant.crm.modules.erp.order.entity.Order;
 import com.restaurant.crm.modules.erp.order.entity.OrderItem;
@@ -21,6 +22,8 @@ import com.restaurant.crm.modules.erp.table.entity.TableArea;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import java.util.Collections;
+import java.util.List;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -59,6 +62,9 @@ public class KitchenOrderTests {
     SseEmitterService sseEmitterService;
 
     @Mock
+    CustomerSseService customerSseService;
+
+    @Mock
     OrderItemMapper orderItemMapper;
 
     @Mock
@@ -92,6 +98,7 @@ public class KitchenOrderTests {
         // Verify that no notification or SSE broadcast is triggered for IN_PROGRESS status
         verify(notificationService, never()).create(any(), any(), any(), any(), any(), any());
         verify(sseEmitterService, never()).broadcastToBranch(any(), any(), any(), any());
+        verify(customerSseService, never()).broadcastOrderUpdate(any(), any());
     }
 
     @Test
@@ -111,6 +118,7 @@ public class KitchenOrderTests {
                 .build();
 
         Order order = Order.builder()
+                .id("order-1")
                 .branchId(branchId)
                 .tableId(tableId)
                 .build();
@@ -151,6 +159,7 @@ public class KitchenOrderTests {
         when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
         when(restaurantTableRepository.findById(tableId)).thenReturn(Optional.of(table));
+        when(orderItemRepository.findByOrderId(any())).thenReturn(Collections.singletonList(orderItem));
 
         when(notificationService.create(
                 eq(branchId),
@@ -173,6 +182,8 @@ public class KitchenOrderTests {
         // Verify notification is created in DB and pushed to SSE
         verify(notificationService, times(1)).create(any(), any(), any(), any(), any(), any());
         verify(sseEmitterService, times(1)).broadcastToBranch(eq(branchId), eq("READY_TO_SERVE"), eq(responseDto), eq(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission.ORDER_READ));
+        // Verify customer SSE update is broadcasted
+        verify(customerSseService, times(1)).broadcastOrderUpdate(any(), any());
     }
 
     @Test
