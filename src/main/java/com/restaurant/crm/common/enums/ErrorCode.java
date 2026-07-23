@@ -110,6 +110,30 @@ public enum ErrorCode {
     VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
+
+    // ==== LICENSE ERRORS ====
+    LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
+    LICENSE_CODE_DUPLICATED("LICENSE_1001", "License code already exists", HttpStatus.CONFLICT),
+    LICENSE_CODE_IMMUTABLE("LICENSE_1002", "License code cannot be changed", HttpStatus.BAD_REQUEST),
+    LICENSE_ALREADY_LOCKED("LICENSE_1003", "License is already locked", HttpStatus.CONFLICT),
+    LICENSE_ALREADY_ACTIVE("LICENSE_1004", "License is already active", HttpStatus.CONFLICT),
+    LICENSE_STATUS_INVALID("LICENSE_1005", "License status is invalid for this action", HttpStatus.CONFLICT),
+    LICENSE_CODE_REQUIRED("LICENSE_1006", "License code is required", HttpStatus.BAD_REQUEST),
+    LICENSE_NAME_REQUIRED("LICENSE_1007", "License name is required", HttpStatus.BAD_REQUEST),
+    LICENSE_PRICE_REQUIRED("LICENSE_1008", "License price is required", HttpStatus.BAD_REQUEST),
+    LICENSE_PRICE_INVALID("LICENSE_1009", "Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    LICENSE_BILLING_CYCLE_REQUIRED("LICENSE_1010", "Billing cycle is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_BRANCH_REQUIRED("LICENSE_1011", "Max branch is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_BRANCH_INVALID("LICENSE_1012", "Max branch must be -1 or greater", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_EMPLOYEE_REQUIRED("LICENSE_1013", "Max employee is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_EMPLOYEE_INVALID("LICENSE_1014", "Max employee must be -1 or greater", HttpStatus.BAD_REQUEST),
+    LICENSE_STATUS_REQUIRED("LICENSE_1015", "License status is required", HttpStatus.BAD_REQUEST),
+
+    // ==== SUBSCRIPTION ERRORS ====
+    SUBSCRIPTION_NOT_FOUND("SUB_1000", "Subscription not found", HttpStatus.NOT_FOUND),
+    SUBSCRIPTION_ALREADY_REVOKED("SUB_1001", "Subscription is already revoked", HttpStatus.CONFLICT),
+    ACTIVE_SUBSCRIPTION_EXISTS("SUB_1002", "Organization already has an active subscription", HttpStatus.CONFLICT),
+    LICENSE_LOCKED_CANNOT_ISSUE("SUB_1003", "License is locked, cannot issue new subscription", HttpStatus.CONFLICT),
     ;
 
     String code;
