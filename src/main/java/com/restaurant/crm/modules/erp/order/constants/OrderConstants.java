@@ -4,11 +4,8 @@ public class OrderConstants {
     private OrderConstants() {}
 
     public static final String TABLE_ORDER = "orders";
-<<<<<<< HEAD
     public static final String TABLE_ORDER_ITEM = "order_items";
     public static final String TABLE_ORDER_ITEM_MODIFIER = "order_item_modifiers";
-=======
->>>>>>> 974a648899522665abe78a764198d9de7c28cde8
 
     public static final String UK_BRANCH_ORDER_CODE = "uk_orders_branch_order_code";
 
