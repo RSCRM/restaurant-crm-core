@@ -31,6 +31,12 @@ public class StartDefinedPermission {
     public static final String INGREDIENT_CATEGORY_MANAGE = "INGREDIENT_CATEGORY_MANAGE";
     public static final String INGREDIENT_VIEW = "INGREDIENT_CATEGORY_MANAGE";
     public static final String INGREDIENT_MANAGE = "INGREDIENT_CATEGORY_MANAGE";
+
+    // ===== INVENTORY =====
+    public static final String INVENTORY_VIEW = "INVENTORY_VIEW";
+    public static final String INVENTORY_MANAGE = "INVENTORY_MANAGE";
+    public static final String INVENTORY_TRANSACTION_VIEW = "INVENTORY_TRANSACTION_VIEW";
+    public static final String INVENTORY_TRANSACTION_MANAGE = "INVENTORY_TRANSACTION_MANAGE";
     private StartDefinedPermission() {
     }
 }
