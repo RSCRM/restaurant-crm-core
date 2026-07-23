@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -37,7 +38,19 @@ import java.time.Instant;
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = OrderItemConstants.TABLE_ORDER_ITEM)
+@Table(
+        name = OrderItemConstants.TABLE_ORDER_ITEM,
+        indexes = {
+                // Covers the kitchen board query: filter by status, sort by priority then age.
+                @Index(
+                        name = OrderItemConstants.IDX_KITCHEN_BOARD,
+                        columnList = OrderItemConstants.COL_STATUS + ", "
+                                + OrderItemConstants.COL_PRIORITY_FLAG + ", "
+                                + OrderItemConstants.COL_CREATED_AT
+                ),
+                @Index(name = OrderItemConstants.IDX_ORDER_ID, columnList = OrderItemConstants.COL_ORDER_ID)
+        }
+)
 public class OrderItem extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -18,6 +18,12 @@ public class OrderItemConstants {
     public static final String COL_CANCEL_REASON = "cancel_reason";
     public static final String COL_PRIORITY_FLAG = "priority_flag";
 
+    // Inherited from BaseEntity; referenced here for the kitchen board index.
+    public static final String COL_CREATED_AT = "created_at";
+
+    public static final String IDX_KITCHEN_BOARD = "idx_order_items_kitchen_board";
+    public static final String IDX_ORDER_ID = "idx_order_items_order_id";
+
     public static final String DISH_NAME_DEFINITION = "VARCHAR(255)";
     public static final String NOTE_DEFINITION = "VARCHAR(255)";
     public static final String PREPARED_BY_DEFINITION = "VARCHAR(36)";
