@@ -1,21 +1,25 @@
 package com.restaurant.crm.modules.identity.service.impl;
 
-<<<<<<< HEAD
-=======
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.redis.RedisBlacklistRepository;
 import com.restaurant.crm.common.redis.RedisKeyGenerator;
+import com.restaurant.crm.modules.erp.shared.entity.Employee;
+import com.restaurant.crm.modules.erp.shared.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.shared.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.shared.repository.EmployeeRepository;
 import com.restaurant.crm.modules.identity.dto.request.AuthenticationRequest;
+import com.restaurant.crm.modules.identity.dto.request.ContextSelectionRequest;
 import com.restaurant.crm.modules.identity.dto.request.IntrospectRequest;
 import com.restaurant.crm.modules.identity.dto.response.AuthenticationResponse;
+import com.restaurant.crm.modules.identity.dto.response.ContextResponse;
+import com.restaurant.crm.modules.identity.dto.response.ContextSelectionResponse;
 import com.restaurant.crm.modules.identity.dto.response.IntrospectResponse;
 import com.restaurant.crm.modules.identity.entity.User;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.service.interfaces.AuthenticationService;
->>>>>>> be38cfc (feat/ impl logout function)
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -26,23 +30,6 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.restaurant.crm.common.constant.JwtClaimSetConstant;
-import com.restaurant.crm.common.enums.ErrorCode;
-import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.organization.entity.Employee;
-import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
-import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
-import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
-import com.restaurant.crm.modules.identity.dto.request.AuthenticationRequest;
-import com.restaurant.crm.modules.identity.dto.request.ContextSelectionRequest;
-import com.restaurant.crm.modules.identity.dto.request.IntrospectRequest;
-import com.restaurant.crm.modules.identity.dto.response.AuthenticationResponse;
-import com.restaurant.crm.modules.identity.dto.response.ContextResponse;
-import com.restaurant.crm.modules.identity.dto.response.ContextSelectionResponse;
-import com.restaurant.crm.modules.identity.dto.response.IntrospectResponse;
-import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.repository.UserRepository;
-import com.restaurant.crm.modules.identity.service.interfaces.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -74,12 +61,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
-<<<<<<< HEAD
     EmployeeRepository employeeRepository;
-=======
     RoleRepository roleRepository;
     RedisBlacklistRepository redisBlacklistRepository;
->>>>>>> be38cfc (feat/ impl logout function)
 
     @NonFinal
     @Value(value = "${security.jwt.signer-key}")
@@ -97,7 +81,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         // Load employee contexts
-        List<Employee> employees = employeeRepository.findByUserIdAndStatus(
+        List<Employee> employees = employeeRepository.findByUser_IdAndStatus(
                 user.getId(), EmployeeStatus.ACTIVE);
 
         List<ContextResponse> contexts = employees.stream()
@@ -140,7 +124,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         // Employee path: verify employee belongs to user
-        Employee employee = employeeRepository.findByIdAndUserId(request.getEmployeeId(), userId)
+        Employee employee = employeeRepository.findByIdAndUser_Id(request.getEmployeeId(), userId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         if (employee.getStatus() != EmployeeStatus.ACTIVE) {
@@ -178,11 +162,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-<<<<<<< HEAD
-    // ==================== Token Generation ====================
-
-    private String generateIdentityToken(User user) {
-=======
     @Override
     public void logout(String token) {
         try {
@@ -217,9 +196,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    private String generateToken(User user) {
+    private String generateIdentityToken(User user) {
         // header
->>>>>>> be38cfc (feat/ impl logout function)
+
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -353,8 +332,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private Set<String> buildOrgPermissions(Employee employee) {
         Set<String> permissions = new HashSet<>();
-        if (employee.getOrgRole() != null && employee.getOrgRole().getOrgPermissions() != null) {
-            employee.getOrgRole().getOrgPermissions()
+        if (employee.getOrgRole() != null && employee.getOrgRole().getPermissions() != null) {
+            employee.getOrgRole().getPermissions()
                     .forEach(permission -> permissions.add(permission.getPermissionName()));
         }
         return permissions;
