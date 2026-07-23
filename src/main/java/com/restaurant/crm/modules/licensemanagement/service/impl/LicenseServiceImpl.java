@@ -9,22 +9,34 @@ import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.OrganizationSubscriptionResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.OrganizationSummary;
+import com.restaurant.crm.modules.licensemanagement.dto.response.PaginationResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.SubscriptionResponse;
 import com.restaurant.crm.modules.licensemanagement.entity.License;
+import com.restaurant.crm.modules.licensemanagement.entity.LicenseSubscription;
 import com.restaurant.crm.modules.licensemanagement.enums.LicenseStatus;
 import com.restaurant.crm.modules.licensemanagement.mapper.LicenseMapper;
+import com.restaurant.crm.modules.licensemanagement.mapper.LicenseSubscriptionMapper;
 import com.restaurant.crm.modules.licensemanagement.repository.LicenseRepository;
+import com.restaurant.crm.modules.licensemanagement.repository.LicenseSubscriptionRepository;
 import com.restaurant.crm.modules.licensemanagement.service.interfaces.LicenseService;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +44,10 @@ import java.time.Instant;
 public class LicenseServiceImpl implements LicenseService {
 
     LicenseRepository licenseRepository;
+    LicenseSubscriptionRepository subscriptionRepository;
+    OrganizationRepository organizationRepository;
     LicenseMapper licenseMapper;
+    LicenseSubscriptionMapper licenseSubscriptionMapper;
 
     @Override
     @Transactional
@@ -148,5 +163,55 @@ public class LicenseServiceImpl implements LicenseService {
         license.setStatus(LicenseStatus.ACTIVE);
         License savedLicense = licenseRepository.save(license);
         return licenseMapper.toLicenseResponse(savedLicense);
+    }
+
+    @Override
+    public LicenseDetailResponse getLicenseDetail(String id, int page, int size) {
+        // 1. Find license by id (including soft-deleted — BR-04)
+        License license = licenseRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.LICENSE_NOT_FOUND));
+
+        // 2. Find subscriptions for this license with pagination
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<LicenseSubscription> subscriptionPage = subscriptionRepository.findByLicenseId(id, pageable);
+
+        // 3. Build organization + subscription pairs
+        List<OrganizationSubscriptionResponse> organizations = subscriptionPage.getContent().stream()
+                .map(sub -> {
+                    OrganizationSummary orgSummary = organizationRepository.findById(sub.getOrganizationId())
+                            .map(org -> OrganizationSummary.builder()
+                                    .id(org.getId())
+                                    .name(org.getOrganizationName())
+                                    .build())
+                            .orElse(OrganizationSummary.builder()
+                                    .id(sub.getOrganizationId())
+                                    .name("Unknown")
+                                    .build());
+
+                    SubscriptionResponse subResponse = licenseSubscriptionMapper.toSubscriptionResponse(sub);
+
+                    return OrganizationSubscriptionResponse.builder()
+                            .organization(orgSummary)
+                            .subscription(subResponse)
+                            .build();
+                })
+                .toList();
+
+        // 4. Build pagination response
+        PaginationResponse pagination = PaginationResponse.builder()
+                .page(subscriptionPage.getNumber())
+                .size(subscriptionPage.getSize())
+                .totalElements(subscriptionPage.getTotalElements())
+                .totalPages(subscriptionPage.getTotalPages())
+                .build();
+
+        // 5. Build license detail response
+        LicenseResponse licenseResponse = licenseMapper.toLicenseResponse(license);
+
+        return LicenseDetailResponse.builder()
+                .license(licenseResponse)
+                .organizations(organizations)
+                .pagination(pagination)
+                .build();
     }
 }
