@@ -92,12 +92,17 @@ class UserServiceImplTest {
     @Test
     void getMyInfoReturnsAuthenticatedUserProfile() {
         Instant createdAt = Instant.parse("2026-07-22T00:00:00Z");
+        Role adminRole = Role.builder()
+                .id("role-1")
+                .roleName(PredefinedRole.ADMIN_ROLE)
+                .permissions(Set.of())
+                .build();
         User user = User.builder()
                 .id("user-1")
                 .username("admin")
                 .email("admin@example.com")
                 .status(UserStatus.ACTIVE)
-                .roles(Set.of())
+                .roles(Set.of(adminRole))
                 .createdAt(createdAt)
                 .build();
         UserProfile profile = UserProfile.builder()
@@ -119,6 +124,9 @@ class UserServiceImplTest {
             assertEquals("admin@example.com", response.getEmail());
             assertEquals("0900000000", response.getPhone());
             assertEquals(UserStatus.ACTIVE, response.getStatus());
+            assertEquals(Set.of(PredefinedRole.ADMIN_ROLE), response.getRoles().stream()
+                    .map(role -> role.getRoleName())
+                    .collect(java.util.stream.Collectors.toSet()));
             assertEquals(createdAt, response.getCreatedAt());
             verify(userRepository).findById("user-1");
         }
