@@ -1,5 +1,21 @@
 package com.restaurant.crm.modules.identity.service.impl;
 
+<<<<<<< HEAD
+=======
+import com.restaurant.crm.common.constant.JwtClaimSetConstant;
+import com.restaurant.crm.common.enums.ErrorCode;
+import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.redis.RedisBlacklistRepository;
+import com.restaurant.crm.common.redis.RedisKeyGenerator;
+import com.restaurant.crm.modules.identity.dto.request.AuthenticationRequest;
+import com.restaurant.crm.modules.identity.dto.request.IntrospectRequest;
+import com.restaurant.crm.modules.identity.dto.response.AuthenticationResponse;
+import com.restaurant.crm.modules.identity.dto.response.IntrospectResponse;
+import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.repository.RoleRepository;
+import com.restaurant.crm.modules.identity.repository.UserRepository;
+import com.restaurant.crm.modules.identity.service.interfaces.AuthenticationService;
+>>>>>>> be38cfc (feat/ impl logout function)
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -58,7 +74,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
+<<<<<<< HEAD
     EmployeeRepository employeeRepository;
+=======
+    RoleRepository roleRepository;
+    RedisBlacklistRepository redisBlacklistRepository;
+>>>>>>> be38cfc (feat/ impl logout function)
 
     @NonFinal
     @Value(value = "${security.jwt.signer-key}")
@@ -157,9 +178,48 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+<<<<<<< HEAD
     // ==================== Token Generation ====================
 
     private String generateIdentityToken(User user) {
+=======
+    @Override
+    public void logout(String token) {
+        try {
+            // parse & verify JWT signature
+            SignedJWT signedJWT = SignedJWT.parse(token);
+            JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+            boolean verified = signedJWT.verify(verifier);
+            if (!verified) {
+                throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+            }
+
+            // check expiration
+            Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+            if (expirationTime.before(new Date())) {
+                throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+            }
+
+            // calculate remaining TTL
+            long remainingTtlInSeconds = (expirationTime.getTime() - System.currentTimeMillis()) / 1000;
+
+            // hash token & save to Redis blacklist
+            String tokenHash = RedisKeyGenerator.generateBlacklistKey(token);
+            redisBlacklistRepository.save(tokenHash, remainingTtlInSeconds);
+
+            log.info("User {} logout successfully.", signedJWT.getJWTClaimsSet().getSubject());
+        } catch (ParseException e) {
+            log.error("Parse token failed", e);
+            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+        } catch (JOSEException e) {
+            log.error("Verify token failed", e);
+            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+        }
+    }
+
+    private String generateToken(User user) {
+        // header
+>>>>>>> be38cfc (feat/ impl logout function)
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()

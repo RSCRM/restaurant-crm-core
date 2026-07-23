@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.text.ParseException;
 
 @RestController
@@ -56,6 +58,24 @@ public class AuthenticationController {
         ApiResponse<IntrospectResponse> response = ApiResponse.<IntrospectResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(authenticationService.introspect(request))
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            ApiResponse<Void> response = ApiResponse.<Void>builder()
+                    .success(ApiConstant.FAILURE)
+                    .build();
+            return ResponseEntity.status(401).body(response);
+        }
+        String token = authHeader.substring(7);
+        authenticationService.logout(token);
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(null)
                 .build();
         return ResponseEntity.ok(response);
     }
