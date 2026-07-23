@@ -20,7 +20,6 @@ public interface IngredientRepository extends JpaRepository<Ingredient, String> 
             Pageable pageable
     );
 
-
     // Get ingredients by category
     List<Ingredient> findByIngredientCategoryId(
             String ingredientCategoryId
@@ -30,7 +29,6 @@ public interface IngredientRepository extends JpaRepository<Ingredient, String> 
             String ingredientCategoryId,
             Pageable pageable
     );
-
 
     // Search ingredient name inside a branch
     List<Ingredient> findByBranchIdAndIngredientNameContainingIgnoreCase(
@@ -44,13 +42,11 @@ public interface IngredientRepository extends JpaRepository<Ingredient, String> 
             Pageable pageable
     );
 
-
     // Check duplicate ingredient name in same branch
     boolean existsByBranchIdAndIngredientName(
             String branchId,
             String ingredientName
     );
-
 
     // Optional: exact search
     Optional<Ingredient> findByBranchIdAndIngredientName(
