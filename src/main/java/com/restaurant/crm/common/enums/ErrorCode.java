@@ -19,6 +19,8 @@ public enum ErrorCode {
     AUTH_GENERATION_FAIL("AUTH_1002", "Generation JWT fail", HttpStatus.INTERNAL_SERVER_ERROR),
     JWT_CLAIM_MISSING("AUTH_1003", "JWT claim is missing or invalid", HttpStatus.UNAUTHORIZED),
     EMAIL_ALREADY_EXISTS("AUTH_1005", "Email already exists", HttpStatus.BAD_REQUEST),
+    AUTH_INVALID_TOKEN_TYPE("AUTH_1006", "Invalid token type", HttpStatus.UNAUTHORIZED),
+    AUTH_CONTEXT_NOT_FOUND("AUTH_1007", "Context not found for user", HttpStatus.NOT_FOUND),
 
     // ==== USER ERRORS ====
     USER_USERNAME_NOT_FOUND("USER_1000", "User not found with given username", HttpStatus.NOT_FOUND),
@@ -52,18 +54,6 @@ public enum ErrorCode {
     EMPLOYEE_NOT_FOUND("EMP_1000", "Employee not found", HttpStatus.NOT_FOUND),
     EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
-    BRANCH_NOT_FOUND("BRANCH_1000", "Branch not found", HttpStatus.NOT_FOUND),
-    BRANCH_MANAGER_NOT_FOUND("BRANCH_MANAGER_1000", "Branch manager not found", HttpStatus.NOT_FOUND),
-    BRANCH_MANAGER_ALREADY_ASSIGNED("BRANCH_MANAGER_1001", "Branch already has an active manager", HttpStatus.BAD_REQUEST),
-    BRANCH_MANAGER_INVALID_REQUEST("BRANCH_MANAGER_1002", "Branch manager request is invalid", HttpStatus.BAD_REQUEST),
-    BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1003", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
-
-    // ==== ORGANIZATION AUTHORIZATION ERRORS ====
-    ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
-    ORG_ROLE_NOT_FOUND("ORG_ROLE_1000", "Organization role not found", HttpStatus.NOT_FOUND),
-
-    // ==== LICENSE ERRORS ====
-    LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
 
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),

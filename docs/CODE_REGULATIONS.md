@@ -76,13 +76,13 @@ com.restaurant.crm.modules.<module_name>
 - **Repository**: `<Entity>Repository` (Ví dụ: `UserRepository`, `RoleRepository`).
 - **Request DTO**: `<Entity><Action>Request` (Ví dụ: `UserCreationRequest`, `UserRolesUpdateRequest`, `AuthenticationRequest`).
 - **Response DTO**: `<Entity>Response` hoặc `<Action>Response` (Ví dụ: `UserResponse`, `RoleResponse`, `IntrospectResponse`).
-- **JPA Entity**: Viết hoa chữ cái đầu (PascalCase), danh từ số ít (Ví dụ: `User`, `Role`, `Permission`).
+- **JPA Entity**: Viết hoa chữ cái đầu (PascalCase), danh từ số ít (Ví dụ: `User`, `OrgRole`, `OrgPermission`).
 - **Mapper**: `<Entity>Mapper` (Ví dụ: `UserMapper`, `RoleMapper`).
 - **Initializer**: `<Domain>Initializer` (Ví dụ: `PermissionInitializer`, `RoleInitializer`, `AdminInitializer`).
 - **Constant Class**: `<Domain>Constants`, `<Domain>ControllerConstants`, `<Domain>ErrorCodeConstants`. Phải khai báo `private` constructor để chống khởi tạo.
 
 ### 3.2. Database (Bảng & Cột)
-- **Tên bảng**: Dùng danh từ số nhiều, chữ thường, phân cách bởi dấu gạch dưới `snake_case` (Ví dụ: `users`, `roles`, `permissions`, `user_roles`).
+- **Tên bảng**: Dùng danh từ số nhiều, chữ thường, phân cách bởi dấu gạch dưới `snake_case` (Ví dụ: `users`, `roles`, `orgPermissions`, `user_roles`).
 - **Tên cột**: Chữ thường, `snake_case` (Ví dụ: `created_at`, `updated_at`, `created_by`, `updated_by`).
 
 ---
