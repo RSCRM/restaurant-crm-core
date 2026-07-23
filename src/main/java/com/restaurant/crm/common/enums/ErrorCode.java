@@ -54,6 +54,10 @@ public enum ErrorCode {
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
 
+    // ==== SCHEDULE ERRORS ====
+    SCHEDULE_DATE_RANGE_INVALID("SCHEDULE_1000", "Schedule date range is invalid", HttpStatus.BAD_REQUEST),
+    SCHEDULE_DATE_RANGE_EXCEEDED("SCHEDULE_1001", "Schedule date range cannot exceed 31 days", HttpStatus.BAD_REQUEST),
+
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
     ORGANIZATION_EXISTS("ORG_1001", "Organization already exists", HttpStatus.BAD_REQUEST),
