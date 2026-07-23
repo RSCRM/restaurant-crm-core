@@ -22,6 +22,7 @@ public enum ErrorCode {
     AUTH_INVALID_TOKEN_TYPE("AUTH_1006", "Invalid token type", HttpStatus.UNAUTHORIZED),
     AUTH_CONTEXT_NOT_FOUND("AUTH_1007", "Context not found for user", HttpStatus.NOT_FOUND),
     AUTH_TOKEN_REVOKED("AUTH_1006", "Access token has been revoked", HttpStatus.UNAUTHORIZED),
+    AUTH_TOKEN_REVOKED("AUTH_1008", "Access token has been revoked", HttpStatus.UNAUTHORIZED),
 
     // ==== USER ERRORS ====
     USER_USERNAME_NOT_FOUND("USER_1000", "User not found with given username", HttpStatus.NOT_FOUND),
@@ -84,11 +85,66 @@ public enum ErrorCode {
     ALLOCATION_NOT_FOUND("ALLOC_1000", "Allocation not found", HttpStatus.NOT_FOUND),
     ALLOCATION_EXCEEDED("ALLOC_1001", "Employee allocation exceeds 100%", HttpStatus.BAD_REQUEST),
     ALLOCATION_PROJECT_COMPLETED("ALLOC_1002", "Cannot allocate to a completed project", HttpStatus.BAD_REQUEST),
+    ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
     // ==== BOOKING ERRORS ====
     BOOKING_NOT_FOUND("BOOKING_1000", "Booking not found", HttpStatus.NOT_FOUND),
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
+    CUSTOMER_PHONE_REQUIRED("CUST_1001", "Phone number is required", HttpStatus.BAD_REQUEST),
+    CUSTOMER_PHONE_INVALID("CUST_1002", "Phone number must be between 9 and 15 digits", HttpStatus.BAD_REQUEST),
 
+    // ==== ORDER ERRORS ====
+    ORDER_BRANCH_ID_REQUIRED("ORDER_1000", "Branch id is required", HttpStatus.BAD_REQUEST),
+    ORDER_TABLE_ID_REQUIRED("ORDER_1001", "Table id is required for dine-in order", HttpStatus.BAD_REQUEST),
+    ORDER_BRANCH_NOT_FOUND("ORDER_1002", "Branch not found", HttpStatus.NOT_FOUND),
+    ORDER_TABLE_NOT_FOUND("ORDER_1003", "Table not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_PRODUCT_NOT_FOUND("ORDER_1004", "Product not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_COMBO_NOT_FOUND("ORDER_1005", "Combo not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1006", "Modifier option not found", HttpStatus.NOT_FOUND),
+
+    // ==== RESTAURANT ERRORS ====
+    RESTAURANT_ID_REQUIRED("REST_1000", "Restaurant ID is required", HttpStatus.BAD_REQUEST),
+
+    // ==== LOYALTY ERRORS ====
+    CUSTOMER_POINT_NOT_FOUND("LOY_1000", "Customer point wallet not found", HttpStatus.NOT_FOUND),
+    CUSTOMER_POINT_INSUFFICIENT("LOY_1001", "Insufficient customer points", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_FOUND("LOY_1002", "Voucher not found", HttpStatus.NOT_FOUND),
+    VOUCHER_INACTIVE("LOY_1003", "Voucher is inactive", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_NOT_FOUND("LOY_1004", "Customer voucher not found", HttpStatus.NOT_FOUND),
+    CUSTOMER_VOUCHER_ALREADY_USED("LOY_1005", "Voucher has already been used", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_MIN_BILL_NOT_MET("LOY_1006", "Minimum bill amount not met", HttpStatus.BAD_REQUEST),
+    VOUCHER_TITLE_REQUIRED("LOY_1007", "Voucher title is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_DISCOUNT_REQUIRED("LOY_1008", "Voucher discount percent is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_DISCOUNT_INVALID("LOY_1009", "Voucher discount percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
+    VOUCHER_MIN_BILL_REQUIRED("LOY_1010", "Voucher minimum bill amount is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_MIN_BILL_INVALID("LOY_1011", "Voucher minimum bill amount cannot be negative", HttpStatus.BAD_REQUEST),
+    VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
+    VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
+    VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
+
+    // ==== LICENSE ERRORS ====
+    LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
+    LICENSE_CODE_DUPLICATED("LICENSE_1001", "License code already exists", HttpStatus.CONFLICT),
+    LICENSE_CODE_IMMUTABLE("LICENSE_1002", "License code cannot be changed", HttpStatus.BAD_REQUEST),
+    LICENSE_ALREADY_LOCKED("LICENSE_1003", "License is already locked", HttpStatus.CONFLICT),
+    LICENSE_ALREADY_ACTIVE("LICENSE_1004", "License is already active", HttpStatus.CONFLICT),
+    LICENSE_STATUS_INVALID("LICENSE_1005", "License status is invalid for this action", HttpStatus.CONFLICT),
+    LICENSE_CODE_REQUIRED("LICENSE_1006", "License code is required", HttpStatus.BAD_REQUEST),
+    LICENSE_NAME_REQUIRED("LICENSE_1007", "License name is required", HttpStatus.BAD_REQUEST),
+    LICENSE_PRICE_REQUIRED("LICENSE_1008", "License price is required", HttpStatus.BAD_REQUEST),
+    LICENSE_PRICE_INVALID("LICENSE_1009", "Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    LICENSE_BILLING_CYCLE_REQUIRED("LICENSE_1010", "Billing cycle is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_BRANCH_REQUIRED("LICENSE_1011", "Max branch is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_BRANCH_INVALID("LICENSE_1012", "Max branch must be -1 or greater", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_EMPLOYEE_REQUIRED("LICENSE_1013", "Max employee is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_EMPLOYEE_INVALID("LICENSE_1014", "Max employee must be -1 or greater", HttpStatus.BAD_REQUEST),
+    LICENSE_STATUS_REQUIRED("LICENSE_1015", "License status is required", HttpStatus.BAD_REQUEST),
+
+    // ==== SUBSCRIPTION ERRORS ====
+    SUBSCRIPTION_NOT_FOUND("SUB_1000", "Subscription not found", HttpStatus.NOT_FOUND),
+    SUBSCRIPTION_ALREADY_REVOKED("SUB_1001", "Subscription is already revoked", HttpStatus.CONFLICT),
+    ACTIVE_SUBSCRIPTION_EXISTS("SUB_1002", "Organization already has an active subscription", HttpStatus.CONFLICT),
+    LICENSE_LOCKED_CANNOT_ISSUE("SUB_1003", "License is locked, cannot issue new subscription", HttpStatus.CONFLICT),
     ;
 
     String code;

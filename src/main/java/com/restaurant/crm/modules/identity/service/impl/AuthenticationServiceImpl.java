@@ -30,6 +30,13 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.identity.dto.request.ContextSelectionRequest;
+import com.restaurant.crm.modules.identity.dto.response.ContextResponse;
+import com.restaurant.crm.modules.identity.dto.response.ContextSelectionResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -162,6 +169,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    private String generateIdentityToken(User user) {
+        return getJwsHeader(user);
+    }
+  
     @Override
     public void logout(String token) {
         try {
@@ -196,22 +207,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    private String generateIdentityToken(User user) {
-        // header
+private String generateIdentityToken(User user) {
+    return getJwsHeader(user);
+}
 
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
+private String getJwsHeader(User user) {
 
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(user.getEmail())
-                .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(IDENTITY_TOKEN_EXPIRY_MINUTES, ChronoUnit.MINUTES)))
-                .jwtID(UUID.randomUUID().toString())
-                .claim(JwtClaimSetConstant.CLAIM_USER_ID, user.getId())
-                .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_IDENTITY)
-                .build();
+    JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
-        return signToken(jwsHeader, jwtClaimsSet);
-    }
+    JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+            .subject(user.getEmail())
+            .issueTime(new Date())
+            .expirationTime(Date.from(
+                    Instant.now().plus(
+                            IDENTITY_TOKEN_EXPIRY_MINUTES,
+                            ChronoUnit.MINUTES)))
+            .jwtID(UUID.randomUUID().toString())
+            .claim(JwtClaimSetConstant.CLAIM_USER_ID, user.getId())
+            .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_IDENTITY)
+            .build();
+
+    return signToken(jwsHeader, jwtClaimsSet);
+}
 
     private String generateContextToken(String userId, Employee employee, String roleName, Set<String> permissions) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
@@ -299,8 +316,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
         }
     }
-
-    // ==================== Helper Methods ====================
 
     private ContextResponse buildContextResponse(Employee employee) {
         OrganizationBranch branch = employee.getBranch();
