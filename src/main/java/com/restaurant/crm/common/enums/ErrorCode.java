@@ -19,8 +19,12 @@ public enum ErrorCode {
     AUTH_GENERATION_FAIL("AUTH_1002", "Generation JWT fail", HttpStatus.INTERNAL_SERVER_ERROR),
     JWT_CLAIM_MISSING("AUTH_1003", "JWT claim is missing or invalid", HttpStatus.UNAUTHORIZED),
     EMAIL_ALREADY_EXISTS("AUTH_1005", "Email already exists", HttpStatus.BAD_REQUEST),
+<<<<<<< HEAD
     AUTH_INVALID_TOKEN_TYPE("AUTH_1006", "Invalid token type", HttpStatus.UNAUTHORIZED),
     AUTH_CONTEXT_NOT_FOUND("AUTH_1007", "Context not found for user", HttpStatus.NOT_FOUND),
+=======
+    AUTH_TOKEN_REVOKED("AUTH_1006", "Access token has been revoked", HttpStatus.UNAUTHORIZED),
+>>>>>>> be38cfc (feat/ impl logout function)
 
     // ==== USER ERRORS ====
     USER_USERNAME_NOT_FOUND("USER_1000", "User not found with given username", HttpStatus.NOT_FOUND),
@@ -55,6 +59,17 @@ public enum ErrorCode {
     EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
 
+    // ==== ORGANIZATION ERRORS ====
+    ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
+    ORGANIZATION_EXISTS("ORG_1001", "Organization already exists", HttpStatus.BAD_REQUEST),
+    ORGANIZATION_TAX_CODE_EXISTS("ORG_1002", "Tax code already exists", HttpStatus.BAD_REQUEST),
+    ORGANIZATION_INACTIVE("ORG_1003", "Organization is inactive", HttpStatus.BAD_REQUEST),
+
+    // ==== ORGANIZATION BRANCH ERRORS ====
+    ORGANIZATION_BRANCH_NOT_FOUND("BRANCH_1000", "Organization branch not found", HttpStatus.NOT_FOUND),
+    ORGANIZATION_BRANCH_MANAGER_EXISTS("BRANCH_1001", "Manager is already assigned to another branch", HttpStatus.BAD_REQUEST),
+    ORGANIZATION_BRANCH_INACTIVE("BRANCH_1002", "Organization branch is inactive", HttpStatus.BAD_REQUEST),
+    ORGANIZATION_BRANCH_EXISTS("BRANCH_1003", "Organization branch already exists", HttpStatus.BAD_REQUEST),
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),
     PROJECT_CODE_EXISTS("PROJ_1001", "Project code already exists", HttpStatus.BAD_REQUEST),
@@ -63,7 +78,10 @@ public enum ErrorCode {
     ALLOCATION_NOT_FOUND("ALLOC_1000", "Allocation not found", HttpStatus.NOT_FOUND),
     ALLOCATION_EXCEEDED("ALLOC_1001", "Employee allocation exceeds 100%", HttpStatus.BAD_REQUEST),
     ALLOCATION_PROJECT_COMPLETED("ALLOC_1002", "Cannot allocate to a completed project", HttpStatus.BAD_REQUEST),
-    ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
+    // ==== BOOKING ERRORS ====
+    BOOKING_NOT_FOUND("BOOKING_1000", "Booking not found", HttpStatus.NOT_FOUND),
+    // ==== CUSTOMER ERRORS ====
+    CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
 
     ;
 

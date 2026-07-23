@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -53,7 +54,9 @@ public class SecurityConfig {
     private String SIGNER_KEY;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
+                                                    CorsConfigurationSource corsConfigurationSource,
+                                                    JwtBlacklistFilter jwtBlacklistFilter) throws Exception {
         return httpSecurity
                 //disable session
                 .sessionManagement(
@@ -71,6 +74,9 @@ public class SecurityConfig {
                         .requestMatchers(WHITELIST_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
+
+                //check token blacklist before authentication
+                .addFilterBefore(jwtBlacklistFilter, UsernamePasswordAuthenticationFilter.class)
 
                 //config oauth2 resource server
                 .oauth2ResourceServer(oauth2 -> oauth2

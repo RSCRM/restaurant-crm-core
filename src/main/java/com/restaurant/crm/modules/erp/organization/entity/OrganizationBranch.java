@@ -2,20 +2,12 @@ package com.restaurant.crm.modules.erp.organization.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.organization.constants.OrganizationBranchConstants;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
@@ -54,4 +46,12 @@ public class OrganizationBranch extends BaseEntity {
             columnDefinition = OrganizationBranchConstants.PHONE_DEFINITION)
     @Size(max = OrganizationBranchConstants.MAX_CHARS_PHONE)
     String phone;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = OrganizationBranchConstants.COL_STATUS,
+            nullable = false
+    )
+    OrganizationBranchStatus status = OrganizationBranchStatus.ACTIVE;
 }
