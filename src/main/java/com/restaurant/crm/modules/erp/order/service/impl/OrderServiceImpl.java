@@ -2,6 +2,12 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.product.entity.Product;
+import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemModifierRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
@@ -15,7 +21,6 @@ import com.restaurant.crm.modules.erp.order.repository.OrderItemModifierReposito
 import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderService;
-import jakarta.persistence.EntityManager;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -45,7 +50,9 @@ public class OrderServiceImpl implements OrderService {
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
     OrderItemModifierRepository orderItemModifierRepository;
-    EntityManager entityManager;
+    ProductRepository productRepository;
+    ComboRepository comboRepository;
+    ModifierOptionRepository modifierOptionRepository;
 
     @Override
     @Transactional
@@ -80,8 +87,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void updateOrderItemQuantity(String orderItemId, UpdateOrderItemQuantityRequestDto request) {
-        OrderItem existingOrderItem = getOrderItem(orderItemId);
+    public void updateOrderItemQuantity(
+            String orderId,
+            String orderItemId,
+            UpdateOrderItemQuantityRequestDto request
+    ) {
+        OrderItem existingOrderItem = getOrderItem(orderId, orderItemId);
 
         validateOrderStatusForOrderItemMutation(existingOrderItem.getOrder());
         validateOrderItemQuantityChange(existingOrderItem, request.getQuantity());
@@ -108,8 +119,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void updateOrderItemModifiers(String orderItemId, UpdateOrderItemModifiersRequestDto request) {
-        OrderItem existingOrderItem = getOrderItem(orderItemId);
+    public void updateOrderItemModifiers(
+            String orderId,
+            String orderItemId,
+            UpdateOrderItemModifiersRequestDto request
+    ) {
+        OrderItem existingOrderItem = getOrderItem(orderId, orderItemId);
         List<OrderItemModifier> currentModifiers = orderItemModifierRepository.findAllByOrderItemId(orderItemId);
 
         validateOrderStatusForOrderItemMutation(existingOrderItem.getOrder());
@@ -134,60 +149,27 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private OrderItem getOrderItem(String orderItemId) {
-        return orderItemRepository.findByIdWithOrder(orderItemId)
+    private OrderItem getOrderItem(String orderId, String orderItemId) {
+        return orderItemRepository.findByIdAndOrderIdWithOrder(orderItemId, orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
     }
 
     private BigDecimal resolveUnitPrice(String branchId, String productId, String comboId) {
         if (StringUtils.hasText(productId)) {
-            // NOTE: Product validation/pricing currently reaches outside the order module
-            // because product data is owned by another domain (waiting for implementation).
-            List<?> productRows = entityManager.createNativeQuery(
-                            """
-                            select price
-                            from products
-                            where product_id = :productId
-                              and branch_id = :branchId
-                            """)
-                    .setParameter("productId", productId)
-                    .setParameter("branchId", branchId)
-                    .getResultList();
-            if (productRows.isEmpty()) {
-                throw new AppException(ErrorCode.ORDER_PRODUCT_NOT_FOUND);
-            }
-            return toBigDecimal(productRows.get(0));
+            Product product = productRepository.findByIdAndBranchId(productId, branchId)
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_PRODUCT_NOT_FOUND));
+            return product.getPrice();
         }
 
-        // NOTE: Combo validation/pricing also depends on data outside the current
-        // order module boundary (waiting for implementation).
-        List<?> comboRows = entityManager.createNativeQuery(
-                        """
-                        select price
-                        from combos
-                        where combo_id = :comboId
-                          and branch_id = :branchId
-                        """)
-                .setParameter("comboId", comboId)
-                .setParameter("branchId", branchId)
-                .getResultList();
-        if (comboRows.isEmpty()) {
-            throw new AppException(ErrorCode.ORDER_COMBO_NOT_FOUND);
-        }
-        return toBigDecimal(comboRows.get(0));
+        Combo combo = comboRepository.findByIdAndBranchId(comboId, branchId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_COMBO_NOT_FOUND));
+        return combo.getPrice();
     }
 
     private BigDecimal resolveModifierAdditionalPrice(String modifierOptionId) {
-        // NOTE: Modifier option validation/pricing reaches outside the order module
-        // because modifier catalogs are defined in another domain.
-        List<?> modifierRows = entityManager.createNativeQuery(
-                        "select additional_price from modifier_options where modifier_option_id = :modifierOptionId")
-                .setParameter("modifierOptionId", modifierOptionId)
-                .getResultList();
-        if (modifierRows.isEmpty()) {
-            throw new AppException(ErrorCode.ORDER_MODIFIER_OPTION_NOT_FOUND);
-        }
-        return toBigDecimal(modifierRows.get(0));
+        ModifierOption modifierOption = modifierOptionRepository.findById(modifierOptionId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_MODIFIER_OPTION_NOT_FOUND));
+        return modifierOption.getAdditionalPrice();
     }
 
     private BigDecimal createOrderItemModifiers(OrderItem orderItem, List<AddOrderItemModifierRequestDto> modifiers) {
@@ -302,12 +284,5 @@ public class OrderServiceImpl implements OrderService {
         return modifiers.stream()
                 .map(modifier -> calculateModifierSubtotal(modifier.getAdditionalPrice(), modifier.getQuantity()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private BigDecimal toBigDecimal(Object value) {
-        if (value instanceof BigDecimal bigDecimal) {
-            return bigDecimal;
-        }
-        return new BigDecimal(value.toString());
     }
 }

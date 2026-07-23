@@ -14,6 +14,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
             from OrderItem oi
             join fetch oi.order o
             where oi.id = :orderItemId
+              and o.id = :orderId
             """)
-    Optional<OrderItem> findByIdWithOrder(String orderItemId);
+    Optional<OrderItem> findByIdAndOrderIdWithOrder(String orderItemId, String orderId);
 }

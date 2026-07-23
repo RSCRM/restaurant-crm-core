@@ -9,7 +9,15 @@ public interface OrderService {
 
     AddOrderItemResponse addOrderItem(String orderId, AddOrderItemRequestDto request);
 
-    void updateOrderItemQuantity(String orderItemId, UpdateOrderItemQuantityRequestDto request);
+    void updateOrderItemQuantity(
+            String orderId,
+            String orderItemId,
+            UpdateOrderItemQuantityRequestDto request
+    );
 
-    void updateOrderItemModifiers(String orderItemId, UpdateOrderItemModifiersRequestDto request);
+    void updateOrderItemModifiers(
+            String orderId,
+            String orderItemId,
+            UpdateOrderItemModifiersRequestDto request
+    );
 }

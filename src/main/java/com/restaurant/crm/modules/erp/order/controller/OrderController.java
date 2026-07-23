@@ -46,7 +46,7 @@ public class OrderController {
             @PathVariable String orderItemId,
             @Valid @RequestBody UpdateOrderItemQuantityRequestDto request
     ) {
-        orderService.updateOrderItemQuantity(orderItemId, request);
+        orderService.updateOrderItemQuantity(orderId, orderItemId, request);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(ApiConstant.SUCCESS)
@@ -61,7 +61,7 @@ public class OrderController {
             @PathVariable String orderItemId,
             @Valid @RequestBody UpdateOrderItemModifiersRequestDto request
     ) {
-        orderService.updateOrderItemModifiers(orderItemId, request);
+        orderService.updateOrderItemModifiers(orderId, orderItemId, request);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(ApiConstant.SUCCESS)
