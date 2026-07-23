@@ -13,6 +13,7 @@ public class OrganizationConstants {
     public static final String COL_ADDRESS = "address";
     public static final String COL_PHONE = "phone";
     public static final String COL_EMAIL = "email";
+    public static final String COL_STATUS = "status";
 
     //======= Organization column definition ========
     public static final String ORGANIZATION_NAME_DEFINITION = "VARCHAR(150)";
