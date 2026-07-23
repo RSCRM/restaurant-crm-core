@@ -3,9 +3,11 @@ package com.restaurant.crm.modules.erp.order.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -26,6 +28,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     OrderService orderService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(
+            @Valid @RequestBody CreateOrderRequestDto request
+    ) {
+        ApiResponse<CreateOrderResponse> response = ApiResponse.<CreateOrderResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(orderService.create(request))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/{orderId}/items")
     public ResponseEntity<ApiResponse<AddOrderItemResponse>> addOrderItem(
