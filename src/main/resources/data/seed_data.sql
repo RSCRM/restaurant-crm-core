@@ -309,7 +309,8 @@ ON CONFLICT (area_id) DO NOTHING;
 
 -- Restaurant Table: Bàn 01 inside Khu A
 INSERT INTO restaurant_tables (table_id, version, area_id, table_number, capacity, status, created_at, updated_at) VALUES
-('t0000000-0000-0000-0000-000000000001', 0, 'a0000000-0000-0000-0000-000000000001', 'Bàn 01', 4, 'AVAILABLE', NOW(), NOW())
+('t0000000-0000-0000-0000-000000000001', 0, 'a0000000-0000-0000-0000-000000000001', 'Bàn 01', 4, 'AVAILABLE', NOW(), NOW()),
+('t0000000-0000-0000-0000-000000000002', 0, 'a0000000-0000-0000-0000-000000000001', 'Bàn 02', 4, 'AVAILABLE', NOW(), NOW())
 ON CONFLICT (table_id) DO NOTHING;
 
 -- Product Category: Món nước
@@ -319,7 +320,8 @@ ON CONFLICT (category_id) DO NOTHING;
 
 -- Product: Phở Bò
 INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, created_at, updated_at) VALUES
-('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', NOW(), NOW())
+('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', NOW(), NOW())
 ON CONFLICT (product_id) DO NOTHING;
 
 -- Order: Order for Table 01 created by Waiter f0000000-0000-0000-0000-000000000009
