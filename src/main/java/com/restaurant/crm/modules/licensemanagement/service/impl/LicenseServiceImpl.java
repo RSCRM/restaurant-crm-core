@@ -119,4 +119,19 @@ public class LicenseServiceImpl implements LicenseService {
                 .deletedAt(now)
                 .build();
     }
+
+    @Override
+    @Transactional
+    public LicenseResponse lockLicense(String id) {
+        License license = licenseRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new AppException(ErrorCode.LICENSE_NOT_FOUND));
+
+        if (license.getStatus() == LicenseStatus.LOCKED) {
+            throw new AppException(ErrorCode.LICENSE_ALREADY_LOCKED);
+        }
+
+        license.setStatus(LicenseStatus.LOCKED);
+        License savedLicense = licenseRepository.save(license);
+        return licenseMapper.toLicenseResponse(savedLicense);
+    }
 }

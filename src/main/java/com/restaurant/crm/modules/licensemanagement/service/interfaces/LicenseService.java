@@ -16,4 +16,6 @@ public interface LicenseService {
     LicenseResponse updateLicense(String id, UpdateLicenseRequest request);
 
     DeleteLicenseResponse deleteLicense(String id);
+
+    LicenseResponse lockLicense(String id);
 }
