@@ -99,6 +99,20 @@ public class PermissionInitializer implements ApplicationRunner {
                         .build(),
                 Permission.builder()
                         .permissionName(StartDefinedPermission.INGREDIENT_MANAGE)
+                        .build(),
+
+                // ===== INVENTORY =====
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.INVENTORY_VIEW)
+                        .build(),
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.INVENTORY_MANAGE)
+                        .build(),
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.INVENTORY_TRANSACTION_VIEW)
+                        .build(),
+                Permission.builder()
+                        .permissionName(StartDefinedPermission.INVENTORY_TRANSACTION_MANAGE)
                         .build()
         );
     }
