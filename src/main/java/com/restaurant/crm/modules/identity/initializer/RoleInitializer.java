@@ -34,11 +34,23 @@ public class RoleInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!roleRepository.existsByRoleName(PredefinedRole.ADMIN_ROLE)) {
-            Role adminRole = Role.builder()
+        Set<Permission> adminPermissions = getAdminPermissions();
+        Role adminRole = roleRepository.findByRoleName(PredefinedRole.ADMIN_ROLE)
+                .orElse(null);
+
+        if (adminRole == null) {
+            adminRole = Role.builder()
                     .roleName(PredefinedRole.ADMIN_ROLE)
-                    .permissions(getAdminPermissions())
+                    .permissions(adminPermissions)
                     .build();
+            roleRepository.save(adminRole);
+        } else {
+            Set<Permission> permissions = adminRole.getPermissions();
+            if (permissions == null) {
+                permissions = new HashSet<>();
+            }
+            permissions.addAll(adminPermissions);
+            adminRole.setPermissions(permissions);
             roleRepository.save(adminRole);
         }
 
@@ -92,6 +104,12 @@ public class RoleInitializer implements ApplicationRunner {
         permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_UPDATE)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
         permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_DELETE)
+                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
+        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_ASSIGN)
+                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
+
+        // Contract permissions
+        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.CONTRACT_LICENSE_VIEW)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
 
         return permissions;
