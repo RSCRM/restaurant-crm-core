@@ -16,13 +16,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -30,9 +33,11 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+    private static final String TOKEN_TYPE_CONTEXT = "CONTEXT";
+
     private final String[] PUBLIC_POST_ENDPOINT = {
             "/api/v1/users",
-            "/api/v1/auth/token",
+            "/api/v1/auth/login",
             "/api/v1/auth/introspect",
             "/api/v1/auth/register"
     };
@@ -49,13 +54,15 @@ public class SecurityConfig {
     private String SIGNER_KEY;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
+                                                    CorsConfigurationSource corsConfigurationSource,
+                                                    JwtBlacklistFilter jwtBlacklistFilter) throws Exception {
         return httpSecurity
                 //disable session
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
 
-                //cors config – dùng CorsConfigurationSource để preflight/response có header CORS
+                //cors config
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
                 //disable csrf
@@ -67,6 +74,9 @@ public class SecurityConfig {
                         .requestMatchers(WHITELIST_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
+
+                //check token blacklist before authentication
+                .addFilterBefore(jwtBlacklistFilter, UsernamePasswordAuthenticationFilter.class)
 
                 //config oauth2 resource server
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -82,18 +92,32 @@ public class SecurityConfig {
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            HashSet<GrantedAuthority> authorities = new HashSet<>();
+            Collection<GrantedAuthority> authorities = new HashSet<>();
 
-            //role converter
-            List<String> roles = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_SCOPE);
-            if (roles != null) {
-                roles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
-            }
+            String tokenType = jwt.getClaimAsString(JwtClaimSetConstant.CLAIM_TYPE);
 
-            //permission converter
-            List<String> permissions = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_PERMISSION);
-            if (permissions != null) {
-                permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
+            if (TOKEN_TYPE_CONTEXT.equals(tokenType)) {
+                // Context Token: extract orgRole + permissions
+                String orgRole = jwt.getClaimAsString(JwtClaimSetConstant.CLAIM_ORG_ROLE);
+                if (orgRole != null) {
+                    authorities.add(new SimpleGrantedAuthority(orgRole));
+                }
+
+                List<String> permissions = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_PERMISSION);
+                if (permissions != null) {
+                    permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
+                }
+            } else {
+                // Identity Token or legacy: extract scope (roles) + permissions
+                List<String> roles = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_SCOPE);
+                if (roles != null) {
+                    roles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
+                }
+
+                List<String> permissions = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_PERMISSION);
+                if (permissions != null) {
+                    permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
+                }
             }
 
             return authorities;

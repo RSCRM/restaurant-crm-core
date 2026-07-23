@@ -4,4 +4,9 @@ public class JwtClaimSetConstant {
     public static final String CLAIM_SCOPE = "scope";
     public static final String CLAIM_PERMISSION = "permission";
     public static final String CLAIM_USER_ID = "userId";
+    public static final String CLAIM_TYPE = "type";
+    public static final String CLAIM_ORGANIZATION_ID = "organizationId";
+    public static final String CLAIM_BRANCH_ID = "branchId";
+    public static final String CLAIM_EMPLOYEE_ID = "employeeId";
+    public static final String CLAIM_ORG_ROLE = "orgRole";
 }
