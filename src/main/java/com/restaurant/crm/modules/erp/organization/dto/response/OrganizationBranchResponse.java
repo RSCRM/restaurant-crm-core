@@ -1,0 +1,26 @@
+package com.restaurant.crm.modules.erp.organization.dto.response;
+
+
+import com.restaurant.crm.modules.erp.shared.enums.OrganizationBranchStatus;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+import java.time.Instant;
+
+@Getter
+@Setter
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class OrganizationBranchResponse {
+    String id;
+    String organizationId;
+    String branchName;
+    String address;
+    String phone;
+    OrganizationBranchStatus status;
+    Instant createdAt;
+    Instant updatedAt;
+}
