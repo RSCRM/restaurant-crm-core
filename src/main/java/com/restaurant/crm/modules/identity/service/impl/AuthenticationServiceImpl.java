@@ -1,6 +1,5 @@
 package com.restaurant.crm.modules.identity.service.impl;
 
-
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
