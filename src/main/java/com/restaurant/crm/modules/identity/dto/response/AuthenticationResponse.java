@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -17,7 +18,8 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthenticationResponse {
-    boolean authenticated;
-    String token;
-    Set<String> roles;
+    String accessToken;
+    String refreshToken;
+    List<ContextResponse> contexts;
+    Set<String> systemRoles;
 }
