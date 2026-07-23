@@ -1,0 +1,112 @@
+package com.restaurant.crm.modules.erp.attendance.service.impl;
+
+import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.common.enums.ErrorCode;
+import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.attendance.constants.AttendanceConstants;
+import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceResponse;
+import com.restaurant.crm.modules.erp.attendance.entity.Attendance;
+import com.restaurant.crm.modules.erp.attendance.entity.ShiftAssignment;
+import com.restaurant.crm.modules.erp.attendance.enums.AttendanceStatus;
+import com.restaurant.crm.modules.erp.attendance.mapper.AttendanceMapper;
+import com.restaurant.crm.modules.erp.attendance.repository.AttendanceRepository;
+import com.restaurant.crm.modules.erp.attendance.repository.ShiftAssignmentRepository;
+import com.restaurant.crm.modules.erp.attendance.service.interfaces.AttendanceService;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class AttendanceServiceImpl implements AttendanceService {
+
+    AttendanceRepository attendanceRepository;
+    ShiftAssignmentRepository shiftAssignmentRepository;
+    EmployeeRepository employeeRepository;
+    AttendanceMapper attendanceMapper;
+
+    @Override
+    @Transactional
+    public AttendanceResponse checkIn() {
+        Employee employee = currentEmployee();
+        Instant now = Instant.now();
+        ShiftAssignment shift = shiftAssignmentRepository
+                .findFirstByEmployeeIdAndStartAtLessThanEqualAndEndAtGreaterThanEqualOrderByStartAtDesc(
+                        employee.getId(), now, now)
+                .orElseThrow(() -> new AppException(ErrorCode.ATTENDANCE_SHIFT_NOT_FOUND));
+
+        if (attendanceRepository.existsByShiftAssignmentId(shift.getId())) {
+            throw new AppException(ErrorCode.ATTENDANCE_ALREADY_CHECKED_IN);
+        }
+
+        Attendance attendance = Attendance.builder()
+                .shiftAssignment(shift)
+                .checkInAt(now)
+                .status(now.isAfter(shift.getStartAt().plus(
+                        AttendanceConstants.LATE_THRESHOLD_MINUTES, ChronoUnit.MINUTES))
+                        ? AttendanceStatus.LATE
+                        : AttendanceStatus.ON_TIME)
+                .build();
+
+        return attendanceMapper.toResponse(attendanceRepository.save(attendance));
+    }
+
+    @Override
+    @Transactional
+    public AttendanceResponse checkOut() {
+        Employee employee = currentEmployee();
+        Attendance attendance = attendanceRepository
+                .findFirstByShiftAssignmentEmployeeIdAndCheckOutAtIsNullOrderByCheckInAtDesc(employee.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.ATTENDANCE_OPEN_RECORD_NOT_FOUND));
+
+        attendance.setCheckOutAt(Instant.now());
+        return attendanceMapper.toResponse(attendanceRepository.save(attendance));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<AttendanceResponse> getMyHistory(
+            LocalDate from, LocalDate to, int page, int size) {
+        if (from.isAfter(to)) {
+            throw new AppException(ErrorCode.ATTENDANCE_DATE_RANGE_INVALID);
+        }
+
+        Employee employee = currentEmployee();
+        Page<Attendance> result = attendanceRepository
+                .findByShiftAssignmentEmployeeIdAndShiftAssignmentWorkDateBetween(
+                        employee.getId(), from, to,
+                        PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "checkInAt")));
+
+        return PagingResponse.<AttendanceResponse>builder()
+                .currentPage(page)
+                .pageSize(result.getSize())
+                .totalPages(result.getTotalPages())
+                .totalElement(result.getTotalElements())
+                .data(result.getContent().stream().map(attendanceMapper::toResponse).toList())
+                .build();
+    }
+
+    private Employee currentEmployee() {
+        Employee employee = employeeRepository
+                .findByIdAndUserId(AuthUtils.getEmployeeId(), AuthUtils.getCurrentUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        if (employee.getStatus() != EmployeeStatus.ACTIVE) {
+            throw new AppException(ErrorCode.EMPLOYEE_NOT_ACTIVE);
+        }
+        return employee;
+    }
+}
