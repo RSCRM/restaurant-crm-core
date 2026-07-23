@@ -16,6 +16,7 @@ import java.util.Objects;
 public class GlobalExceptionHandler extends RuntimeException{
     @ExceptionHandler(value = RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handlingRuntimeException(RuntimeException exception){
+        exception.printStackTrace(); // Log stack trace for debugging
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(ApiConstant.FAILURE)
                 .errorMessage(ErrorMessage.builder()

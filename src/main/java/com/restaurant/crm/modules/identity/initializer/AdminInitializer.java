@@ -41,7 +41,7 @@ public class AdminInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing admin ...");
+         log.info("Initializing admin ...");
 
         User admin = usersRepository.findByUsername(adminProperties.getUsername()).orElseGet(() -> {
             Role adminRole = roleRepository.findByRoleName(PredefinedRole.ADMIN_ROLE)

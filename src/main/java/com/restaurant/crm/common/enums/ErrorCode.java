@@ -85,6 +85,36 @@ public enum ErrorCode {
     CUSTOMER_PHONE_REQUIRED("CUST_1001", "Phone number is required", HttpStatus.BAD_REQUEST),
     CUSTOMER_PHONE_INVALID("CUST_1002", "Phone number must be between 9 and 15 digits", HttpStatus.BAD_REQUEST),
 
+    // ==== ORDER ERRORS ====
+    ORDER_BRANCH_ID_REQUIRED("ORDER_1000", "Branch id is required", HttpStatus.BAD_REQUEST),
+    ORDER_TABLE_ID_REQUIRED("ORDER_1001", "Table id is required for dine-in order", HttpStatus.BAD_REQUEST),
+    ORDER_BRANCH_NOT_FOUND("ORDER_1002", "Branch not found", HttpStatus.NOT_FOUND),
+    ORDER_TABLE_NOT_FOUND("ORDER_1003", "Table not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_PRODUCT_NOT_FOUND("ORDER_1004", "Product not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_COMBO_NOT_FOUND("ORDER_1005", "Combo not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1006", "Modifier option not found", HttpStatus.NOT_FOUND),
+    ORDER_ITEM_NOT_FOUND("ORDER_1007", "Order item not found", HttpStatus.NOT_FOUND),
+    ORDER_NOT_FOUND("ORDER_1008", "Order not found", HttpStatus.NOT_FOUND),
+
+    // ==== INGREDIENT ERRORS ====
+    INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
+    INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.BAD_REQUEST),
+    INGREDIENT_NOT_FOUND("INGREDIENT_1000", "Ingredient not found", HttpStatus.NOT_FOUND),
+    INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.BAD_REQUEST),
+
+    // ==== INVENTORY ERRORS ====
+    INVENTORY_NOT_FOUND("INV_1000", "Inventory not found", HttpStatus.NOT_FOUND),
+    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.BAD_REQUEST),
+    INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
+    INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
+    INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
+
+    // ==== INVENTORY TRANSACTION ERRORS ====
+    INVENTORY_TRANSACTION_NOT_FOUND("INV_TX_1000", "Inventory transaction not found", HttpStatus.NOT_FOUND),
+    INVENTORY_TRANSACTION_INVALID_QUANTITY("INV_TX_1001", "Transaction quantity must be greater than zero", HttpStatus.BAD_REQUEST),
+    INVENTORY_TRANSACTION_INVALID_TYPE("INV_TX_1002", "Invalid inventory transaction type", HttpStatus.BAD_REQUEST),
+    INVENTORY_TRANSACTION_FAILED("INV_TX_1003", "Inventory transaction failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // ==== RESTAURANT ERRORS ====
     RESTAURANT_ID_REQUIRED("REST_1000", "Restaurant ID is required", HttpStatus.BAD_REQUEST),
 
@@ -104,6 +134,30 @@ public enum ErrorCode {
     VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
+
+    // ==== LICENSE ERRORS ====
+    LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
+    LICENSE_CODE_DUPLICATED("LICENSE_1001", "License code already exists", HttpStatus.CONFLICT),
+    LICENSE_CODE_IMMUTABLE("LICENSE_1002", "License code cannot be changed", HttpStatus.BAD_REQUEST),
+    LICENSE_ALREADY_LOCKED("LICENSE_1003", "License is already locked", HttpStatus.CONFLICT),
+    LICENSE_ALREADY_ACTIVE("LICENSE_1004", "License is already active", HttpStatus.CONFLICT),
+    LICENSE_STATUS_INVALID("LICENSE_1005", "License status is invalid for this action", HttpStatus.CONFLICT),
+    LICENSE_CODE_REQUIRED("LICENSE_1006", "License code is required", HttpStatus.BAD_REQUEST),
+    LICENSE_NAME_REQUIRED("LICENSE_1007", "License name is required", HttpStatus.BAD_REQUEST),
+    LICENSE_PRICE_REQUIRED("LICENSE_1008", "License price is required", HttpStatus.BAD_REQUEST),
+    LICENSE_PRICE_INVALID("LICENSE_1009", "Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    LICENSE_BILLING_CYCLE_REQUIRED("LICENSE_1010", "Billing cycle is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_BRANCH_REQUIRED("LICENSE_1011", "Max branch is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_BRANCH_INVALID("LICENSE_1012", "Max branch must be -1 or greater", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_EMPLOYEE_REQUIRED("LICENSE_1013", "Max employee is required", HttpStatus.BAD_REQUEST),
+    LICENSE_MAX_EMPLOYEE_INVALID("LICENSE_1014", "Max employee must be -1 or greater", HttpStatus.BAD_REQUEST),
+    LICENSE_STATUS_REQUIRED("LICENSE_1015", "License status is required", HttpStatus.BAD_REQUEST),
+
+    // ==== SUBSCRIPTION ERRORS ====
+    SUBSCRIPTION_NOT_FOUND("SUB_1000", "Subscription not found", HttpStatus.NOT_FOUND),
+    SUBSCRIPTION_ALREADY_REVOKED("SUB_1001", "Subscription is already revoked", HttpStatus.CONFLICT),
+    ACTIVE_SUBSCRIPTION_EXISTS("SUB_1002", "Organization already has an active subscription", HttpStatus.CONFLICT),
+    LICENSE_LOCKED_CANNOT_ISSUE("SUB_1003", "License is locked, cannot issue new subscription", HttpStatus.CONFLICT),
     ;
 
     String code;
