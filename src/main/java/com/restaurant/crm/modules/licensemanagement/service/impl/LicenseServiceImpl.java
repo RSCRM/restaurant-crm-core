@@ -1,7 +1,11 @@
 package com.restaurant.crm.modules.licensemanagement.service.impl;
 
+import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
@@ -14,6 +18,9 @@ import com.restaurant.crm.modules.licensemanagement.service.interfaces.LicenseSe
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +53,27 @@ public class LicenseServiceImpl implements LicenseService {
         License savedLicense = licenseRepository.save(license);
 
         return licenseMapper.toLicenseResponse(savedLicense);
+    }
+
+    @Override
+    public PagingResponse<LicenseResponse> getLicenses(PagingRequest request) {
+        Pageable pageable = PageRequest.of(
+                request.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                request.getPageSize(),
+                PagingUtil.createSort(request)
+        );
+
+        Page<License> licensePage = licenseRepository.findAllByDeletedAtIsNull(pageable);
+
+        return PagingResponse.<LicenseResponse>builder()
+                .currentPage(request.getPage())
+                .pageSize(licensePage.getSize())
+                .totalPages(licensePage.getTotalPages())
+                .totalElement(licensePage.getTotalElements())
+                .data(licensePage.getContent().stream()
+                        .map(licenseMapper::toLicenseResponse)
+                        .toList())
+                .build();
     }
 
     @Override
