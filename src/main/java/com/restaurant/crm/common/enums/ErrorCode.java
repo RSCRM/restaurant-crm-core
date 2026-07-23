@@ -97,6 +97,19 @@ public enum ErrorCode {
     INGREDIENT_NOT_FOUND("INGREDIENT_1000", "Ingredient not found", HttpStatus.NOT_FOUND),
     INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.BAD_REQUEST),
 
+    // ==== INVENTORY ERRORS ====
+    INVENTORY_NOT_FOUND("INV_1000", "Inventory not found", HttpStatus.NOT_FOUND),
+    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.BAD_REQUEST),
+    INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
+    INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
+    INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
+
+    // ==== INVENTORY TRANSACTION ERRORS ====
+    INVENTORY_TRANSACTION_NOT_FOUND("INV_TX_1000", "Inventory transaction not found", HttpStatus.NOT_FOUND),
+    INVENTORY_TRANSACTION_INVALID_QUANTITY("INV_TX_1001", "Transaction quantity must be greater than zero", HttpStatus.BAD_REQUEST),
+    INVENTORY_TRANSACTION_INVALID_TYPE("INV_TX_1002", "Invalid inventory transaction type", HttpStatus.BAD_REQUEST),
+    INVENTORY_TRANSACTION_FAILED("INV_TX_1003", "Inventory transaction failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // ==== RESTAURANT ERRORS ====
     RESTAURANT_ID_REQUIRED("REST_1000", "Restaurant ID is required", HttpStatus.BAD_REQUEST),
 
