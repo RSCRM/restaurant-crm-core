@@ -25,10 +25,11 @@
 7. [UC-LIC-03: Delete License (Soft Delete)](#uc-lic-03-delete-license-soft-delete)
 8. [UC-LIC-04: Lock License](#uc-lic-04-lock-license)
 9. [UC-LIC-05: Reactivate License](#uc-lic-05-reactivate-license)
-10. [UC-SUB-01: Renew Subscription](#uc-sub-01-renew-subscription)
-11. [UC-SUB-02: Revoke Subscription](#uc-sub-02-revoke-subscription)
-12. [UC-SUB-03: View License Detail](#uc-sub-03-view-license-detail)
-13. [Phụ lục: Định hướng mở rộng cho Payment (Future Design)](#13-phụ-lục-định-hướng-mở-rộng-cho-payment-future-design)
+10. [UC-SUB-00: Grant Subscription (Cấp License thủ công)](#uc-sub-00-grant-subscription-cấp-license-thủ-công)
+11. [UC-SUB-01: Renew Subscription](#uc-sub-01-renew-subscription)
+12. [UC-SUB-02: Revoke Subscription](#uc-sub-02-revoke-subscription)
+13. [UC-SUB-03: View License Detail](#uc-sub-03-view-license-detail)
+14. [Phụ lục: Định hướng mở rộng cho Payment (Future Design)](#13-phụ-lục-định-hướng-mở-rộng-cho-payment-future-design)
 
 ---
 
@@ -1258,8 +1259,8 @@ END FUNCTION
 1. System Admin gửi request `PATCH /api/v1/admin/licenses/{id}/lock`.
 2. Hệ thống tìm License theo `id` (loại trừ đã soft-delete).
 3. Hệ thống kiểm tra `status` hiện tại của License:
-    - Nếu đang `ACTIVE` → chuyển thành `LOCKED`.
-    - Nếu đã là `LOCKED` → xem Exception Flow.
+   - Nếu đang `ACTIVE` → chuyển thành `LOCKED`.
+   - Nếu đã là `LOCKED` → xem Exception Flow.
 4. Hệ thống lưu thay đổi.
 5. Hệ thống trả về `200 OK` cùng dữ liệu License sau khi Lock.
 
@@ -1482,8 +1483,8 @@ END FUNCTION
 1. System Admin gửi request `PATCH /api/v1/admin/licenses/{id}/reactivate`.
 2. Hệ thống tìm License theo `id` (loại trừ đã soft-delete).
 3. Hệ thống kiểm tra `status` hiện tại:
-    - Nếu là `LOCKED` → chuyển thành `ACTIVE`.
-    - Nếu là `ACTIVE` → xem Exception Flow.
+   - Nếu là `LOCKED` → chuyển thành `ACTIVE`.
+   - Nếu là `ACTIVE` → xem Exception Flow.
 4. Hệ thống lưu thay đổi.
 5. Hệ thống trả về `200 OK` cùng dữ liệu License sau khi Reactivate.
 
@@ -1656,6 +1657,333 @@ END FUNCTION
 
 ---
 
+## UC-SUB-00: Grant Subscription (Cấp License thủ công)
+
+### 1. Overview
+
+| | |
+|---|---|
+| **Use Case ID** | UC-SUB-00 |
+| **Use Case Name** | Grant Subscription (Cấp License thủ công cho Organization) |
+| **Description** | System Admin cấp một License Plan cho một Organization cụ thể bằng cách tạo mới một `License_Subscription`, snapshot lại toàn bộ thông tin thương mại của License tại thời điểm cấp. Đây là điểm khởi đầu vòng đời Subscription của một Organization, vì chưa tích hợp Payment nên hành động này do System Admin thực hiện thủ công. |
+| **Actor** | System Admin |
+| **Priority** | High |
+
+> Ghi chú vị trí trong toàn bộ luồng nghiệp vụ: UC-SUB-00 là use case **tạo ra** `License_Subscription` đầu tiên (hoặc tiếp theo, sau khi Subscription trước đó đã EXPIRED/REVOKED) cho một Organization. UC-SUB-01 (Renew) chỉ thao tác trên Subscription đã tồn tại từ UC-SUB-00; UC-SUB-02 (Revoke) và UC-SUB-03 (View Detail) cũng thao tác trên dữ liệu do UC-SUB-00 sinh ra.
+
+### 2. Business Rules
+
+- BR-01: Một **Organization chỉ được có đúng một Subscription đang ACTIVE tại một thời điểm** (business invariant cốt lõi của toàn hệ thống — mục 2.1). Nếu Organization đã có Subscription ACTIVE, Grant mới **phải bị từ chối**.
+- BR-02: License được chọn để cấp phải đang ở trạng thái `ACTIVE` (không phải `LOCKED`) và **chưa bị soft-delete** — đúng theo business rule đã nêu ở UC-LIC-04: *"Sau khi License bị LOCKED, không được phép tạo Subscription mới từ License này."* Rule này cũng áp dụng tương tự với License đã bị xoá mềm (vì License đã xoá không còn là lựa chọn khả dụng trong danh sách License đang cung cấp).
+- BR-03: Khi tạo Subscription, hệ thống phải **snapshot** lại từ License gốc tại đúng thời điểm cấp các field: `price, billing_cycle, max_branch, max_employee`. Sau này nếu License gốc thay đổi, Subscription này không bị ảnh hưởng (đây là business rule bắt buộc xuyên suốt toàn bộ tài liệu — mục 2.1).
+- BR-04: `status` mặc định khi tạo Subscription luôn là `ACTIVE`. Không nhận `status` từ client.
+- BR-05: `start_date` mặc định là ngày hiện tại nếu client không truyền; có thể cho phép Admin chọn `start_date` trong tương lai (ví dụ cấp trước, có hiệu lực sau) — nếu vậy, `status` vẫn là `ACTIVE` ngay khi tạo theo đúng field mô tả trong DB Design gốc (tài liệu gốc không định nghĩa trạng thái "chờ kích hoạt", nên không tự suy diễn thêm trạng thái mới).
+- BR-06: `end_date` được tính từ `start_date + billing_cycle` tại thời điểm cấp (30 ngày cho `MONTHLY`, 365 ngày cho `YEARLY`) — áp dụng cùng công thức quy đổi billing cycle đã dùng ở UC-SUB-01 (Renew), để đảm bảo tính nhất quán logic ngày tháng trong toàn hệ thống.
+- BR-07: Chỉ System Admin được thực hiện Grant Subscription. Restaurant Owner không tự đăng ký được (vì chưa có Payment).
+
+### 3. Preconditions
+
+- Actor đã đăng nhập với vai trò System Admin.
+- `// TODO: PERMISSION CHECK` — Actor có quyền `ADMIN_SUBSCRIPTION_GRANT`.
+- Organization với `organization_id` tương ứng tồn tại.
+- License với `license_id` tương ứng tồn tại, đang `ACTIVE`, chưa bị soft-delete.
+- Organization chưa có Subscription nào đang ở trạng thái `ACTIVE`.
+
+### 4. Postconditions
+
+- Một record mới được tạo trong bảng `license_subscription` với `status = ACTIVE`, các field snapshot lấy đúng từ License tại thời điểm cấp.
+- Organization giờ đây có đúng 1 Subscription ACTIVE (chính là Subscription vừa tạo).
+- License gốc không bị thay đổi bởi hành động này.
+
+### 5. Main Flow
+
+1. System Admin gửi request `POST /api/v1/admin/subscriptions` với `organizationId`, `licenseId`, và tuỳ chọn `startDate`.
+2. Hệ thống kiểm tra Organization tồn tại.
+3. Hệ thống kiểm tra License tồn tại, đang `ACTIVE`, chưa soft-delete.
+4. Hệ thống kiểm tra Organization **chưa có** Subscription nào đang `ACTIVE`.
+5. Hệ thống tính `start_date` (mặc định = hôm nay nếu không truyền) và `end_date = start_date + billing_cycle` (theo `billing_cycle` của License tại thời điểm này).
+6. Hệ thống snapshot `price, billing_cycle, max_branch, max_employee` từ License vào Subscription mới.
+7. Hệ thống tạo record `License_Subscription` với `status = ACTIVE`.
+8. Hệ thống trả về `201 Created` cùng dữ liệu Subscription vừa tạo.
+
+### 6. Alternative Flow
+
+- **AF-01**: Nếu client không truyền `startDate`, hệ thống tự động dùng ngày hiện tại làm `start_date`.
+
+### 7. Exception Flow
+
+- **EF-01**: Organization không tồn tại → `404 Not Found`, error code `ORGANIZATION_NOT_FOUND`.
+- **EF-02**: License không tồn tại hoặc đã soft-delete → `404 Not Found`, error code `LICENSE_NOT_FOUND`.
+- **EF-03**: License đang `LOCKED` → `409 Conflict`, error code `LICENSE_LOCKED_CANNOT_ISSUE`.
+- **EF-04**: Organization đã có Subscription `ACTIVE` khác → `409 Conflict`, error code `ACTIVE_SUBSCRIPTION_EXISTS`.
+- **EF-05**: Vi phạm Unique Index `uq_one_active_subscription_per_org` do race condition (2 request Grant đồng thời cho cùng 1 Organization) → bắt `DataIntegrityViolationException`, convert thành `409 ACTIVE_SUBSCRIPTION_EXISTS`.
+- **EF-06**: Lỗi hệ thống → `500`, `INTERNAL_SERVER_ERROR`.
+
+### 8. Validation Rules
+
+| Field | Rule | Error Message |
+|---|---|---|
+| `organizationId` | required, UUID hợp lệ, phải tồn tại | "Organization is required" / "Organization not found" |
+| `licenseId` | required, UUID hợp lệ, phải tồn tại, `status=ACTIVE`, `deleted_at IS NULL` | "License is required" / "License not found" / "License is locked and cannot be issued" |
+| `startDate` | optional, date, nếu có thì không được là ngày trong quá khứ xa (đề xuất: `>= hôm nay`, cần BA xác nhận nếu cho phép cấp hồi tố) | "Start date must not be in the past" |
+| (Ràng buộc nghiệp vụ) | Organization không được có Subscription `ACTIVE` khác | "Organization already has an active subscription" |
+
+### 9. Database Changes
+
+| Table | Thao tác | Field bị thay đổi |
+|---|---|---|
+| `license_subscription` | INSERT | `id, license_id, organization_id, start_date, end_date, status(=ACTIVE), price, billing_cycle, max_branch, max_employee, created_at, updated_at` |
+| `license` | Không thay đổi | — |
+
+### 10. API Design
+
+**Method**: `POST`
+**URL**: `/api/v1/admin/subscriptions`
+
+**Headers**
+```
+Authorization: Bearer {jwt_token}
+Content-Type: application/json
+```
+
+**Request**
+```json
+{
+  "organizationId": "a9b8c7d6-0000-0000-0000-000000000099",
+  "licenseId": "b1e2c3d4-0000-0000-0000-000000000001",
+  "startDate": "2026-07-23"
+}
+```
+
+**Response (201 Created)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "c2d3e4f5-0000-0000-0000-000000000010",
+    "licenseId": "b1e2c3d4-0000-0000-0000-000000000001",
+    "organizationId": "a9b8c7d6-0000-0000-0000-000000000099",
+    "startDate": "2026-07-23",
+    "endDate": "2026-08-22",
+    "status": "ACTIVE",
+    "price": 990000,
+    "billingCycle": "MONTHLY",
+    "maxBranch": 5,
+    "maxEmployee": 50,
+    "createdAt": "2026-07-23T10:00:00Z",
+    "updatedAt": "2026-07-23T10:00:00Z"
+  },
+  "error": null
+}
+```
+
+**HTTP Status**
+- `201 Created` — thành công
+- `400 Bad Request` — validation lỗi
+- `404 Not Found` — Organization/License không tồn tại
+- `409 Conflict` — License LOCKED hoặc Organization đã có Subscription ACTIVE
+- `401/403` — auth/permission
+- `500` — lỗi hệ thống
+
+**Error Codes**: `VALIDATION_ERROR`, `ORGANIZATION_NOT_FOUND`, `LICENSE_NOT_FOUND`, `LICENSE_LOCKED_CANNOT_ISSUE`, `ACTIVE_SUBSCRIPTION_EXISTS`, `UNAUTHORIZED`, `FORBIDDEN`, `INTERNAL_SERVER_ERROR`
+
+### 11. DTO Design
+
+**Request DTO — `GrantSubscriptionRequest`**
+```java
+public class GrantSubscriptionRequest {
+
+    @NotNull(message = "Organization is required")
+    private UUID organizationId;
+
+    @NotNull(message = "License is required")
+    private UUID licenseId;
+
+    /** Optional; nếu null, service sẽ set = LocalDate.now() */
+    private LocalDate startDate;
+}
+```
+
+**Response DTO**: dùng chung `SubscriptionResponse` (xem UC-SUB-01, mục 11).
+
+### 12. Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    actor Admin as System Admin
+    participant API as SubscriptionController
+    participant SVC as SubscriptionService
+    participant OREPO as OrganizationRepository
+    participant LREPO as LicenseRepository
+    participant SREPO as LicenseSubscriptionRepository
+    participant DB as PostgreSQL
+
+    Admin->>API: POST /api/v1/admin/subscriptions
+    API->>API: Validate DTO
+    API->>SVC: grantSubscription(request)
+    SVC->>OREPO: findById(organizationId)
+    OREPO->>DB: SELECT * FROM organization WHERE id=?
+    DB-->>OREPO: organization row
+    alt Organization không tồn tại
+        SVC-->>API: throw OrganizationNotFoundException
+        API-->>Admin: 404 ORGANIZATION_NOT_FOUND
+    else Organization tồn tại
+        SVC->>LREPO: findActiveById(licenseId)
+        LREPO->>DB: SELECT * FROM license WHERE id=? AND deleted_at IS NULL
+        DB-->>LREPO: license row
+        alt License không tồn tại
+            SVC-->>API: throw LicenseNotFoundException
+            API-->>Admin: 404 LICENSE_NOT_FOUND
+        else License tồn tại
+            alt License.status == LOCKED
+                SVC-->>API: throw LicenseLockedException
+                API-->>Admin: 409 LICENSE_LOCKED_CANNOT_ISSUE
+            else License.status == ACTIVE
+                SVC->>SREPO: existsActiveByOrganizationId(organizationId)
+                SREPO->>DB: SELECT 1 FROM license_subscription WHERE organization_id=? AND status='ACTIVE'
+                DB-->>SREPO: boolean exists
+                alt Đã có Subscription ACTIVE
+                    SVC-->>API: throw ActiveSubscriptionExistsException
+                    API-->>Admin: 409 ACTIVE_SUBSCRIPTION_EXISTS
+                else Chưa có Subscription ACTIVE
+                    SVC->>SVC: startDate = request.startDate ?? today
+                    SVC->>SVC: endDate = startDate + cycleDays(license.billingCycle)
+                    SVC->>SVC: build Subscription (snapshot price/billingCycle/maxBranch/maxEmployee, status=ACTIVE)
+                    SVC->>SREPO: save(subscription)
+                    SREPO->>DB: INSERT INTO license_subscription (...)
+                    DB-->>SREPO: saved entity
+                    SVC-->>API: SubscriptionResponse
+                    API-->>Admin: 201 Created
+                end
+            end
+        end
+    end
+```
+
+### 13. Activity Diagram
+
+```mermaid
+flowchart TD
+    A([Bắt đầu]) --> B[Admin chọn Organization + License để cấp]
+    B --> C{Organization tồn tại?}
+    C -- Không --> D[404 ORGANIZATION_NOT_FOUND]
+    D --> Z([Kết thúc])
+    C -- Có --> E{License tồn tại & chưa xoá?}
+    E -- Không --> F[404 LICENSE_NOT_FOUND]
+    F --> Z
+    E -- Có --> G{License.status == LOCKED?}
+    G -- Có --> H[409 LICENSE_LOCKED_CANNOT_ISSUE]
+    H --> Z
+    G -- Không --> I{Organization đã có Subscription ACTIVE?}
+    I -- Có --> J[409 ACTIVE_SUBSCRIPTION_EXISTS]
+    J --> Z
+    I -- Không --> K["Tính start_date / end_date"]
+    K --> L["Snapshot price, billing_cycle, max_branch, max_employee"]
+    L --> M["Tạo License_Subscription, status = ACTIVE"]
+    M --> N[201 Created]
+    N --> Z
+```
+
+### 14. Business Logic (Pseudo Code)
+
+```text
+FUNCTION grantSubscription(request: GrantSubscriptionRequest) -> SubscriptionResponse:
+    // TODO: PERMISSION CHECK - ADMIN_SUBSCRIPTION_GRANT
+
+    organization = organizationRepository.findById(request.organizationId)
+    IF organization == NULL:
+        THROW OrganizationNotFoundException("Organization not found")
+
+    license = licenseRepository.findActiveById(request.licenseId)
+    IF license == NULL:
+        THROW LicenseNotFoundException("License not found")
+
+    IF license.status == LicenseStatus.LOCKED:
+        THROW LicenseLockedException("License is locked and cannot be issued")
+
+    IF subscriptionRepository.existsActiveByOrganizationId(request.organizationId):
+        THROW ActiveSubscriptionExistsException("Organization already has an active subscription")
+
+    startDate = request.startDate IS NOT NULL ? request.startDate : LocalDate.now()
+    cycleDays = (license.billingCycle == BillingCycle.MONTHLY) ? 30 : 365
+    endDate = startDate.plusDays(cycleDays)
+
+    subscription = NEW LicenseSubscription()
+    subscription.licenseId       = license.id
+    subscription.organizationId  = organization.id
+    subscription.startDate       = startDate
+    subscription.endDate         = endDate
+    subscription.status          = SubscriptionStatus.ACTIVE   // luôn ép cứng
+    subscription.price           = license.price               // snapshot
+    subscription.billingCycle    = license.billingCycle         // snapshot
+    subscription.maxBranch       = license.maxBranch             // snapshot
+    subscription.maxEmployee     = license.maxEmployee           // snapshot
+
+    savedSubscription = subscriptionRepository.save(subscription)
+    // Unique Index uq_one_active_subscription_per_org là tuyến phòng thủ cuối cùng
+    // cho race condition; nếu vi phạm, bắt DataIntegrityViolationException tại đây
+    // và convert thành ActiveSubscriptionExistsException.
+
+    RETURN subscriptionMapper.toResponse(savedSubscription)
+END FUNCTION
+```
+
+### 15. Edge Cases
+
+| Edge Case | Xử lý |
+|---|---|
+| Organization đã có Subscription ACTIVE | Từ chối `409 ACTIVE_SUBSCRIPTION_EXISTS` |
+| License đang LOCKED | Từ chối `409 LICENSE_LOCKED_CANNOT_ISSUE` |
+| License đã bị soft-delete | Từ chối `404 LICENSE_NOT_FOUND` (vì `findActiveById` loại trừ deleted) |
+| Organization không tồn tại | Từ chối `404 ORGANIZATION_NOT_FOUND` |
+| 2 request Grant gửi đồng thời cho cùng 1 Organization (race condition) | Unique Index DB chặn 1 trong 2, request thua bị convert thành `409 ACTIVE_SUBSCRIPTION_EXISTS` |
+| Organization từng có Subscription EXPIRED/REVOKED trước đó (không có Subscription ACTIVE hiện tại) | Cho phép Grant mới bình thường — tạo thêm 1 record `license_subscription` mới, các record cũ giữ nguyên làm lịch sử |
+| Không truyền `startDate` | Mặc định `start_date = hôm nay` |
+| Truyền `startDate` trong tương lai | Cho phép tạo với `status=ACTIVE` ngay (theo đúng field DB gốc, không có trạng thái "chờ kích hoạt" được định nghĩa) — cần BA xác nhận thêm nếu muốn giới hạn |
+| Truyền `status` trong request | Bị bỏ qua hoàn toàn (DTO không có field `status`), luôn set `ACTIVE` |
+
+### 16. Acceptance Criteria
+
+- [ ] Grant Subscription thành công tạo đúng 1 record `license_subscription` mới với `status=ACTIVE`.
+- [ ] Các field `price, billingCycle, maxBranch, maxEmployee` được snapshot đúng từ License tại thời điểm cấp.
+- [ ] `end_date` được tính đúng theo `start_date + billing_cycle` (30 ngày MONTHLY / 365 ngày YEARLY).
+- [ ] Grant Subscription cho Organization đã có Subscription ACTIVE bị từ chối `409 ACTIVE_SUBSCRIPTION_EXISTS`.
+- [ ] Grant Subscription từ License đang LOCKED bị từ chối `409 LICENSE_LOCKED_CANNOT_ISSUE`.
+- [ ] Grant Subscription từ License đã soft-delete bị từ chối `404 LICENSE_NOT_FOUND`.
+- [ ] Grant Subscription cho Organization không tồn tại bị từ chối `404 ORGANIZATION_NOT_FOUND`.
+- [ ] Race condition tạo đồng thời 2 Subscription ACTIVE cho cùng Organization chỉ 1 request thành công.
+- [ ] Sau khi Grant thành công, sửa License gốc (UC-LIC-02) không làm thay đổi Subscription vừa tạo.
+
+### 17. Test Scenarios
+
+**Happy Path**
+- TC-01: Grant Subscription hợp lệ cho Organization chưa có Subscription nào → 201, status=ACTIVE, snapshot đúng.
+- TC-02: Grant Subscription cho Organization đã từng có Subscription EXPIRED trước đó → 201 (tạo thêm record mới).
+- TC-03: Grant Subscription không truyền `startDate` → 201, `start_date` = hôm nay.
+
+**Validation**
+- TC-04: Thiếu `organizationId` → 400.
+- TC-05: Thiếu `licenseId` → 400.
+- TC-06: `organizationId` không đúng UUID format → 400.
+
+**Boundary**
+- TC-07: `startDate` = hôm nay chính xác → 201, `end_date` tính đúng từ hôm nay.
+- TC-08: License có `billingCycle=YEARLY` → `end_date = start_date + 365 ngày`.
+
+**Exception**
+- TC-09: Organization không tồn tại → 404 `ORGANIZATION_NOT_FOUND`.
+- TC-10: License không tồn tại → 404 `LICENSE_NOT_FOUND`.
+- TC-11: License đã soft-delete → 404 `LICENSE_NOT_FOUND`.
+- TC-12: License đang LOCKED → 409 `LICENSE_LOCKED_CANNOT_ISSUE`.
+- TC-13: Organization đã có Subscription ACTIVE → 409 `ACTIVE_SUBSCRIPTION_EXISTS`.
+
+**Business Rule**
+- TC-14: Grant Subscription thành công, sau đó Admin sửa `price` của License gốc (UC-LIC-02) → Subscription vừa tạo vẫn giữ `price` snapshot cũ.
+- TC-15: Gửi đồng thời 2 request Grant cho cùng 1 Organization (giả lập race condition) → chỉ 1 request thành công, request còn lại nhận `409 ACTIVE_SUBSCRIPTION_EXISTS`.
+- TC-16: Grant Subscription rồi Revoke (UC-SUB-02), sau đó Grant lại License khác cho cùng Organization → cho phép, vì Organization không còn Subscription ACTIVE nào.
+
+---
+
 ## UC-SUB-01: Renew Subscription
 
 ### 1. Overview
@@ -1676,8 +2004,8 @@ END FUNCTION
 - BR-03: Nếu Subscription đã hết hạn (`end_date < current_date`, tương ứng `status == EXPIRED` hoặc sắp được xác định là expired):
   `new_end_date = current_date + billing_cycle`
 - BR-04: Quy đổi `billing_cycle`:
-    - `MONTHLY` → cộng thêm **30 ngày**.
-    - `YEARLY` → cộng thêm **365 ngày**.
+   - `MONTHLY` → cộng thêm **30 ngày**.
+   - `YEARLY` → cộng thêm **365 ngày**.
 - BR-05: Có thể Renew **nhiều lần liên tiếp**, không giới hạn số lần.
 - BR-06: `billing_cycle` dùng để tính toán là `billing_cycle` **đang lưu trên chính Subscription đó** (snapshot), KHÔNG lấy từ License gốc hiện hành (vì License có thể đã bị sửa/xoá).
 - BR-07: Chỉ System Admin được thực hiện Renew. Restaurant Owner tự gia hạn là ngoài phạm vi (chưa hỗ trợ).
@@ -1705,7 +2033,7 @@ END FUNCTION
 2. Hệ thống tìm Subscription theo `id`.
 3. Hệ thống kiểm tra `status` hiện tại của Subscription (không được là `REVOKED`).
 4. Hệ thống xác định Subscription còn hạn hay đã hết hạn:
-    - So sánh `end_date` với `current_date`.
+   - So sánh `end_date` với `current_date`.
 5. Hệ thống tính `new_end_date` theo đúng công thức tương ứng (BR-02 hoặc BR-03), dựa trên `billing_cycle` snapshot của Subscription.
 6. Hệ thống cập nhật `end_date = new_end_date`.
 7. Nếu trạng thái trước đó là `EXPIRED`, hệ thống chuyển `status = ACTIVE`.
@@ -1752,21 +2080,21 @@ Authorization: Bearer {jwt_token}
 **Response (200 OK)**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "c2d3e4f5-0000-0000-0000-000000000010",
-    "licenseId": "b1e2c3d4-0000-0000-0000-000000000001",
-    "organizationId": "a9b8c7d6-0000-0000-0000-000000000099",
-    "startDate": "2026-01-01",
-    "endDate": "2026-08-22",
-    "status": "ACTIVE",
-    "price": 990000,
-    "billingCycle": "MONTHLY",
-    "maxBranch": 5,
-    "maxEmployee": 50,
-    "updatedAt": "2026-07-23T15:00:00Z"
-  },
-  "error": null
+   "success": true,
+   "data": {
+      "id": "c2d3e4f5-0000-0000-0000-000000000010",
+      "licenseId": "b1e2c3d4-0000-0000-0000-000000000001",
+      "organizationId": "a9b8c7d6-0000-0000-0000-000000000099",
+      "startDate": "2026-01-01",
+      "endDate": "2026-08-22",
+      "status": "ACTIVE",
+      "price": 990000,
+      "billingCycle": "MONTHLY",
+      "maxBranch": 5,
+      "maxEmployee": 50,
+      "updatedAt": "2026-07-23T15:00:00Z"
+   },
+   "error": null
 }
 ```
 
@@ -1780,17 +2108,17 @@ Authorization: Bearer {jwt_token}
 **Response DTO — `SubscriptionResponse`**
 ```java
 public class SubscriptionResponse {
-    private UUID id;
-    private UUID licenseId;
-    private UUID organizationId;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private SubscriptionStatus status;
-    private BigDecimal price;
-    private BillingCycle billingCycle;
-    private Integer maxBranch;
-    private Integer maxEmployee;
-    private Instant updatedAt;
+   private UUID id;
+   private UUID licenseId;
+   private UUID organizationId;
+   private LocalDate startDate;
+   private LocalDate endDate;
+   private SubscriptionStatus status;
+   private BigDecimal price;
+   private BillingCycle billingCycle;
+   private Integer maxBranch;
+   private Integer maxEmployee;
+   private Instant updatedAt;
 }
 ```
 
@@ -1798,65 +2126,65 @@ public class SubscriptionResponse {
 
 ```mermaid
 sequenceDiagram
-    actor Admin as System Admin
-    participant API as SubscriptionController
-    participant SVC as SubscriptionService
-    participant REPO as SubscriptionRepository
-    participant DB as PostgreSQL
+   actor Admin as System Admin
+   participant API as SubscriptionController
+   participant SVC as SubscriptionService
+   participant REPO as SubscriptionRepository
+   participant DB as PostgreSQL
 
-    Admin->>API: POST /api/v1/admin/subscriptions/{id}/renew
-    API->>SVC: renewSubscription(id)
-    SVC->>REPO: findById(id)
-    REPO->>DB: SELECT * FROM license_subscription WHERE id=?
-    DB-->>REPO: subscription row
-    alt Không tìm thấy
-        SVC-->>API: throw SubscriptionNotFoundException
-        API-->>Admin: 404 SUBSCRIPTION_NOT_FOUND
-    else Tìm thấy
-        alt status == REVOKED
-            SVC-->>API: throw InvalidSubscriptionStatusException
-            API-->>Admin: 409 SUBSCRIPTION_ALREADY_REVOKED
-        else status == ACTIVE hoặc EXPIRED
-            SVC->>SVC: today = currentDate()
-            alt subscription.endDate >= today  (còn hạn)
-                SVC->>SVC: newEndDate = subscription.endDate + cycleDays(billingCycle)
-            else  (đã hết hạn)
-                SVC->>SVC: newEndDate = today + cycleDays(billingCycle)
-            end
-            SVC->>SVC: subscription.endDate = newEndDate
-            SVC->>SVC: IF subscription.status == EXPIRED THEN subscription.status = ACTIVE
-            SVC->>REPO: save(subscription)
-            REPO->>DB: UPDATE license_subscription SET end_date=?, status=?, updated_at=? WHERE id=?
-            DB-->>REPO: updated entity
-            SVC-->>API: SubscriptionResponse
-            API-->>Admin: 200 OK
-        end
-    end
+   Admin->>API: POST /api/v1/admin/subscriptions/{id}/renew
+   API->>SVC: renewSubscription(id)
+   SVC->>REPO: findById(id)
+   REPO->>DB: SELECT * FROM license_subscription WHERE id=?
+   DB-->>REPO: subscription row
+   alt Không tìm thấy
+      SVC-->>API: throw SubscriptionNotFoundException
+      API-->>Admin: 404 SUBSCRIPTION_NOT_FOUND
+   else Tìm thấy
+      alt status == REVOKED
+         SVC-->>API: throw InvalidSubscriptionStatusException
+         API-->>Admin: 409 SUBSCRIPTION_ALREADY_REVOKED
+      else status == ACTIVE hoặc EXPIRED
+         SVC->>SVC: today = currentDate()
+         alt subscription.endDate >= today  (còn hạn)
+            SVC->>SVC: newEndDate = subscription.endDate + cycleDays(billingCycle)
+         else  (đã hết hạn)
+            SVC->>SVC: newEndDate = today + cycleDays(billingCycle)
+         end
+         SVC->>SVC: subscription.endDate = newEndDate
+         SVC->>SVC: IF subscription.status == EXPIRED THEN subscription.status = ACTIVE
+         SVC->>REPO: save(subscription)
+         REPO->>DB: UPDATE license_subscription SET end_date=?, status=?, updated_at=? WHERE id=?
+         DB-->>REPO: updated entity
+         SVC-->>API: SubscriptionResponse
+         API-->>Admin: 200 OK
+      end
+   end
 ```
 
 ### 13. Activity Diagram
 
 ```mermaid
 flowchart TD
-    A([Bắt đầu]) --> B[Admin gửi request Renew Subscription]
-    B --> C{Subscription tồn tại?}
-    C -- Không --> D[404 SUBSCRIPTION_NOT_FOUND]
-    D --> Z([Kết thúc])
-    C -- Có --> E{status == REVOKED?}
-    E -- Có --> F[409 SUBSCRIPTION_ALREADY_REVOKED]
-    F --> Z
-    E -- Không --> G{end_date >= current_date?}
-    G -- Có, còn hạn --> H["new_end_date = old_end_date + billing_cycle"]
-    G -- Không, hết hạn --> I["new_end_date = current_date + billing_cycle"]
-    H --> J[Cập nhật end_date]
-    I --> J
-    J --> K{status trước đó == EXPIRED?}
-    K -- Có --> L[Chuyển status = ACTIVE]
-    K -- Không --> M[Giữ nguyên status]
-    L --> N[Lưu DB]
-    M --> N
-    N --> O[200 OK]
-    O --> Z
+   A([Bắt đầu]) --> B[Admin gửi request Renew Subscription]
+   B --> C{Subscription tồn tại?}
+   C -- Không --> D[404 SUBSCRIPTION_NOT_FOUND]
+   D --> Z([Kết thúc])
+   C -- Có --> E{status == REVOKED?}
+   E -- Có --> F[409 SUBSCRIPTION_ALREADY_REVOKED]
+   F --> Z
+   E -- Không --> G{end_date >= current_date?}
+   G -- Có, còn hạn --> H["new_end_date = old_end_date + billing_cycle"]
+   G -- Không, hết hạn --> I["new_end_date = current_date + billing_cycle"]
+   H --> J[Cập nhật end_date]
+   I --> J
+   J --> K{status trước đó == EXPIRED?}
+   K -- Có --> L[Chuyển status = ACTIVE]
+   K -- Không --> M[Giữ nguyên status]
+   L --> N[Lưu DB]
+   M --> N
+   N --> O[200 OK]
+   O --> Z
 ```
 
 ### 14. Business Logic (Pseudo Code)
@@ -2025,14 +2353,14 @@ Authorization: Bearer {jwt_token}
 **Response (200 OK)**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "c2d3e4f5-0000-0000-0000-000000000010",
-    "organizationId": "a9b8c7d6-0000-0000-0000-000000000099",
-    "status": "REVOKED",
-    "updatedAt": "2026-07-23T16:00:00Z"
-  },
-  "error": null
+   "success": true,
+   "data": {
+      "id": "c2d3e4f5-0000-0000-0000-000000000010",
+      "organizationId": "a9b8c7d6-0000-0000-0000-000000000099",
+      "status": "REVOKED",
+      "updatedAt": "2026-07-23T16:00:00Z"
+   },
+   "error": null
 }
 ```
 
@@ -2046,10 +2374,10 @@ Authorization: Bearer {jwt_token}
 **Response DTO — `RevokeSubscriptionResponse`**
 ```java
 public class RevokeSubscriptionResponse {
-    private UUID id;
-    private UUID organizationId;
-    private SubscriptionStatus status;
-    private Instant updatedAt;
+   private UUID id;
+   private UUID organizationId;
+   private SubscriptionStatus status;
+   private Instant updatedAt;
 }
 ```
 
@@ -2057,50 +2385,50 @@ public class RevokeSubscriptionResponse {
 
 ```mermaid
 sequenceDiagram
-    actor Admin as System Admin
-    participant API as SubscriptionController
-    participant SVC as SubscriptionService
-    participant REPO as SubscriptionRepository
-    participant DB as PostgreSQL
+   actor Admin as System Admin
+   participant API as SubscriptionController
+   participant SVC as SubscriptionService
+   participant REPO as SubscriptionRepository
+   participant DB as PostgreSQL
 
-    Admin->>API: POST /api/v1/admin/subscriptions/{id}/revoke
-    API->>SVC: revokeSubscription(id)
-    SVC->>REPO: findById(id)
-    REPO->>DB: SELECT * FROM license_subscription WHERE id=?
-    DB-->>REPO: subscription row
-    alt Không tìm thấy
-        SVC-->>API: throw SubscriptionNotFoundException
-        API-->>Admin: 404 SUBSCRIPTION_NOT_FOUND
-    else Tìm thấy
-        alt status == REVOKED
-            SVC-->>API: throw InvalidSubscriptionStatusException
-            API-->>Admin: 409 SUBSCRIPTION_ALREADY_REVOKED
-        else status == ACTIVE hoặc EXPIRED
-            SVC->>SVC: subscription.status = REVOKED
-            SVC->>REPO: save(subscription)
-            REPO->>DB: UPDATE license_subscription SET status='REVOKED', updated_at=? WHERE id=?
-            DB-->>REPO: updated entity
-            SVC-->>API: RevokeSubscriptionResponse
-            API-->>Admin: 200 OK
-        end
-    end
+   Admin->>API: POST /api/v1/admin/subscriptions/{id}/revoke
+   API->>SVC: revokeSubscription(id)
+   SVC->>REPO: findById(id)
+   REPO->>DB: SELECT * FROM license_subscription WHERE id=?
+   DB-->>REPO: subscription row
+   alt Không tìm thấy
+      SVC-->>API: throw SubscriptionNotFoundException
+      API-->>Admin: 404 SUBSCRIPTION_NOT_FOUND
+   else Tìm thấy
+      alt status == REVOKED
+         SVC-->>API: throw InvalidSubscriptionStatusException
+         API-->>Admin: 409 SUBSCRIPTION_ALREADY_REVOKED
+      else status == ACTIVE hoặc EXPIRED
+         SVC->>SVC: subscription.status = REVOKED
+         SVC->>REPO: save(subscription)
+         REPO->>DB: UPDATE license_subscription SET status='REVOKED', updated_at=? WHERE id=?
+         DB-->>REPO: updated entity
+         SVC-->>API: RevokeSubscriptionResponse
+         API-->>Admin: 200 OK
+      end
+   end
 ```
 
 ### 13. Activity Diagram
 
 ```mermaid
 flowchart TD
-    A([Bắt đầu]) --> B[Admin gửi request Revoke Subscription]
-    B --> C{Subscription tồn tại?}
-    C -- Không --> D[404 SUBSCRIPTION_NOT_FOUND]
-    D --> Z([Kết thúc])
-    C -- Có --> E{status == REVOKED?}
-    E -- Có --> F[409 SUBSCRIPTION_ALREADY_REVOKED]
-    F --> Z
-    E -- Không --> G[Set status = REVOKED]
-    G --> H[Lưu DB]
-    H --> I[200 OK - Restaurant không login được]
-    I --> Z
+   A([Bắt đầu]) --> B[Admin gửi request Revoke Subscription]
+   B --> C{Subscription tồn tại?}
+   C -- Không --> D[404 SUBSCRIPTION_NOT_FOUND]
+   D --> Z([Kết thúc])
+   C -- Có --> E{status == REVOKED?}
+   E -- Có --> F[409 SUBSCRIPTION_ALREADY_REVOKED]
+   F --> Z
+   E -- Không --> G[Set status = REVOKED]
+   G --> H[Lưu DB]
+   H --> I[200 OK - Restaurant không login được]
+   I --> Z
 ```
 
 ### 14. Business Logic (Pseudo Code)
@@ -2255,46 +2583,46 @@ Authorization: Bearer {jwt_token}
 **Response (200 OK)**
 ```json
 {
-  "success": true,
-  "data": {
-    "license": {
-      "id": "b1e2c3d4-0000-0000-0000-000000000001",
-      "code": "PRO_PLAN",
-      "name": "Professional",
-      "description": "Dành cho nhà hàng vừa và nhỏ",
-      "price": 990000,
-      "billingCycle": "MONTHLY",
-      "maxBranch": 5,
-      "maxEmployee": 50,
-      "status": "ACTIVE",
-      "deletedAt": null
-    },
-    "organizations": [
-      {
-        "organization": {
-          "id": "a9b8c7d6-0000-0000-0000-000000000099",
-          "name": "ABC Restaurant"
-        },
-        "subscription": {
-          "id": "c2d3e4f5-0000-0000-0000-000000000010",
-          "startDate": "2026-01-01",
-          "endDate": "2026-08-22",
-          "status": "ACTIVE",
-          "price": 990000,
-          "billingCycle": "MONTHLY",
-          "maxBranch": 5,
-          "maxEmployee": 50
-        }
+   "success": true,
+   "data": {
+      "license": {
+         "id": "b1e2c3d4-0000-0000-0000-000000000001",
+         "code": "PRO_PLAN",
+         "name": "Professional",
+         "description": "Dành cho nhà hàng vừa và nhỏ",
+         "price": 990000,
+         "billingCycle": "MONTHLY",
+         "maxBranch": 5,
+         "maxEmployee": 50,
+         "status": "ACTIVE",
+         "deletedAt": null
+      },
+      "organizations": [
+         {
+            "organization": {
+               "id": "a9b8c7d6-0000-0000-0000-000000000099",
+               "name": "ABC Restaurant"
+            },
+            "subscription": {
+               "id": "c2d3e4f5-0000-0000-0000-000000000010",
+               "startDate": "2026-01-01",
+               "endDate": "2026-08-22",
+               "status": "ACTIVE",
+               "price": 990000,
+               "billingCycle": "MONTHLY",
+               "maxBranch": 5,
+               "maxEmployee": 50
+            }
+         }
+      ],
+      "pagination": {
+         "page": 0,
+         "size": 20,
+         "totalElements": 1,
+         "totalPages": 1
       }
-    ],
-    "pagination": {
-      "page": 0,
-      "size": 20,
-      "totalElements": 1,
-      "totalPages": 1
-    }
-  },
-  "error": null
+   },
+   "error": null
 }
 ```
 
@@ -2308,26 +2636,26 @@ Authorization: Bearer {jwt_token}
 **Response DTO — `LicenseDetailResponse`**
 ```java
 public class LicenseDetailResponse {
-    private LicenseResponse license;
-    private List<OrganizationSubscriptionResponse> organizations;
-    private PaginationResponse pagination;
+   private LicenseResponse license;
+   private List<OrganizationSubscriptionResponse> organizations;
+   private PaginationResponse pagination;
 }
 
 public class OrganizationSubscriptionResponse {
-    private OrganizationSummary organization;
-    private SubscriptionResponse subscription;
+   private OrganizationSummary organization;
+   private SubscriptionResponse subscription;
 }
 
 public class OrganizationSummary {
-    private UUID id;
-    private String name;
+   private UUID id;
+   private String name;
 }
 
 public class PaginationResponse {
-    private int page;
-    private int size;
-    private long totalElements;
-    private int totalPages;
+   private int page;
+   private int size;
+   private long totalElements;
+   private int totalPages;
 }
 ```
 
@@ -2337,47 +2665,47 @@ public class PaginationResponse {
 
 ```mermaid
 sequenceDiagram
-    actor Admin as System Admin
-    participant API as LicenseController
-    participant SVC as LicenseService
-    participant LREPO as LicenseRepository
-    participant SREPO as LicenseSubscriptionRepository
-    participant DB as PostgreSQL
+   actor Admin as System Admin
+   participant API as LicenseController
+   participant SVC as LicenseService
+   participant LREPO as LicenseRepository
+   participant SREPO as LicenseSubscriptionRepository
+   participant DB as PostgreSQL
 
-    Admin->>API: GET /api/v1/admin/licenses/{id}/detail?page=0&size=20
-    API->>SVC: getLicenseDetail(id, pageable)
-    SVC->>LREPO: findByIdIncludeDeleted(id)
-    LREPO->>DB: SELECT * FROM license WHERE id=?
-    DB-->>LREPO: license row (hoặc rỗng)
-    alt Không tìm thấy
-        SVC-->>API: throw LicenseNotFoundException
-        API-->>Admin: 404 LICENSE_NOT_FOUND
-    else Tìm thấy
-        SVC->>SREPO: findByLicenseIdWithOrganization(id, pageable)
-        SREPO->>DB: SELECT s.*, o.* FROM license_subscription s JOIN organization o ON s.organization_id=o.id WHERE s.license_id=?
-        DB-->>SREPO: list of (subscription, organization)
-        SREPO-->>SVC: Page<OrganizationSubscriptionProjection>
-        SVC->>SVC: build LicenseDetailResponse
-        SVC-->>API: LicenseDetailResponse
-        API-->>Admin: 200 OK + LicenseDetailResponse
-    end
+   Admin->>API: GET /api/v1/admin/licenses/{id}/detail?page=0&size=20
+   API->>SVC: getLicenseDetail(id, pageable)
+   SVC->>LREPO: findByIdIncludeDeleted(id)
+   LREPO->>DB: SELECT * FROM license WHERE id=?
+   DB-->>LREPO: license row (hoặc rỗng)
+   alt Không tìm thấy
+      SVC-->>API: throw LicenseNotFoundException
+      API-->>Admin: 404 LICENSE_NOT_FOUND
+   else Tìm thấy
+      SVC->>SREPO: findByLicenseIdWithOrganization(id, pageable)
+      SREPO->>DB: SELECT s.*, o.* FROM license_subscription s JOIN organization o ON s.organization_id=o.id WHERE s.license_id=?
+      DB-->>SREPO: list of (subscription, organization)
+      SREPO-->>SVC: Page<OrganizationSubscriptionProjection>
+      SVC->>SVC: build LicenseDetailResponse
+      SVC-->>API: LicenseDetailResponse
+      API-->>Admin: 200 OK + LicenseDetailResponse
+   end
 ```
 
 ### 13. Activity Diagram
 
 ```mermaid
 flowchart TD
-    A([Bắt đầu]) --> B[Admin gửi request xem chi tiết License]
-    B --> C{License tồn tại kể cả đã xoá?}
-    C -- Không --> D[404 LICENSE_NOT_FOUND]
-    D --> Z([Kết thúc])
-    C -- Có --> E[Truy vấn danh sách Subscription + Organization theo license_id]
-    E --> F{Có Subscription nào không?}
-    F -- Không --> G["Trả về organizations = rỗng"]
-    F -- Có --> H["Trả về danh sách Organization + Subscription (đã phân trang)"]
-    G --> I[200 OK]
-    H --> I
-    I --> Z
+   A([Bắt đầu]) --> B[Admin gửi request xem chi tiết License]
+   B --> C{License tồn tại kể cả đã xoá?}
+   C -- Không --> D[404 LICENSE_NOT_FOUND]
+   D --> Z([Kết thúc])
+   C -- Có --> E[Truy vấn danh sách Subscription + Organization theo license_id]
+   E --> F{Có Subscription nào không?}
+   F -- Không --> G["Trả về organizations = rỗng"]
+   F -- Có --> H["Trả về danh sách Organization + Subscription (đã phân trang)"]
+   G --> I[200 OK]
+   H --> I
+   I --> Z
 ```
 
 ### 14. Business Logic (Pseudo Code)
@@ -2475,15 +2803,15 @@ Theo yêu cầu gốc, hệ thống hiện tại **chưa tích hợp Payment**, 
 
 ```mermaid
 flowchart LR
-    subgraph Hiện tại - Phase này
-        A[System Admin] -->|Cấp thủ công| B[License_Subscription]
-    end
-    subgraph Tương lai - Payment Phase
-        C[Restaurant Owner] --> D[Payment Gateway]
-        D --> E[Payment Service - Bounded Context mới]
-        E -->|Sau khi thanh toán thành công| B
-    end
-    F[License Catalog] --> B
+   subgraph Hiện tại - Phase này
+      A[System Admin] -->|Cấp thủ công| B[License_Subscription]
+   end
+   subgraph Tương lai - Payment Phase
+      C[Restaurant Owner] --> D[Payment Gateway]
+      D --> E[Payment Service - Bounded Context mới]
+      E -->|Sau khi thanh toán thành công| B
+   end
+   F[License Catalog] --> B
 ```
 
 - Khi tích hợp Payment, chỉ cần bổ sung một **Application Service mới** (ví dụ `PaymentGrantSubscriptionService`) đóng vai trò gọi lại đúng logic tạo `License_Subscription` snapshot (tái sử dụng lại toàn bộ logic snapshot đã thiết kế ở UC-LIC hiện tại), thay vì phải sửa cấu trúc dữ liệu hiện có.
