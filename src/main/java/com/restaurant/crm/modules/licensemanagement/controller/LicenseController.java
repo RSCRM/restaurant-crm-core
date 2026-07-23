@@ -116,4 +116,18 @@ public class LicenseController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{id}/reactivate")
+    public ResponseEntity<ApiResponse<LicenseResponse>> reactivateLicense(
+            @PathVariable String id
+    ) {
+        LicenseResponse licenseResponse = licenseService.reactivateLicense(id);
+
+        ApiResponse<LicenseResponse> response = ApiResponse.<LicenseResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(licenseResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

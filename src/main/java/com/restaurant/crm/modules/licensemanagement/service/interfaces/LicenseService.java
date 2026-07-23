@@ -18,4 +18,6 @@ public interface LicenseService {
     DeleteLicenseResponse deleteLicense(String id);
 
     LicenseResponse lockLicense(String id);
+
+    LicenseResponse reactivateLicense(String id);
 }

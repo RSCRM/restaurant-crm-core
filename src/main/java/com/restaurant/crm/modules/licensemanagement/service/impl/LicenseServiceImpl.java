@@ -134,4 +134,19 @@ public class LicenseServiceImpl implements LicenseService {
         License savedLicense = licenseRepository.save(license);
         return licenseMapper.toLicenseResponse(savedLicense);
     }
+
+    @Override
+    @Transactional
+    public LicenseResponse reactivateLicense(String id) {
+        License license = licenseRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new AppException(ErrorCode.LICENSE_NOT_FOUND));
+
+        if (license.getStatus() == LicenseStatus.ACTIVE) {
+            throw new AppException(ErrorCode.LICENSE_ALREADY_ACTIVE);
+        }
+
+        license.setStatus(LicenseStatus.ACTIVE);
+        License savedLicense = licenseRepository.save(license);
+        return licenseMapper.toLicenseResponse(savedLicense);
+    }
 }
