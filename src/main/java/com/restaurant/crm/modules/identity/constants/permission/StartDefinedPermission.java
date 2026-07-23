@@ -18,6 +18,19 @@ public class StartDefinedPermission {
     public static final String USER_UPDATE = "USER_UPDATE";
     public static final String USER_DELETE = "USER_DELETE";
 
+    // ===== ORGANIZATION =====
+    public static final String ORGANIZATION_VIEW = "ORGANIZATION_VIEW";
+    public static final String ORGANIZATION_MANAGE = "ORGANIZATION_MANAGE";
+
+    // ===== ORGANIZATION BRANCH =====
+    public static final String ORGANIZATION_BRANCH_VIEW = "ORGANIZATION_BRANCH_VIEW";
+    public static final String ORGANIZATION_BRANCH_MANAGE = "ORGANIZATION_BRANCH_MANAGE";
+
+    // ===== INGREDIENT CATEGORY =====
+    public static final String INGREDIENT_CATEGORY_VIEW = "INGREDIENT_CATEGORY_VIEW";
+    public static final String INGREDIENT_CATEGORY_MANAGE = "INGREDIENT_CATEGORY_MANAGE";
+    public static final String INGREDIENT_VIEW = "INGREDIENT_CATEGORY_MANAGE";
+    public static final String INGREDIENT_MANAGE = "INGREDIENT_CATEGORY_MANAGE";
     private StartDefinedPermission() {
     }
 }
