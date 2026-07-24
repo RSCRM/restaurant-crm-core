@@ -6,9 +6,14 @@ import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVouch
 
 import java.math.BigDecimal;
 
+import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
+import java.util.List;
+
 public interface CustomerVoucherService {
     CustomerVoucherResponse redeemVoucher(VoucherRedeemRequest request);
     CustomerVoucherResponse giveVoucherDirectly(String customerId, String restaurantId, String voucherId);
     CustomerVoucherResponse useVoucher(String customerVoucherId, String orderId, BigDecimal billAmount);
     PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String restaurantId, String status, int page, int size);
+    List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String restaurantId, BigDecimal subtotal);
+    void releaseVoucher(String orderId);
 }

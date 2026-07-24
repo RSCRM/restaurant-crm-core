@@ -20,8 +20,11 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.util.List;
+import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
 
 import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
 import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceResponse;
@@ -95,6 +98,41 @@ public class OrderController {
         ApiResponse<InvoiceResponse> response = ApiResponse.<InvoiceResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(responseData)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{orderId}/applicable-vouchers")
+    public ResponseEntity<ApiResponse<List<CustomerVoucherApplicableResponse>>> getApplicableVouchers(
+            @PathVariable String orderId
+    ) {
+        List<CustomerVoucherApplicableResponse> data = orderService.getApplicableVouchers(orderId);
+        ApiResponse<List<CustomerVoucherApplicableResponse>> response = ApiResponse.<List<CustomerVoucherApplicableResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{orderId}/apply-voucher")
+    public ResponseEntity<ApiResponse<Void>> applyVoucher(
+            @PathVariable String orderId,
+            @RequestParam String customerVoucherId
+    ) {
+        orderService.applyVoucher(orderId, customerVoucherId);
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{orderId}/remove-voucher")
+    public ResponseEntity<ApiResponse<Void>> removeVoucher(
+            @PathVariable String orderId
+    ) {
+        orderService.removeVoucher(orderId);
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
                 .build();
         return ResponseEntity.ok(response);
     }
