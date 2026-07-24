@@ -38,6 +38,7 @@ public class OrderConstants {
     public static final String NOTE_DEFINITION = "VARCHAR(255)";
     public static final String ORDER_CODE_PREFIX = "ORD-";
 
+    public static final int MIN_UPDATE_ORDER_ITEM_QUANTITY = 0;
     public static final int MIN_QUANTITY = 1;
     public static final int ORDER_CODE_RANDOM_LENGTH = 8;
     public static final int MAX_CHARS_ORDER_CODE = 30;

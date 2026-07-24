@@ -24,6 +24,9 @@ public class OrderCookingStatusResponse {
     String tableId;
     String customerPhone;
     OrderStatus status;
+    java.math.BigDecimal subtotal;
+    java.math.BigDecimal discountAmount;
+    java.math.BigDecimal totalAmount;
     List<OrderItemCookingStatusResponse> items;
     Instant updatedAt;
 }

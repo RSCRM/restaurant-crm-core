@@ -16,4 +16,6 @@ public interface CustomerVoucherRepository extends JpaRepository<CustomerVoucher
     List<CustomerVoucher> findByCustomerIdAndRestaurantIdAndStatus(String customerId, String restaurantId, CustomerVoucherStatus status);
     Page<CustomerVoucher> findByCustomerIdAndRestaurantIdAndStatus(String customerId, String restaurantId, CustomerVoucherStatus status, Pageable pageable);
     Page<CustomerVoucher> findByCustomerIdAndRestaurantId(String customerId, String restaurantId, Pageable pageable);
+    Optional<CustomerVoucher> findByOrderId(String orderId);
+    List<CustomerVoucher> findByCustomerIdAndRestaurantId(String customerId, String restaurantId);
 }
