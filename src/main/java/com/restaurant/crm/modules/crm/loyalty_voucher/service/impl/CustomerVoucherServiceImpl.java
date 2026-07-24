@@ -122,7 +122,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
         // Check if voucher has expired
         Voucher voucher = customerVoucher.getVoucher();
-        if (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt())) {
+        if (voucher.getExpiredAt() != null && java.time.Instant.now().isAfter(voucher.getExpiredAt())) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
         }
 
