@@ -27,5 +27,6 @@ public class TableSessionResponse {
     Integer partySize;
     TableSessionStatus status;
     Instant startedAt;
+    Instant endedAt;
     String note;
 }

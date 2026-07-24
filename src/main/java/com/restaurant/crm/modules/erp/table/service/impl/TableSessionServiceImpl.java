@@ -130,6 +130,35 @@ public class TableSessionServiceImpl implements TableSessionService {
         return tableSessionMapper.toResponse(session);
     }
 
+    @Override
+    @Transactional
+    public TableSessionResponse close(String sessionId) {
+        String branchId = AuthUtils.getBranchId();
+        validateBranch(branchId);
+
+        TableSession session = tableSessionRepository.findByIdForUpdate(sessionId)
+                .filter(candidate -> branchId.equals(candidate.getBranchId()))
+                .orElseThrow(() -> new AppException(ErrorCode.TABLE_SESSION_NOT_FOUND));
+        if (session.getStatus() != TableSessionStatus.ACTIVE) {
+            throw new AppException(ErrorCode.TABLE_SESSION_NOT_ACTIVE);
+        }
+
+        RestaurantTable table = session.getTable();
+        if (orderRepository.findFirstByTableIdAndStatusOrderByCreatedAtDesc(
+                table.getId(),
+                OrderStatus.PENDING
+        ).isPresent()) {
+            throw new AppException(ErrorCode.TABLE_SESSION_UNPAID_ORDER);
+        }
+
+        session.setStatus(TableSessionStatus.CLOSED);
+        session.setEndedAt(Instant.now());
+        table.setStatus(RestaurantTableStatus.AVAILABLE);
+        restaurantTableRepository.save(table);
+        tableSessionRepository.save(session);
+        return tableSessionMapper.toResponse(session);
+    }
+
     private void validateBranch(String branchId) {
         if (branchId == null || branchId.isBlank()) {
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);

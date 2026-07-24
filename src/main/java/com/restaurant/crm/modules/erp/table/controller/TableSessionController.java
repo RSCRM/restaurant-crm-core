@@ -51,4 +51,13 @@ public class TableSessionController {
                 .data(tableSessionService.transfer(sessionId, request))
                 .build());
     }
+
+    @PutMapping("/{sessionId}/close")
+    @PreAuthorize("hasAuthority('TABLE_MANAGE') or hasAuthority('ORDER_UPDATE')")
+    public ResponseEntity<ApiResponse<TableSessionResponse>> close(@PathVariable String sessionId) {
+        return ResponseEntity.ok(ApiResponse.<TableSessionResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(tableSessionService.close(sessionId))
+                .build());
+    }
 }

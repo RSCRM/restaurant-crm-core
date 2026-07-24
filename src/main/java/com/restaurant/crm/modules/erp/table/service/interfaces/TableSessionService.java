@@ -8,4 +8,6 @@ public interface TableSessionService {
     TableSessionResponse create(TableSessionCreationRequest request);
 
     TableSessionResponse transfer(String sessionId, TableSessionTransferRequest request);
+
+    TableSessionResponse close(String sessionId);
 }
