@@ -37,6 +37,10 @@ public class StartDefinedPermission {
     public static final String INVENTORY_MANAGE = "INVENTORY_MANAGE";
     public static final String INVENTORY_TRANSACTION_VIEW = "INVENTORY_TRANSACTION_VIEW";
     public static final String INVENTORY_TRANSACTION_MANAGE = "INVENTORY_TRANSACTION_MANAGE";
+
+    // ===== CONTRACT =====
+    public static final String CONTRACT_LICENSE_VIEW = "CONTRACT_LICENSE_VIEW";
+
     private StartDefinedPermission() {
     }
 }
