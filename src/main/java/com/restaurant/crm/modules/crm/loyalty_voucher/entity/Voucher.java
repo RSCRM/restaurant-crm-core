@@ -58,4 +58,7 @@ public class Voucher extends BaseEntity {
     @Builder.Default
     @Column(name = VoucherConstants.COL_IS_ACTIVE, nullable = false)
     Short isActive = 1;
+
+    @Column(name = VoucherConstants.COL_EXPIRED_AT)
+    java.time.Instant expiredAt;
 }

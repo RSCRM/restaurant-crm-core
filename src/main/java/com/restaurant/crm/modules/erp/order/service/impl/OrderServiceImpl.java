@@ -75,6 +75,10 @@ public class OrderServiceImpl implements OrderService {
     ModifierOptionRepository modifierOptionRepository;
     RestaurantTableRepository restaurantTableRepository;
     CustomerSseService customerSseService;
+    com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.CustomerVoucherService customerVoucherService;
+    com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository customerVoucherRepository;
+    com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository customerRepository;
+    com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService pointWalletService;
 
     @Override
     @Transactional
@@ -132,7 +136,15 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 activeOrder.setSubtotal(orderSubtotal);
-                activeOrder.setTotalAmount(orderSubtotal.subtract(activeOrder.getDiscountAmount()));
+                com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher appliedVoucher = customerVoucherRepository.findByOrderId(activeOrder.getId()).orElse(null);
+                if (appliedVoucher != null) {
+                    BigDecimal discountPercent = BigDecimal.valueOf(appliedVoucher.getVoucher().getDiscountPercent());
+                    BigDecimal discountAmount = orderSubtotal.multiply(discountPercent).divide(BigDecimal.valueOf(100));
+                    activeOrder.setDiscountAmount(discountAmount);
+                    activeOrder.setTotalAmount(orderSubtotal.subtract(discountAmount));
+                } else {
+                    activeOrder.setTotalAmount(orderSubtotal.subtract(activeOrder.getDiscountAmount()));
+                }
                 orderRepository.save(activeOrder);
 
                 OrderCookingStatusResponse updatedStatus = getOrderCookingStatus(activeOrder.getId());
@@ -189,6 +201,17 @@ public class OrderServiceImpl implements OrderService {
         savedOrder.setTotalAmount(orderSubtotal.subtract(savedOrder.getDiscountAmount()));
         orderRepository.save(savedOrder);
 
+        // Ensure customer is registered in CRM if phone is provided
+        if (StringUtils.hasText(request.getCustomerPhone())) {
+            com.restaurant.crm.modules.crm.customer_account.entity.Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
+                    .orElseGet(() -> customerRepository.save(com.restaurant.crm.modules.crm.customer_account.entity.Customer.builder()
+                            .phone(request.getCustomerPhone())
+                            .status(com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus.ACTIVE)
+                            .build()));
+            pointWalletService.initializeWallet(customer.getId(), branchId);
+        }
+
+        // Update table status to OCCUPIED
         if (table != null) {
             table.setStatus(RestaurantTableStatus.OCCUPIED);
             restaurantTableRepository.save(table);
@@ -586,5 +609,68 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return blockedItems;
+    }
+
+    @Override
+    public List<com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse> getApplicableVouchers(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!StringUtils.hasText(order.getCustomerPhone())) {
+            return List.of();
+        }
+
+        com.restaurant.crm.modules.crm.customer_account.entity.Customer customer = customerRepository.findByPhone(order.getCustomerPhone())
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+
+        return customerVoucherService.getApplicableVouchers(customer.getId(), order.getBranchId(), order.getSubtotal());
+    }
+
+    @Override
+    @Transactional
+    public void applyVoucher(String orderId, String customerVoucherId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new AppException(ErrorCode.ORDER_ALREADY_PAID);
+        }
+
+        // Release any currently applied voucher on this order first
+        customerVoucherService.releaseVoucher(orderId);
+
+        // Apply the new voucher
+        com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherResponse cv = customerVoucherService.useVoucher(customerVoucherId, orderId, order.getSubtotal());
+
+        // Recalculate discount
+        BigDecimal discountPercent = BigDecimal.valueOf(cv.getVoucher().getDiscountPercent());
+        BigDecimal discountAmount = order.getSubtotal().multiply(discountPercent).divide(BigDecimal.valueOf(100));
+
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(order.getSubtotal().subtract(discountAmount));
+        orderRepository.save(order);
+
+        // Broadcast SSE update
+        customerSseService.broadcastOrderUpdate(orderId, getOrderCookingStatus(orderId));
+    }
+
+    @Override
+    @Transactional
+    public void removeVoucher(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new AppException(ErrorCode.ORDER_ALREADY_PAID);
+        }
+
+        customerVoucherService.releaseVoucher(orderId);
+
+        order.setDiscountAmount(BigDecimal.ZERO);
+        order.setTotalAmount(order.getSubtotal());
+        orderRepository.save(order);
+
+        // Broadcast SSE update
+        customerSseService.broadcastOrderUpdate(orderId, getOrderCookingStatus(orderId));
     }
 }

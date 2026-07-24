@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrganizationBranchRepository extends JpaRepository<OrganizationBranch, String> {
@@ -40,5 +41,10 @@ public interface OrganizationBranchRepository extends JpaRepository<Organization
     boolean existsByOrganizationIdAndBranchName(
             String organizationId,
             String branchName
+    );
+
+    Optional<OrganizationBranch> findByIdAndOrganization_OwnerId(
+            String id,
+            String ownerId
     );
 }
