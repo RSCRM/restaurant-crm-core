@@ -118,6 +118,12 @@ public enum ErrorCode {
     ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 
+    // ==== TABLE OPERATION ERRORS ====
+    TABLE_NOT_FOUND("TABLE_1000", "Table not found in branch", HttpStatus.NOT_FOUND),
+    TABLE_NOT_AVAILABLE("TABLE_1001", "Table is not available", HttpStatus.CONFLICT),
+    TABLE_SESSION_ACTIVE_EXISTS("TABLE_1002", "Table already has an active session", HttpStatus.CONFLICT),
+    TABLE_PARTY_SIZE_EXCEEDS_CAPACITY("TABLE_1003", "Party size exceeds table capacity", HttpStatus.BAD_REQUEST),
+
     // ==== INGREDIENT ERRORS ====
     INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
     INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.BAD_REQUEST),
