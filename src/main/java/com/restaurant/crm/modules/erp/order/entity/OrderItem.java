@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -21,6 +22,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -29,7 +31,20 @@ import java.math.BigDecimal;
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = OrderConstants.TABLE_ORDER_ITEM)
+@Table(
+        name = OrderConstants.TABLE_ORDER_ITEM,
+        indexes = {
+                // Kitchen board query: filter by status, then sort by priority and age.
+                // branch_id is not duplicated here; it is reached via orders, whose
+                // uk_orders_branch_order_code already indexes branch_id.
+                @Index(
+                        name = OrderConstants.IDX_ORDER_ITEMS_KITCHEN_BOARD,
+                        columnList = OrderConstants.COL_STATUS + ", "
+                                + OrderConstants.COL_PRIORITY_FLAG + ", "
+                                + OrderConstants.COL_CREATED_AT
+                )
+        }
+)
 public class OrderItem extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -70,4 +85,23 @@ public class OrderItem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = OrderConstants.COL_STATUS, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
     OrderItemStatus status = OrderItemStatus.PENDING;
+
+    // --- Kitchen status-lifecycle columns (uc-scf-01..06) ---
+
+    /** References users.id (not employees.id), consistent with BaseEntity#createdBy. */
+    @Column(name = OrderConstants.COL_PREPARED_BY, columnDefinition = OrderConstants.UUID_DEFINITION)
+    String preparedBy;
+
+    @Column(name = OrderConstants.COL_STARTED_AT)
+    Instant startedAt;
+
+    @Column(name = OrderConstants.COL_COMPLETED_AT)
+    Instant completedAt;
+
+    @Column(name = OrderConstants.COL_CANCEL_REASON, columnDefinition = OrderConstants.NOTE_DEFINITION)
+    String cancelReason;
+
+    @Builder.Default
+    @Column(name = OrderConstants.COL_PRIORITY_FLAG, nullable = false)
+    boolean priorityFlag = false;
 }

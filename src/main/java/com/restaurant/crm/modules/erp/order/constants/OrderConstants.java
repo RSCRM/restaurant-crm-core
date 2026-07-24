@@ -30,6 +30,17 @@ public class OrderConstants {
     public static final String COL_MODIFIER_OPTION_ID = "modifier_option_id";
     public static final String COL_ADDITIONAL_PRICE = "additional_price";
 
+    // Kitchen status-lifecycle columns on order_items (uc-scf-01..06)
+    public static final String COL_PREPARED_BY = "prepared_by";
+    public static final String COL_STARTED_AT = "started_at";
+    public static final String COL_COMPLETED_AT = "completed_at";
+    public static final String COL_CANCEL_REASON = "cancel_reason";
+    public static final String COL_PRIORITY_FLAG = "priority_flag";
+    /** Inherited from BaseEntity; named here for the kitchen board index. */
+    public static final String COL_CREATED_AT = "created_at";
+
+    public static final String IDX_ORDER_ITEMS_KITCHEN_BOARD = "idx_order_items_kitchen_board";
+
     public static final String UUID_DEFINITION = "VARCHAR(36)";
     public static final String ORDER_CODE_DEFINITION = "VARCHAR(30)";
     public static final String ENUM_DEFINITION = "VARCHAR(20)";
