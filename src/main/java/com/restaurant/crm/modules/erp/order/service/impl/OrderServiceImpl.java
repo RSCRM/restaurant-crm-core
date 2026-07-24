@@ -17,6 +17,8 @@ import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderBlockedItemResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemCookingStatusResponse;
@@ -31,10 +33,10 @@ import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderService;
-import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -61,6 +63,8 @@ public class OrderServiceImpl implements OrderService {
             EnumSet.of(OrderStatus.PENDING);
     private static final Set<OrderItemStatus> MODIFIABLE_ORDER_ITEM_STATUSES =
             EnumSet.of(OrderItemStatus.PENDING);
+    private static final Set<OrderItemStatus> ORDER_CANCELLABLE_ORDER_ITEM_STATUSES =
+            EnumSet.of(OrderItemStatus.PENDING, OrderItemStatus.CANCELLED);
 
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
@@ -273,6 +277,42 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    public CancelOrderResponse cancelOrder(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        validateOrderStatusForOrderCancellation(order);
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        List<CancelOrderBlockedItemResponse> blockedItems = getBlockedItemsForOrderCancellation(orderItems);
+        if (!blockedItems.isEmpty()) {
+            return CancelOrderResponse.builder()
+                    .cancelled(false)
+                    .blockedItems(blockedItems)
+                    .build();
+        }
+
+        List<OrderItem> itemsToCancel = orderItems.stream()
+                .filter(orderItem -> orderItem.getStatus() != OrderItemStatus.CANCELLED)
+                .toList();
+        if (!itemsToCancel.isEmpty()) {
+            for (OrderItem orderItem : itemsToCancel) {
+                orderItem.setStatus(OrderItemStatus.CANCELLED);
+            }
+            orderItemRepository.saveAll(itemsToCancel);
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setSubtotal(BigDecimal.ZERO);
+        order.setTotalAmount(BigDecimal.ZERO);
+        orderRepository.save(order);
+
+        return CancelOrderResponse.builder()
+                .cancelled(true)
+                .build();
+    }
+
+    @Override
     public OrderCookingStatusResponse getOrderCookingStatus(String orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
@@ -357,11 +397,16 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    private void validateOrderStatusForOrderCancellation(Order order) {
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new AppException(ErrorCode.ORDER_STATUS_NOT_MODIFIABLE);
+        }
+    }
+
     private OrderItem getOrderItem(String orderId, String orderItemId) {
         return orderItemRepository.findByIdAndOrderIdWithOrder(orderItemId, orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
     }
-
     private BigDecimal resolveUnitPrice(String branchId, String productId, String comboId) {
         if (StringUtils.hasText(productId)) {
             Product product = productRepository.findByIdAndBranchId(productId, branchId)
@@ -397,7 +442,6 @@ public class OrderServiceImpl implements OrderService {
         orderItemModifierRepository.saveAll(modifiersToSave);
         return modifierTotal;
     }
-
     private BigDecimal saveOrderItemModifiers(
             OrderItem orderItem,
             List<CreateOrderItemModifierRequestDto> modifierRequests
@@ -522,5 +566,25 @@ public class OrderServiceImpl implements OrderService {
         return modifiers.stream()
                 .map(modifier -> calculateModifierSubtotal(modifier.getAdditionalPrice(), modifier.getQuantity()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private List<CancelOrderBlockedItemResponse> getBlockedItemsForOrderCancellation(List<OrderItem> orderItems) {
+        List<CancelOrderBlockedItemResponse> blockedItems = new ArrayList<>();
+        for (OrderItem orderItem : orderItems) {
+            if (ORDER_CANCELLABLE_ORDER_ITEM_STATUSES.contains(orderItem.getStatus())) {
+                continue;
+            }
+
+            blockedItems.add(CancelOrderBlockedItemResponse.builder()
+                    .orderItemId(orderItem.getId())
+                    .productId(orderItem.getProductId())
+                    .comboId(orderItem.getComboId())
+                    .quantity(orderItem.getQuantity())
+                    .status(orderItem.getStatus())
+                    .note(orderItem.getNote())
+                    .build());
+        }
+
+        return blockedItems;
     }
 }

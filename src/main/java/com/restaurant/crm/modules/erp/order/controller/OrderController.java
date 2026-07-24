@@ -9,6 +9,7 @@ import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
@@ -21,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -88,6 +90,16 @@ public class OrderController {
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(ApiConstant.SUCCESS)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<CancelOrderResponse>> cancelOrder(@PathVariable String orderId) {
+        ApiResponse<CancelOrderResponse> response = ApiResponse.<CancelOrderResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(orderService.cancelOrder(orderId))
                 .build();
 
         return ResponseEntity.ok(response);

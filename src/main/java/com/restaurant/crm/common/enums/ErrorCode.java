@@ -30,8 +30,10 @@ public enum ErrorCode {
     USER_USERNAME_EXISTED("USER_1001", "Username already exists", HttpStatus.BAD_REQUEST),
     USER_ALREADY_VERIFIED("USER_1002", "User email already verified", HttpStatus.BAD_REQUEST),
     USER_ALREADY_EXISTS("USER_1003", "User already exists", HttpStatus.BAD_REQUEST),
-    USER_USERNAME_INVALID("USER_1005", "Username is invalid", HttpStatus.BAD_REQUEST),
-    USER_PASSWORD_INVALID("USER_1006", "Password is invalid", HttpStatus.BAD_REQUEST),
+    USER_EMAIL_INVALID("USER_1005", "Email is invalid", HttpStatus.BAD_REQUEST),
+    USER_FULL_NAME_INVALID("USER_1006", "Full name is invalid", HttpStatus.BAD_REQUEST),
+    USER_PHONE_INVALID("USER_1007", "Phone number is invalid", HttpStatus.BAD_REQUEST),
+    USER_PHONE_ALREADY_EXISTS("USER_1008", "Phone number already exists", HttpStatus.BAD_REQUEST),
 
     // ==== ROLE ERRORS ====
     ROLE_NOT_FOUND("ROLE_1000", "Role not found", HttpStatus.NOT_FOUND),
@@ -68,11 +70,6 @@ public enum ErrorCode {
     ORGANIZATION_BRANCH_MANAGER_EXISTS("BRANCH_1001", "Manager is already assigned to another branch", HttpStatus.BAD_REQUEST),
     ORGANIZATION_BRANCH_INACTIVE("BRANCH_1002", "Organization branch is inactive", HttpStatus.BAD_REQUEST),
     ORGANIZATION_BRANCH_EXISTS("BRANCH_1003", "Organization branch already exists", HttpStatus.BAD_REQUEST),
-    BRANCH_NOT_FOUND("BRANCH_1004", "Branch not found", HttpStatus.NOT_FOUND),
-    BRANCH_MANAGER_NOT_FOUND("BRANCH_MANAGER_1000", "Branch manager not found", HttpStatus.NOT_FOUND),
-    BRANCH_MANAGER_ALREADY_ASSIGNED("BRANCH_MANAGER_1001", "Branch manager is already assigned to another branch", HttpStatus.BAD_REQUEST),
-    BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1002", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
-
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),
     PROJECT_CODE_EXISTS("PROJ_1001", "Project code already exists", HttpStatus.BAD_REQUEST),
@@ -101,7 +98,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND("ORDER_1008", "Order not found", HttpStatus.NOT_FOUND),
     ORDER_ITEM_STATUS_NOT_MODIFIABLE("ORDER_1009", "Order item status does not allow this modification", HttpStatus.BAD_REQUEST),
     ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
-    ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Order status does not allow this modification", HttpStatus.BAD_REQUEST),
+    ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
     ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 

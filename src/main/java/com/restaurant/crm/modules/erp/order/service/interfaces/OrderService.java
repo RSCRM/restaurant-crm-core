@@ -5,6 +5,7 @@ import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
 
@@ -25,6 +26,8 @@ public interface OrderService {
             String orderItemId,
             UpdateOrderItemModifiersRequestDto request
     );
+
+    CancelOrderResponse cancelOrder(String orderId);
 
     OrderCookingStatusResponse getOrderCookingStatus(String orderId);
 
