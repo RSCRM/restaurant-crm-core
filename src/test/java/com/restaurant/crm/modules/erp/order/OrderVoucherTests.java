@@ -26,6 +26,12 @@ import com.restaurant.crm.modules.erp.order.service.impl.OrderServiceImpl;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
+import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
+import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
+import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
+import com.restaurant.crm.modules.erp.order.entity.OrderItem;
+import com.restaurant.crm.modules.erp.menu.product.entity.Product;
+import com.restaurant.crm.common.enums.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -199,5 +205,74 @@ public class OrderVoucherTests {
         assertEquals(0, BigDecimal.ZERO.compareTo(testOrder.getDiscountAmount()));
         assertEquals(0, BigDecimal.valueOf(100000.00).compareTo(testOrder.getTotalAmount()));
         verify(customerSseService, times(1)).broadcastOrderUpdate(eq("o0000000-0000-0000-0000-000000000001"), any());
+    }
+
+    @Test
+    void testApplyVoucher_Expired_ThrowsException() {
+        when(orderRepository.findById("o0000000-0000-0000-0000-000000000001")).thenReturn(Optional.of(testOrder));
+        doThrow(new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED))
+                .when(customerVoucherService).useVoucher(eq("cv000000-0000-0000-0000-000000000001"), eq("o0000000-0000-0000-0000-000000000001"), any());
+
+        AppException ex = assertThrows(AppException.class, () -> {
+            orderService.applyVoucher("o0000000-0000-0000-0000-000000000001", "cv000000-0000-0000-0000-000000000001");
+        });
+
+        assertEquals(ErrorCode.CUSTOMER_VOUCHER_EXPIRED, ex.getErrorCode());
+    }
+
+    @Test
+    void testAddItemsToOrder_WithAppliedVoucher_RecalculatesDiscount() {
+        CreateOrderRequestDto request = CreateOrderRequestDto.builder()
+                .branchId("e0000000-0000-0000-0000-000000000001")
+                .orderType(OrderType.DINE_IN)
+                .tableId("t0000000-0000-0000-0000-000000000001")
+                .items(List.of(
+                        CreateOrderItemRequestDto.builder()
+                                .productId("p0000000-0000-0000-0000-000000000001")
+                                .quantity(1)
+                                .build()
+                ))
+                .build();
+
+        RestaurantTable table = RestaurantTable.builder()
+                .id("t0000000-0000-0000-0000-000000000001")
+                .status(RestaurantTableStatus.OCCUPIED)
+                .build();
+
+        Product product = Product.builder()
+                .id("p0000000-0000-0000-0000-000000000001")
+                .price(BigDecimal.valueOf(50000.00))
+                .build();
+
+        OrderItem savedItem = OrderItem.builder()
+                .id("oi000000-0000-0000-0000-000000000001")
+                .subtotal(BigDecimal.valueOf(50000.00))
+                .build();
+
+        when(organizationBranchRepository.existsById("e0000000-0000-0000-0000-000000000001")).thenReturn(true);
+        when(restaurantTableRepository.findById("t0000000-0000-0000-0000-000000000001")).thenReturn(Optional.of(table));
+        when(restaurantTableRepository.existsByIdAndAreaBranchId(eq("t0000000-0000-0000-0000-000000000001"), any())).thenReturn(true);
+        when(orderRepository.findFirstByTableIdAndStatusOrderByCreatedAtDesc("t0000000-0000-0000-0000-000000000001", OrderStatus.PENDING))
+                .thenReturn(Optional.of(testOrder));
+        when(orderRepository.findById("o0000000-0000-0000-0000-000000000001")).thenReturn(Optional.of(testOrder));
+        when(productRepository.findByIdAndBranchId("p0000000-0000-0000-0000-000000000001", "e0000000-0000-0000-0000-000000000001"))
+                .thenReturn(Optional.of(product));
+        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
+        when(customerVoucherRepository.findByOrderId("o0000000-0000-0000-0000-000000000001"))
+                .thenReturn(Optional.of(testCustomerVoucher)); // 10% voucher
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderItemRepository.findByOrderId("o0000000-0000-0000-0000-000000000001")).thenReturn(new ArrayList<>());
+
+        CreateOrderResponse response = orderService.create(request);
+
+        assertNotNull(response);
+        assertEquals("o0000000-0000-0000-0000-000000000001", response.getOrderId());
+        
+        // original subtotal (100k) + new item (50k) = 150k
+        assertEquals(0, BigDecimal.valueOf(150000.00).compareTo(testOrder.getSubtotal()));
+        // 10% of 150k = 15k
+        assertEquals(0, BigDecimal.valueOf(15000.00).compareTo(testOrder.getDiscountAmount()));
+        // 150k - 15k = 135k
+        assertEquals(0, BigDecimal.valueOf(135000.00).compareTo(testOrder.getTotalAmount()));
     }
 }

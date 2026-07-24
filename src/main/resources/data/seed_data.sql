@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS product_categories (
 );
 
 -- Clean up existing tables to prevent foreign key & duplicate key violations
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
 TRUNCATE TABLE 
     order_items,
     orders,
@@ -41,7 +42,12 @@ TRUNCATE TABLE
     roles_permissions,
     users,
     roles,
-    permissions 
+    permissions,
+    customer_point_history,
+    customer_vouchers,
+    customer_point,
+    vouchers,
+    customers
     CASCADE;
 
 -- =============================================================================
@@ -341,7 +347,7 @@ ON CONFLICT (phone) DO NOTHING;
 
 -- Customer Point: Test customer point wallet
 INSERT INTO customer_point (id, version, customer_id, restaurant_id, current_points, lifetime_points, updated_at) VALUES
-('cp000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 0, 0, NOW())
+('cp000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 500, 500, NOW())
 ON CONFLICT (customer_id, restaurant_id) DO NOTHING;
 
 -- Order: Order for Table 01 created by Waiter f0000000-0000-0000-0000-000000000009
@@ -399,7 +405,8 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO vouchers (id, version, restaurant_id, title, discount_percent, min_bill_amount, points_required, is_active, created_at, expired_at) VALUES
 ('v0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 10%', 10, 0.00, 0, 1, NOW(), NULL),
 ('v0000000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 20% Đơn Tối Thiểu 200k', 20, 200000.00, 0, 1, NOW(), NULL),
-('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 30% Hết Hạn', 30, 0.00, 0, 1, NOW() - INTERVAL '2 days', NOW() - INTERVAL '1 day')
+('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 30% Hết Hạn', 30, 0.00, 0, 1, NOW() - INTERVAL '2 days', NOW() - INTERVAL '1 day'),
+('v0000000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 15% (100 Điểm)', 15, 0.00, 100, 1, NOW(), NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Customer Vouchers: Assign these vouchers to customer c0000000-0000-0000-0000-000000000001
