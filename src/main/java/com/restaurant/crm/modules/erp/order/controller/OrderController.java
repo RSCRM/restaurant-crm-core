@@ -2,7 +2,13 @@ package com.restaurant.crm.modules.erp.order.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
+import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceResponse;
+import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
+import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,9 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.List;
 import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
-
-import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
-import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceResponse;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -46,6 +50,49 @@ public class OrderController {
         ApiResponse<CreateOrderResponse> response = ApiResponse.<CreateOrderResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(orderService.create(request))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{orderId}/items")
+    public ResponseEntity<ApiResponse<AddOrderItemResponse>> addOrderItem(
+            @PathVariable String orderId,
+            @Valid @RequestBody AddOrderItemRequestDto request
+    ) {
+        ApiResponse<AddOrderItemResponse> response = ApiResponse.<AddOrderItemResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(orderService.addOrderItem(orderId, request))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{orderId}/items/{orderItemId}/quantity")
+    public ResponseEntity<ApiResponse<Void>> updateOrderItemQuantity(
+            @PathVariable String orderId,
+            @PathVariable String orderItemId,
+            @Valid @RequestBody UpdateOrderItemQuantityRequestDto request
+    ) {
+        orderService.updateOrderItemQuantity(orderId, orderItemId, request);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{orderId}/items/{orderItemId}/modifiers")
+    public ResponseEntity<ApiResponse<Void>> updateOrderItemModifiers(
+            @PathVariable String orderId,
+            @PathVariable String orderItemId,
+            @Valid @RequestBody UpdateOrderItemModifiersRequestDto request
+    ) {
+        orderService.updateOrderItemModifiers(orderId, orderItemId, request);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
                 .build();
 
         return ResponseEntity.ok(response);
@@ -91,9 +138,7 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}/bill")
-    public ResponseEntity<ApiResponse<InvoiceResponse>> getActiveOrderBill(
-            @PathVariable String orderId
-    ) {
+    public ResponseEntity<ApiResponse<InvoiceResponse>> getActiveOrderBill(@PathVariable String orderId) {
         InvoiceResponse responseData = invoiceService.getActiveOrderBillDetails(orderId);
         ApiResponse<InvoiceResponse> response = ApiResponse.<InvoiceResponse>builder()
                 .success(ApiConstant.SUCCESS)

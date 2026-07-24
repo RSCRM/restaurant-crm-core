@@ -96,8 +96,10 @@ public enum ErrorCode {
     ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1006", "Modifier option not found", HttpStatus.NOT_FOUND),
     ORDER_ITEM_NOT_FOUND("ORDER_1007", "Order item not found", HttpStatus.NOT_FOUND),
     ORDER_NOT_FOUND("ORDER_1008", "Order not found", HttpStatus.NOT_FOUND),
+    ORDER_ITEM_STATUS_NOT_MODIFIABLE("ORDER_1009", "Order item status does not allow this modification", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
     ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
-    ORDER_ALREADY_PAID("ORDER_1009", "Order has already been paid", HttpStatus.BAD_REQUEST),
+    ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 
     // ==== INGREDIENT ERRORS ====
