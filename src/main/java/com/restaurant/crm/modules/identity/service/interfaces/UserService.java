@@ -14,8 +14,6 @@ public interface UserService {
 
     UserResponse updateRoles(String userId, UserRolesUpdateRequest request);
 
-    UserResponse getMyInfo();
-
     void deleteById(String userId);
 
 }

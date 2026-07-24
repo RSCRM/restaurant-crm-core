@@ -30,8 +30,10 @@ public enum ErrorCode {
     USER_USERNAME_EXISTED("USER_1001", "Username already exists", HttpStatus.BAD_REQUEST),
     USER_ALREADY_VERIFIED("USER_1002", "User email already verified", HttpStatus.BAD_REQUEST),
     USER_ALREADY_EXISTS("USER_1003", "User already exists", HttpStatus.BAD_REQUEST),
-    USER_USERNAME_INVALID("USER_1005", "Username is invalid", HttpStatus.BAD_REQUEST),
-    USER_PASSWORD_INVALID("USER_1006", "Password is invalid", HttpStatus.BAD_REQUEST),
+    USER_EMAIL_INVALID("USER_1005", "Email is invalid", HttpStatus.BAD_REQUEST),
+    USER_FULL_NAME_INVALID("USER_1006", "Full name is invalid", HttpStatus.BAD_REQUEST),
+    USER_PHONE_INVALID("USER_1007", "Phone number is invalid", HttpStatus.BAD_REQUEST),
+    USER_PHONE_ALREADY_EXISTS("USER_1008", "Phone number already exists", HttpStatus.BAD_REQUEST),
 
     // ==== ROLE ERRORS ====
     ROLE_NOT_FOUND("ROLE_1000", "Role not found", HttpStatus.NOT_FOUND),
@@ -56,10 +58,6 @@ public enum ErrorCode {
     EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
-
-    // ==== SCHEDULE ERRORS ====
-    SCHEDULE_DATE_RANGE_INVALID("SCHEDULE_1000", "Schedule date range is invalid", HttpStatus.BAD_REQUEST),
-    SCHEDULE_DATE_RANGE_EXCEEDED("SCHEDULE_1001", "Schedule date range cannot exceed 31 days", HttpStatus.BAD_REQUEST),
 
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),

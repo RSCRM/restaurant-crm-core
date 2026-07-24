@@ -17,7 +17,8 @@ import com.restaurant.crm.modules.identity.mapper.UserMapper;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.service.interfaces.UserService;
-import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -40,12 +41,15 @@ public class UserServiceImpl implements UserService {
     UserRepository usersRepository;
     RoleRepository roleRepository;
     UserMapper userMapper;
+    UserProfileRepository userProfileRepository;
     PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public UserResponse create(UserCreationRequest request) {
         validateUsernameExisted(request.getUsername());
+        validateEmailExisted(request.getEmail());
+        validatePhoneExisted(request.getPhone());
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
@@ -55,6 +59,11 @@ public class UserServiceImpl implements UserService {
         user.setRoles(new HashSet<>(Set.of(userRole)));
 
         User userSaved = usersRepository.save(user);
+        userProfileRepository.save(UserProfile.builder()
+                .user(userSaved)
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
+                .build());
 
         return userMapper.toUserResponse(userSaved);
     }
@@ -94,19 +103,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getMyInfo() {
-        String userId = AuthUtils.getCurrentUserId();
-        if (userId == null) {
-            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
-        }
-
-        User user = usersRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHENTICATED));
-
-        return userMapper.toUserResponse(user);
-    }
-
-    @Override
     @Transactional
     public void deleteById(String userId) {
         usersRepository.deleteById(userId);
@@ -115,8 +111,19 @@ public class UserServiceImpl implements UserService {
 
     private void validateUsernameExisted(String username) {
         if (usersRepository.existsByUsername(username)) {
-            // TODO: bổ sung ErrorCode riêng cho user khi mở rộng ErrorCode
-            throw new AppException(ErrorCode.AUTH_UNAUTHENTICATED);
+            throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
+        }
+    }
+
+    private void validateEmailExisted(String email) {
+        if (usersRepository.existsByEmail(email)) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+    }
+
+    private void validatePhoneExisted(String phone) {
+        if (userProfileRepository.existsByPhone(phone)) {
+            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
     }
 }
