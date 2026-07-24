@@ -2,7 +2,7 @@ package com.restaurant.crm.modules.erp.order.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
-import com.restaurant.crm.modules.erp.order.enums.OrderStatus;
+import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -66,7 +66,7 @@ public class OrderItem extends BaseEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = OrderConstants.COL_STATUS, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
-    OrderStatus status = OrderStatus.PENDING;
+    OrderItemStatus status = OrderItemStatus.PENDING;
 
     @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
     String note;

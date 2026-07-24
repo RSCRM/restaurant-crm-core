@@ -8,6 +8,8 @@ import java.util.List;
 
 @Repository
 public interface OrderItemModifierRepository extends JpaRepository<OrderItemModifier, String> {
+    List<OrderItemModifier> findByOrderItemId(String orderItemId);
+
     List<OrderItemModifier> findAllByOrderItemId(String orderItemId);
 
     void deleteByOrderItemId(String orderItemId);
