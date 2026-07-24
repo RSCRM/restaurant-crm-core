@@ -1,12 +1,16 @@
 package com.restaurant.crm.modules.erp.attendance.service.interfaces;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.erp.attendance.dto.request.AttendanceCheckInRequest;
+import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceQrResponse;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceResponse;
 
 import java.time.LocalDate;
 
 public interface AttendanceService {
-    AttendanceResponse checkIn();
+    AttendanceQrResponse getCurrentQr();
+
+    AttendanceResponse checkIn(AttendanceCheckInRequest request);
 
     AttendanceResponse checkOut();
 

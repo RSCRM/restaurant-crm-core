@@ -3,17 +3,22 @@ package com.restaurant.crm.modules.erp.attendance.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.erp.attendance.dto.request.AttendanceCheckInRequest;
+import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceQrResponse;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceResponse;
 import com.restaurant.crm.modules.erp.attendance.service.interfaces.AttendanceService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,11 +32,21 @@ public class AttendanceController {
 
     AttendanceService attendanceService;
 
+    @GetMapping("/qr")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.AttendanceConstants).QR_DISPLAY_AUTHORITY)")
+    public ResponseEntity<ApiResponse<AttendanceQrResponse>> getCurrentQr() {
+        return ResponseEntity.ok(ApiResponse.<AttendanceQrResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(attendanceService.getCurrentQr())
+                .build());
+    }
+
     @PostMapping("/check-in")
-    public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn() {
+    public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn(
+            @Valid @RequestBody AttendanceCheckInRequest request) {
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
                 .success(ApiConstant.SUCCESS)
-                .data(attendanceService.checkIn())
+                .data(attendanceService.checkIn(request))
                 .build());
     }
 
