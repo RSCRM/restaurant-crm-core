@@ -318,11 +318,20 @@ INSERT INTO product_categories (category_id, branch_id, category_name, descripti
 ('ac000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Món nước', 'Các món bún, phở', 1, NOW(), NOW())
 ON CONFLICT (category_id) DO NOTHING;
 
--- Product: Phở Bò
 INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, created_at, updated_at) VALUES
 ('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', NOW(), NOW()),
 ('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', NOW(), NOW())
 ON CONFLICT (product_id) DO NOTHING;
+
+-- Customer: Test customer for CRM Loyalty points test
+INSERT INTO customers (id, phone, status, created_at, updated_at) VALUES
+('c0000000-0000-0000-0000-000000000001', '0987654321', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (phone) DO NOTHING;
+
+-- Customer Point: Test customer point wallet
+INSERT INTO customer_point (id, customer_id, restaurant_id, current_points, lifetime_points, updated_at) VALUES
+('cp000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 0, 0, NOW())
+ON CONFLICT (customer_id, restaurant_id) DO NOTHING;
 
 -- Order: Order for Table 01 created by Waiter f0000000-0000-0000-0000-000000000009
 INSERT INTO orders (id, version, branch_id, table_id, reservation_id, order_code, order_type, status, note, subtotal, discount_amount, total_amount, created_by, created_at, updated_at) VALUES

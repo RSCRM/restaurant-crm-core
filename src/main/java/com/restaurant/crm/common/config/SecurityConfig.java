@@ -47,7 +47,8 @@ public class SecurityConfig {
     private final String[] PUBLIC_GET_ENDPOINT = {
             "/api/v1/orders/*/cooking-status",
             "/api/v1/orders/tables/*/active-order/cooking-status",
-            "/api/v1/orders/*/cooking-status/subscribe"
+            "/api/v1/orders/*/cooking-status/subscribe",
+            "/api/v1/orders/*/bill"
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {
