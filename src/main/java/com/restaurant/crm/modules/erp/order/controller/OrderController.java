@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.order.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
+import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
 import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceResponse;
 import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
@@ -13,6 +14,7 @@ import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
+import com.restaurant.crm.modules.erp.order.service.interfaces.OrderItemService;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,8 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.util.List;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -40,6 +43,7 @@ import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVouch
 public class OrderController {
 
     OrderService orderService;
+    OrderItemService orderItemService;
     CustomerSseService customerSseService;
     InvoiceService invoiceService;
 
@@ -62,7 +66,7 @@ public class OrderController {
     ) {
         ApiResponse<AddOrderItemResponse> response = ApiResponse.<AddOrderItemResponse>builder()
                 .success(ApiConstant.SUCCESS)
-                .data(orderService.addOrderItem(orderId, request))
+                .data(orderItemService.addOrderItem(orderId, request))
                 .build();
 
         return ResponseEntity.ok(response);
@@ -74,7 +78,7 @@ public class OrderController {
             @PathVariable String orderItemId,
             @Valid @RequestBody UpdateOrderItemQuantityRequestDto request
     ) {
-        orderService.updateOrderItemQuantity(orderId, orderItemId, request);
+        orderItemService.updateOrderItemQuantity(orderId, orderItemId, request);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(ApiConstant.SUCCESS)
@@ -89,7 +93,7 @@ public class OrderController {
             @PathVariable String orderItemId,
             @Valid @RequestBody UpdateOrderItemModifiersRequestDto request
     ) {
-        orderService.updateOrderItemModifiers(orderId, orderItemId, request);
+        orderItemService.updateOrderItemModifiers(orderId, orderItemId, request);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(ApiConstant.SUCCESS)
@@ -103,6 +107,20 @@ public class OrderController {
         ApiResponse<CancelOrderResponse> response = ApiResponse.<CancelOrderResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(orderService.cancelOrder(orderId))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{orderId}/items/{orderItemId}")
+    public ResponseEntity<ApiResponse<Void>> removeOrderItem(
+            @PathVariable String orderId,
+            @PathVariable String orderItemId
+    ) {
+        orderItemService.removeOrderItem(orderId, orderItemId);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
                 .build();
 
         return ResponseEntity.ok(response);
