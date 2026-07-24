@@ -176,6 +176,9 @@ public class OrderItemServiceImpl implements OrderItemService {
                 .tableId(order.getTableId())
                 .customerPhone(order.getCustomerPhone())
                 .status(order.getStatus())
+                .subtotal(order.getSubtotal())
+                .discountAmount(order.getDiscountAmount())
+                .totalAmount(order.getTotalAmount())
                 .items(itemResponses)
                 .updatedAt(order.getUpdatedAt())
                 .build();

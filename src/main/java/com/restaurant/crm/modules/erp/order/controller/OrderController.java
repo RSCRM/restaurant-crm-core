@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
+import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceResponse;
+
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class OrderController {
 
     OrderService orderService;
     CustomerSseService customerSseService;
+    InvoiceService invoiceService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderResponse>> createOrder(
@@ -69,5 +73,17 @@ public class OrderController {
             @PathVariable String orderId
     ) {
         return customerSseService.createEmitter(orderId);
+    }
+
+    @GetMapping("/{orderId}/bill")
+    public ResponseEntity<ApiResponse<InvoiceResponse>> getActiveOrderBill(
+            @PathVariable String orderId
+    ) {
+        InvoiceResponse responseData = invoiceService.getActiveOrderBillDetails(orderId);
+        ApiResponse<InvoiceResponse> response = ApiResponse.<InvoiceResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(responseData)
+                .build();
+        return ResponseEntity.ok(response);
     }
 }
