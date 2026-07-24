@@ -123,6 +123,9 @@ public enum ErrorCode {
     TABLE_NOT_AVAILABLE("TABLE_1001", "Table is not available", HttpStatus.CONFLICT),
     TABLE_SESSION_ACTIVE_EXISTS("TABLE_1002", "Table already has an active session", HttpStatus.CONFLICT),
     TABLE_PARTY_SIZE_EXCEEDS_CAPACITY("TABLE_1003", "Party size exceeds table capacity", HttpStatus.BAD_REQUEST),
+    TABLE_SESSION_NOT_FOUND("TABLE_1004", "Table session not found", HttpStatus.NOT_FOUND),
+    TABLE_SESSION_NOT_ACTIVE("TABLE_1005", "Table session is not active", HttpStatus.CONFLICT),
+    TABLE_TRANSFER_SAME_TABLE("TABLE_1006", "Source and target table must be different", HttpStatus.BAD_REQUEST),
 
     // ==== INGREDIENT ERRORS ====
     INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
