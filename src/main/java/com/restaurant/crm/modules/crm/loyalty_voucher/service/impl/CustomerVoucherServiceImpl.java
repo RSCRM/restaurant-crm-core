@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.List;
+import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -118,8 +120,13 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_ALREADY_USED);
         }
 
-        // 2. minimum bill amount check
+        // Check if voucher has expired
         Voucher voucher = customerVoucher.getVoucher();
+        if (voucher.getExpiredAt() != null && java.time.Instant.now().isAfter(voucher.getExpiredAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+
+        // 2. minimum bill amount check
         if (billAmount.compareTo(voucher.getMinBillAmount()) < 0) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_MIN_BILL_NOT_MET);
         }
@@ -132,6 +139,56 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         customerVoucher = customerVoucherRepository.save(customerVoucher);
 
         return customerVoucherMapper.toCustomerVoucherResponse(customerVoucher);
+    }
+
+    @Override
+    public List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String restaurantId, BigDecimal subtotal) {
+        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId);
+        return customerVouchers.stream().map(cv -> {
+            Voucher voucher = cv.getVoucher();
+            boolean isExpired = voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt());
+            
+            boolean isApplicable = true;
+            String reason = null;
+            String status = cv.getStatus().name();
+
+            if (isExpired) {
+                isApplicable = false;
+                reason = "Voucher đã hết hạn sử dụng";
+                status = "EXPIRED";
+            } else if (cv.getStatus() != CustomerVoucherStatus.AVAILABLE) {
+                isApplicable = false;
+                reason = "Voucher đã được sử dụng hoặc không còn hiệu lực";
+            } else if (subtotal.compareTo(voucher.getMinBillAmount()) < 0) {
+                isApplicable = false;
+                reason = "Chưa đạt giá trị đơn hàng tối thiểu (Thiếu " + (voucher.getMinBillAmount().subtract(subtotal)) + " VNĐ)";
+            }
+
+            return CustomerVoucherApplicableResponse.builder()
+                    .customerVoucherId(cv.getId())
+                    .voucherSn(cv.getVoucherSn())
+                    .title(voucher.getTitle())
+                    .discountPercent(voucher.getDiscountPercent())
+                    .minBillAmount(voucher.getMinBillAmount())
+                    .status(status)
+                    .expiredAt(voucher.getExpiredAt())
+                    .isApplicable(isApplicable)
+                    .reason(reason)
+                    .build();
+        }).toList();
+    }
+
+    @Override
+    @Transactional
+    public void releaseVoucher(String orderId) {
+        customerVoucherRepository.findByOrderId(orderId).ifPresent(cv -> {
+            if (cv.getStatus() == CustomerVoucherStatus.USED) {
+                cv.setStatus(CustomerVoucherStatus.AVAILABLE);
+                cv.setUsedAt(null);
+                cv.setOrderId(null);
+                customerVoucherRepository.save(cv);
+            }
+        });
     }
 
     @Override

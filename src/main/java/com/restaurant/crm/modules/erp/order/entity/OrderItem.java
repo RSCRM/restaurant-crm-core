@@ -63,11 +63,11 @@ public class OrderItem extends BaseEntity {
     )
     BigDecimal subtotal = BigDecimal.ZERO;
 
-    @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
-    String note;
-
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = OrderConstants.COL_STATUS, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
     OrderItemStatus status = OrderItemStatus.PENDING;
+
+    @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
+    String note;
 }

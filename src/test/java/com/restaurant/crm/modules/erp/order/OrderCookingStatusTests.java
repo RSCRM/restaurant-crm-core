@@ -18,6 +18,10 @@ import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.order.service.impl.OrderServiceImpl;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.CustomerVoucherService;
+import com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
@@ -57,6 +61,14 @@ public class OrderCookingStatusTests {
     RestaurantTableRepository restaurantTableRepository;
     @Mock
     CustomerSseService customerSseService;
+    @Mock
+    CustomerRepository customerRepository;
+    @Mock
+    PointWalletService pointWalletService;
+    @Mock
+    CustomerVoucherService customerVoucherService;
+    @Mock
+    CustomerVoucherRepository customerVoucherRepository;
 
     @InjectMocks
     OrderServiceImpl orderService;

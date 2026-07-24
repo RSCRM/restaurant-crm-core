@@ -30,8 +30,10 @@ public enum ErrorCode {
     USER_USERNAME_EXISTED("USER_1001", "Username already exists", HttpStatus.BAD_REQUEST),
     USER_ALREADY_VERIFIED("USER_1002", "User email already verified", HttpStatus.BAD_REQUEST),
     USER_ALREADY_EXISTS("USER_1003", "User already exists", HttpStatus.BAD_REQUEST),
-    USER_USERNAME_INVALID("USER_1005", "Username is invalid", HttpStatus.BAD_REQUEST),
-    USER_PASSWORD_INVALID("USER_1006", "Password is invalid", HttpStatus.BAD_REQUEST),
+    USER_EMAIL_INVALID("USER_1005", "Email is invalid", HttpStatus.BAD_REQUEST),
+    USER_FULL_NAME_INVALID("USER_1006", "Full name is invalid", HttpStatus.BAD_REQUEST),
+    USER_PHONE_INVALID("USER_1007", "Phone number is invalid", HttpStatus.BAD_REQUEST),
+    USER_PHONE_ALREADY_EXISTS("USER_1008", "Phone number already exists", HttpStatus.BAD_REQUEST),
 
     // ==== ROLE ERRORS ====
     ROLE_NOT_FOUND("ROLE_1000", "Role not found", HttpStatus.NOT_FOUND),
@@ -100,7 +102,10 @@ public enum ErrorCode {
     ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1006", "Modifier option not found", HttpStatus.NOT_FOUND),
     ORDER_ITEM_NOT_FOUND("ORDER_1007", "Order item not found", HttpStatus.NOT_FOUND),
     ORDER_NOT_FOUND("ORDER_1008", "Order not found", HttpStatus.NOT_FOUND),
-    ORDER_ALREADY_PAID("ORDER_1009", "Order has already been paid", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_STATUS_NOT_MODIFIABLE("ORDER_1009", "Order item status does not allow this modification", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
+    ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
+    ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 
     // ==== INGREDIENT ERRORS ====
@@ -141,6 +146,7 @@ public enum ErrorCode {
     VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
