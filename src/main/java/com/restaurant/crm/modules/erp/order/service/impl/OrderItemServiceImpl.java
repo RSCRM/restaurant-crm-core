@@ -62,6 +62,19 @@ public class OrderItemServiceImpl implements OrderItemService {
 
         // Update the item status
         orderItem.setStatus(status);
+
+        // Record chef employee who accepted the item
+        if (status == OrderItemStatus.IN_PROGRESS) {
+            try {
+                String chefId = AuthUtils.getEmployeeId();
+                if (chefId != null) {
+                    orderItem.setPreparedBy(chefId);
+                }
+            } catch (Exception e) {
+                // Fallback for tests/unauthenticated
+            }
+        }
+
         OrderItem savedItem = orderItemRepository.save(orderItem);
 
         // If the item status becomes READY_TO_SERVE, trigger SSE notification and persist it
@@ -69,11 +82,20 @@ public class OrderItemServiceImpl implements OrderItemService {
             triggerReadyToServeNotification(savedItem);
         }
 
+        // Broadcast KDS update to kitchen displays in branch
+        sseEmitterService.broadcastToBranch(
+                savedItem.getOrder().getBranchId(),
+                "KDS_ITEM_UPDATED",
+                savedItem.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+        );
+
         // Broadcast cooking status update to customer SSE subscribers
         broadcastOrderCookingStatus(savedItem.getOrder());
 
         return orderItemMapper.toOrderItemResponse(savedItem);
     }
+
 
     /**
      * Formats notification content, saves it to the database, and broadcasts it via SSE.

@@ -37,6 +37,8 @@ import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -79,6 +81,8 @@ public class OrderServiceImpl implements OrderService {
     com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository customerVoucherRepository;
     com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository customerRepository;
     com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService pointWalletService;
+    SseEmitterService sseEmitterService;
+
 
     @Override
     @Transactional
@@ -150,7 +154,16 @@ public class OrderServiceImpl implements OrderService {
                 OrderCookingStatusResponse updatedStatus = getOrderCookingStatus(activeOrder.getId());
                 customerSseService.broadcastOrderUpdate(activeOrder.getId(), updatedStatus);
 
+                // Broadcast KDS update to kitchen
+                sseEmitterService.broadcastToBranch(
+                        activeOrder.getBranchId(),
+                        "KDS_ORDER_UPDATED",
+                        activeOrder.getId(),
+                        StartDefinedOrgPermission.ORDER_READ
+                );
+
                 return CreateOrderResponse.builder()
+
                         .orderId(activeOrder.getId())
                         .build();
             }
@@ -217,10 +230,19 @@ public class OrderServiceImpl implements OrderService {
             restaurantTableRepository.save(table);
         }
 
+        // Broadcast KDS update to kitchen
+        sseEmitterService.broadcastToBranch(
+                savedOrder.getBranchId(),
+                "KDS_ORDER_CREATED",
+                savedOrder.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+        );
+
         return CreateOrderResponse.builder()
                 .orderId(savedOrder.getId())
                 .build();
     }
+
 
     @Override
     @Transactional
@@ -249,10 +271,19 @@ public class OrderServiceImpl implements OrderService {
         orderItemRepository.save(savedOrderItem);
         applyOrderSubtotalDelta(existingOrder, savedOrderItem.getSubtotal());
 
+        // Broadcast KDS update to kitchen
+        sseEmitterService.broadcastToBranch(
+                existingOrder.getBranchId(),
+                "KDS_ORDER_UPDATED",
+                existingOrder.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+        );
+
         return AddOrderItemResponse.builder()
                 .orderItemId(savedOrderItem.getId())
                 .build();
     }
+
 
     @Override
     @Transactional
@@ -277,7 +308,16 @@ public class OrderServiceImpl implements OrderService {
         orderItemRepository.save(existingOrderItem);
 
         applyOrderSubtotalDelta(existingOrderItem.getOrder(), quantityDelta);
+
+        // Broadcast KDS update to kitchen
+        sseEmitterService.broadcastToBranch(
+                existingOrderItem.getOrder().getBranchId(),
+                "KDS_ITEM_UPDATED",
+                existingOrderItem.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+        );
     }
+
 
     @Override
     @Transactional
@@ -297,7 +337,16 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal modifierSubtotalDelta = newModifierSubtotal.subtract(oldModifierSubtotal);
 
         applyOrderItemSubtotalDelta(existingOrderItem, modifierSubtotalDelta);
+
+        // Broadcast KDS update to kitchen
+        sseEmitterService.broadcastToBranch(
+                existingOrderItem.getOrder().getBranchId(),
+                "KDS_ITEM_UPDATED",
+                existingOrderItem.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+        );
     }
+
 
     @Override
     @Transactional
@@ -330,10 +379,19 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(BigDecimal.ZERO);
         orderRepository.save(order);
 
+        // Broadcast KDS update to kitchen
+        sseEmitterService.broadcastToBranch(
+                order.getBranchId(),
+                "KDS_ORDER_UPDATED",
+                order.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+        );
+
         return CancelOrderResponse.builder()
                 .cancelled(true)
                 .build();
     }
+
 
     @Override
     public OrderCookingStatusResponse getOrderCookingStatus(String orderId) {
