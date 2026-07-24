@@ -1,0 +1,26 @@
+package com.restaurant.crm.modules.licensemanagement.service.interfaces;
+
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseResponse;
+
+public interface LicenseService {
+
+    LicenseResponse createLicense(CreateLicenseRequest request);
+
+    PagingResponse<LicenseResponse> getLicenses(PagingRequest request);
+
+    LicenseResponse updateLicense(String id, UpdateLicenseRequest request);
+
+    DeleteLicenseResponse deleteLicense(String id);
+
+    LicenseResponse lockLicense(String id);
+
+    LicenseResponse reactivateLicense(String id);
+
+    LicenseDetailResponse getLicenseDetail(String id, int page, int size);
+}

@@ -41,7 +41,6 @@ public class CreateOrderRequestDto {
     @Size(max = OrderConstants.MAX_CHARS_CUSTOMER_PHONE)
     String customerPhone;
 
-    @NotBlank
     @Size(max = OrderConstants.MAX_CHARS_NOTE)
     String note;
 
