@@ -13,10 +13,13 @@ import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemModifierRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderBlockedItemResponse;
+import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.entity.Order;
 import com.restaurant.crm.modules.erp.order.entity.OrderItem;
 import com.restaurant.crm.modules.erp.order.entity.OrderItemModifier;
+import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import com.restaurant.crm.modules.erp.order.enums.OrderStatus;
 import com.restaurant.crm.modules.erp.order.enums.OrderType;
 import com.restaurant.crm.modules.erp.order.repository.OrderItemModifierRepository;
@@ -33,13 +36,18 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
+
+    private static final Set<OrderItemStatus> ORDER_CANCELLABLE_ORDER_ITEM_STATUSES =
+            EnumSet.of(OrderItemStatus.PENDING, OrderItemStatus.CANCELLED);
 
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
@@ -101,6 +109,7 @@ public class OrderServiceImpl implements OrderService {
                     .quantity(itemRequest.getQuantity())
                     .unitPrice(unitPrice)
                     .subtotal(unitPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity())))
+                    .status(OrderItemStatus.PENDING)
                     .note(itemRequest.getNote())
                     .build();
             OrderItem savedOrderItem = orderItemRepository.save(orderItem);
@@ -122,9 +131,51 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public CancelOrderResponse cancelOrder(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        validateOrderStatusForOrderCancellation(order);
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        List<CancelOrderBlockedItemResponse> blockedItems = getBlockedItemsForOrderCancellation(orderItems);
+        if (!blockedItems.isEmpty()) {
+            return CancelOrderResponse.builder()
+                    .cancelled(false)
+                    .blockedItems(blockedItems)
+                    .build();
+        }
+
+        List<OrderItem> itemsToCancel = orderItems.stream()
+                .filter(orderItem -> orderItem.getStatus() != OrderItemStatus.CANCELLED)
+                .toList();
+        if (!itemsToCancel.isEmpty()) {
+            for (OrderItem orderItem : itemsToCancel) {
+                orderItem.setStatus(OrderItemStatus.CANCELLED);
+            }
+            orderItemRepository.saveAll(itemsToCancel);
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setSubtotal(BigDecimal.ZERO);
+        order.setTotalAmount(BigDecimal.ZERO);
+        orderRepository.save(order);
+
+        return CancelOrderResponse.builder()
+                .cancelled(true)
+                .build();
+    }
+
     private String generateOrderCode() {
         return OrderConstants.ORDER_CODE_PREFIX
                 + UUID.randomUUID().toString().substring(0, OrderConstants.ORDER_CODE_RANDOM_LENGTH).toUpperCase();
+    }
+
+    private void validateOrderStatusForOrderCancellation(Order order) {
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new AppException(ErrorCode.ORDER_STATUS_NOT_MODIFIABLE);
+        }
     }
 
     private BigDecimal resolveUnitPrice(String branchId, String productId, String comboId) {
@@ -167,5 +218,25 @@ public class OrderServiceImpl implements OrderService {
 
         orderItemModifierRepository.saveAll(modifiersToSave);
         return modifierTotal;
+    }
+
+    private List<CancelOrderBlockedItemResponse> getBlockedItemsForOrderCancellation(List<OrderItem> orderItems) {
+        List<CancelOrderBlockedItemResponse> blockedItems = new ArrayList<>();
+        for (OrderItem orderItem : orderItems) {
+            if (ORDER_CANCELLABLE_ORDER_ITEM_STATUSES.contains(orderItem.getStatus())) {
+                continue;
+            }
+
+            blockedItems.add(CancelOrderBlockedItemResponse.builder()
+                    .orderItemId(orderItem.getId())
+                    .productId(orderItem.getProductId())
+                    .comboId(orderItem.getComboId())
+                    .quantity(orderItem.getQuantity())
+                    .status(orderItem.getStatus())
+                    .note(orderItem.getNote())
+                    .build());
+        }
+
+        return blockedItems;
     }
 }

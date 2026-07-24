@@ -2,8 +2,11 @@ package com.restaurant.crm.modules.erp.order.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
+import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -59,6 +62,11 @@ public class OrderItem extends BaseEntity {
             scale = OrderConstants.MONEY_SCALE
     )
     BigDecimal subtotal = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = OrderConstants.COL_STATUS, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
+    OrderItemStatus status = OrderItemStatus.PENDING;
 
     @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
     String note;

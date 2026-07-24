@@ -86,9 +86,11 @@ public enum ErrorCode {
     ORDER_TABLE_ID_REQUIRED("ORDER_1001", "Table id is required for dine-in order", HttpStatus.BAD_REQUEST),
     ORDER_BRANCH_NOT_FOUND("ORDER_1002", "Branch not found", HttpStatus.NOT_FOUND),
     ORDER_TABLE_NOT_FOUND("ORDER_1003", "Table not found in branch", HttpStatus.NOT_FOUND),
-    ORDER_PRODUCT_NOT_FOUND("ORDER_1004", "Product not found in branch", HttpStatus.NOT_FOUND),
-    ORDER_COMBO_NOT_FOUND("ORDER_1005", "Combo not found in branch", HttpStatus.NOT_FOUND),
-    ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1006", "Modifier option not found", HttpStatus.NOT_FOUND),
+    ORDER_NOT_FOUND("ORDER_1004", "Order not found", HttpStatus.NOT_FOUND),
+    ORDER_PRODUCT_NOT_FOUND("ORDER_1006", "Product not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_COMBO_NOT_FOUND("ORDER_1007", "Combo not found in branch", HttpStatus.NOT_FOUND),
+    ORDER_MODIFIER_OPTION_NOT_FOUND("ORDER_1008", "Modifier option not found", HttpStatus.NOT_FOUND),
+    ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
 
     // ==== RESTAURANT ERRORS ====
     RESTAURANT_ID_REQUIRED("REST_1000", "Restaurant ID is required", HttpStatus.BAD_REQUEST),
