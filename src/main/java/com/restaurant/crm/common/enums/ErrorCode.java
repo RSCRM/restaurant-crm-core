@@ -59,6 +59,16 @@ public enum ErrorCode {
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
 
+    // ==== ATTENDANCE ERRORS ====
+    ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),
+    ATTENDANCE_ALREADY_CHECKED_IN("ATT_1001", "Shift already checked in", HttpStatus.CONFLICT),
+    ATTENDANCE_OPEN_RECORD_NOT_FOUND("ATT_1002", "No open attendance found", HttpStatus.NOT_FOUND),
+    ATTENDANCE_DATE_RANGE_INVALID("ATT_1003", "Attendance date range is invalid", HttpStatus.BAD_REQUEST),
+    ATTENDANCE_QR_INVALID("ATT_1004", "Attendance QR is invalid", HttpStatus.BAD_REQUEST),
+    ATTENDANCE_QR_EXPIRED("ATT_1005", "Attendance QR has expired", HttpStatus.BAD_REQUEST),
+    ATTENDANCE_QR_CONTEXT_MISMATCH("ATT_1006", "Attendance QR does not match shift context", HttpStatus.FORBIDDEN),
+    ATTENDANCE_QR_GENERATION_FAILED("ATT_1007", "Attendance QR generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
     ORGANIZATION_EXISTS("ORG_1001", "Organization already exists", HttpStatus.BAD_REQUEST),
