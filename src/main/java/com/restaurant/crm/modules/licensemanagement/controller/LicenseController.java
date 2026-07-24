@@ -9,6 +9,7 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseResponse;
 import com.restaurant.crm.modules.licensemanagement.service.interfaces.LicenseService;
 import jakarta.validation.Valid;
@@ -112,6 +113,36 @@ public class LicenseController {
         ApiResponse<LicenseResponse> response = ApiResponse.<LicenseResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(licenseResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    public ResponseEntity<ApiResponse<LicenseResponse>> reactivateLicense(
+            @PathVariable String id
+    ) {
+        LicenseResponse licenseResponse = licenseService.reactivateLicense(id);
+
+        ApiResponse<LicenseResponse> response = ApiResponse.<LicenseResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(licenseResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/detail")
+    public ResponseEntity<ApiResponse<LicenseDetailResponse>> getLicenseDetail(
+            @PathVariable String id,
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size
+    ) {
+        LicenseDetailResponse detailResponse = licenseService.getLicenseDetail(id, page, size);
+
+        ApiResponse<LicenseDetailResponse> response = ApiResponse.<LicenseDetailResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(detailResponse)
                 .build();
 
         return ResponseEntity.ok(response);

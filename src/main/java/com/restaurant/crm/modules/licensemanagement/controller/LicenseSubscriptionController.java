@@ -52,4 +52,18 @@ public class LicenseSubscriptionController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/revoke")
+    public ResponseEntity<ApiResponse<SubscriptionResponse>> revokeSubscription(
+            @PathVariable String id
+    ) {
+        SubscriptionResponse subscriptionResponse = licenseSubscriptionService.revokeSubscription(id);
+
+        ApiResponse<SubscriptionResponse> response = ApiResponse.<SubscriptionResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(subscriptionResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

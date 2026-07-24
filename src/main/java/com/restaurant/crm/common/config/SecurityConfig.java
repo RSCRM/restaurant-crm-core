@@ -36,10 +36,18 @@ public class SecurityConfig {
     private static final String TOKEN_TYPE_CONTEXT = "CONTEXT";
 
     private final String[] PUBLIC_POST_ENDPOINT = {
+            "/api/v1/orders", // Also allow customers to place orders without token
             "/api/v1/users",
             "/api/v1/auth/login",
             "/api/v1/auth/introspect",
-            "/api/v1/auth/register"
+            "/api/v1/auth/register",
+            "/api/v1/crm/customers/identify" // Make customer identification public
+    };
+
+    private final String[] PUBLIC_GET_ENDPOINT = {
+            "/api/v1/orders/*/cooking-status",
+            "/api/v1/orders/tables/*/active-order/cooking-status",
+            "/api/v1/orders/*/cooking-status/subscribe"
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {
@@ -71,6 +79,7 @@ public class SecurityConfig {
                 //authorization rules
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINT).permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINT).permitAll()
                         .requestMatchers(WHITELIST_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
