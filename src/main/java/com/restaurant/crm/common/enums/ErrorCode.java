@@ -97,6 +97,10 @@ public enum ErrorCode {
     ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
     // ==== BOOKING ERRORS ====
     BOOKING_NOT_FOUND("BOOKING_1000", "Booking not found", HttpStatus.NOT_FOUND),
+
+    // ==== TABLE ERRORS ====
+    TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
+
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
     CUSTOMER_PHONE_REQUIRED("CUST_1001", "Phone number is required", HttpStatus.BAD_REQUEST),
