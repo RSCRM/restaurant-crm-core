@@ -116,6 +116,9 @@ public enum ErrorCode {
     ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
     ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
     ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_ALREADY_ACCEPTED("ORDER_1013", "Order item has already been accepted by another chef", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_INVALID_STATUS_TRANSITION("ORDER_1014", "Invalid status transition for order item", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_NOT_PREPARED_BY_YOU("ORDER_1015", "You are not the chef who accepted this order item", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 
     // ==== INGREDIENT ERRORS ====

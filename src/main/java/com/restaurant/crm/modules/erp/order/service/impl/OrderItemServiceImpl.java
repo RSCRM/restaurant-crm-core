@@ -175,6 +175,22 @@ public class OrderItemServiceImpl implements OrderItemService {
         OrderItem orderItem = orderItemRepository.findById(orderItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
 
+        OrderItemStatus currentStatus = orderItem.getStatus();
+
+        // 1. Terminal states check (SERVED, CANCELLED cannot transition to anything)
+        if (currentStatus == OrderItemStatus.SERVED || currentStatus == OrderItemStatus.CANCELLED) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+
+        // Retrieve product requires_preparation property
+        boolean requiresPrep = true;
+        if (orderItem.getProductId() != null) {
+            Product product = productRepository.findById(orderItem.getProductId()).orElse(null);
+            if (product != null && product.getRequiresPreparation() != null) {
+                requiresPrep = product.getRequiresPreparation();
+            }
+        }
+
         orderItem.setStatus(status);
 
         if (status == OrderItemStatus.IN_PROGRESS) {
@@ -188,12 +204,76 @@ public class OrderItemServiceImpl implements OrderItemService {
             }
         }
 
+        // Get current employee ID
+        String currentEmployeeId = null;
+        try {
+            currentEmployeeId = AuthUtils.getEmployeeId();
+        } catch (Exception e) {
+            // Fallback for tests/unauthenticated
+        }
+
+        // 2. Validate transitions
+        if (status == OrderItemStatus.IN_PROGRESS) {
+            if (currentStatus == OrderItemStatus.IN_PROGRESS) {
+                throw new AppException(ErrorCode.ORDER_ITEM_ALREADY_ACCEPTED);
+            }
+            if (currentStatus != OrderItemStatus.PENDING) {
+                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+            }
+            if (currentEmployeeId != null) {
+                orderItem.setPreparedBy(currentEmployeeId);
+            }
+        } else if (status == OrderItemStatus.READY_TO_SERVE) {
+            if (currentStatus == OrderItemStatus.IN_PROGRESS) {
+                if (currentEmployeeId != null && orderItem.getPreparedBy() != null && !currentEmployeeId.equals(orderItem.getPreparedBy())) {
+                    throw new AppException(ErrorCode.ORDER_ITEM_NOT_PREPARED_BY_YOU);
+                }
+            } else if (currentStatus == OrderItemStatus.PENDING) {
+                if (requiresPrep) {
+                    throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+                }
+                if (currentEmployeeId != null) {
+                    orderItem.setPreparedBy(currentEmployeeId);
+                }
+            } else {
+                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+            }
+        } else if (status == OrderItemStatus.PENDING) {
+            if (currentStatus != OrderItemStatus.IN_PROGRESS) {
+                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+            }
+            orderItem.setPreparedBy(null);
+        } else if (status == OrderItemStatus.CANCELLED) {
+            if (currentStatus != OrderItemStatus.PENDING && currentStatus != OrderItemStatus.IN_PROGRESS) {
+                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+            }
+            orderItem.setPreparedBy(null);
+        } else if (status == OrderItemStatus.SERVED) {
+            if (currentStatus != OrderItemStatus.READY_TO_SERVE) {
+                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+            }
+        } else {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+
+        // Update the item status
+        orderItem.setStatus(status);
+
         OrderItem savedItem = orderItemRepository.save(orderItem);
 
         if (status == OrderItemStatus.READY_TO_SERVE) {
             triggerReadyToServeNotification(savedItem);
         }
 
+        // Broadcast KDS update to kitchen displays in branch
+        sseEmitterService.broadcastToBranch(
+                savedItem.getOrder().getBranchId(),
+                "KDS_ITEM_UPDATED",
+                savedItem.getId(),
+                StartDefinedOrgPermission.ORDER_READ
+            );
+
+        // Broadcast cooking status update to customer SSE subscribers
         broadcastKdsItemEvent(savedItem.getOrder().getBranchId(), "KDS_ITEM_UPDATED", savedItem.getId());
         broadcastOrderCookingStatus(savedItem.getOrder());
 
