@@ -19,6 +19,7 @@ import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemModifierRequ
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
+import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemStatusRequest;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemCookingStatusResponse;
@@ -171,7 +172,8 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     @Transactional
-    public OrderItemResponse updateStatus(String orderItemId, OrderItemStatus status) {
+    public OrderItemResponse updateStatus(String orderItemId, UpdateOrderItemStatusRequest request) {
+        OrderItemStatus status = request.getStatus();
         OrderItem orderItem = orderItemRepository.findById(orderItemId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
 
@@ -247,7 +249,21 @@ public class OrderItemServiceImpl implements OrderItemService {
             if (currentStatus != OrderItemStatus.PENDING && currentStatus != OrderItemStatus.IN_PROGRESS) {
                 throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
             }
+            if (!StringUtils.hasText(request.getReason())) {
+                throw new AppException(ErrorCode.ORDER_ITEM_CANCEL_REASON_REQUIRED);
+            }
             orderItem.setPreparedBy(null);
+            orderItem.setCancelReason(request.getReason());
+            if (currentEmployeeId != null) {
+                orderItem.setCancelledBy(currentEmployeeId);
+            }
+
+            // Recalculate financials (Phương án A: Đầu bếp hủy món)
+            Order order = orderItem.getOrder();
+            BigDecimal updatedSubtotal = order.getSubtotal().subtract(orderItem.getSubtotal());
+            order.setSubtotal(updatedSubtotal.max(BigDecimal.ZERO));
+            recalculateOrderFinancials(order);
+            orderRepository.save(order);
         } else if (status == OrderItemStatus.SERVED) {
             if (currentStatus != OrderItemStatus.READY_TO_SERVE) {
                 throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
@@ -264,14 +280,6 @@ public class OrderItemServiceImpl implements OrderItemService {
         if (status == OrderItemStatus.READY_TO_SERVE) {
             triggerReadyToServeNotification(savedItem);
         }
-
-        // Broadcast KDS update to kitchen displays in branch
-        sseEmitterService.broadcastToBranch(
-                savedItem.getOrder().getBranchId(),
-                "KDS_ITEM_UPDATED",
-                savedItem.getId(),
-                StartDefinedOrgPermission.ORDER_READ
-            );
 
         // Broadcast cooking status update to customer SSE subscribers
         broadcastKdsItemEvent(savedItem.getOrder().getBranchId(), "KDS_ITEM_UPDATED", savedItem.getId());

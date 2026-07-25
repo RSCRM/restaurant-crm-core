@@ -11,12 +11,15 @@ import com.restaurant.crm.modules.erp.notification.mapper.NotificationMapper;
 import com.restaurant.crm.modules.erp.notification.service.interfaces.NotificationService;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
+import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemStatusRequest;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemResponse;
 import com.restaurant.crm.modules.erp.order.entity.Order;
 import com.restaurant.crm.modules.erp.order.entity.OrderItem;
 import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import com.restaurant.crm.modules.erp.order.mapper.OrderItemMapper;
 import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
+import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
+import com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository;
 import com.restaurant.crm.modules.erp.order.service.impl.OrderItemServiceImpl;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.entity.TableArea;
@@ -30,6 +33,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -74,6 +78,12 @@ public class KitchenOrderTests {
     @Mock
     NotificationMapper notificationMapper;
 
+    @Mock
+    OrderRepository orderRepository;
+
+    @Mock
+    CustomerVoucherRepository customerVoucherRepository;
+
     @InjectMocks
     OrderItemServiceImpl orderItemService;
 
@@ -107,7 +117,7 @@ public class KitchenOrderTests {
         try (MockedStatic<AuthUtils> authUtilsMockedStatic = Mockito.mockStatic(AuthUtils.class)) {
             authUtilsMockedStatic.when(AuthUtils::getEmployeeId).thenReturn(employeeId);
 
-            OrderItemResponse response = orderItemService.updateStatus(itemId, OrderItemStatus.IN_PROGRESS);
+            OrderItemResponse response = orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.IN_PROGRESS).build());
 
             assertNotNull(response);
             assertEquals(OrderItemStatus.IN_PROGRESS, response.getStatus());
@@ -204,7 +214,7 @@ public class KitchenOrderTests {
             authUtilsMockedStatic.when(AuthUtils::getEmployeeId).thenReturn(chefId);
 
             // Execute status update to READY_TO_SERVE
-            OrderItemResponse response = orderItemService.updateStatus(itemId, OrderItemStatus.READY_TO_SERVE);
+            OrderItemResponse response = orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.READY_TO_SERVE).build());
 
             assertNotNull(response);
             assertEquals(OrderItemStatus.READY_TO_SERVE, response.getStatus());
@@ -230,7 +240,7 @@ public class KitchenOrderTests {
         when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(orderItem));
 
         AppException exception = assertThrows(AppException.class, () -> {
-            orderItemService.updateStatus(itemId, OrderItemStatus.IN_PROGRESS);
+            orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.IN_PROGRESS).build());
         });
 
         assertEquals(ErrorCode.ORDER_ITEM_ALREADY_ACCEPTED, exception.getErrorCode());
@@ -271,7 +281,7 @@ public class KitchenOrderTests {
         try (MockedStatic<AuthUtils> authUtilsMockedStatic = Mockito.mockStatic(AuthUtils.class)) {
             authUtilsMockedStatic.when(AuthUtils::getEmployeeId).thenReturn(employeeId);
 
-            OrderItemResponse response = orderItemService.updateStatus(itemId, OrderItemStatus.READY_TO_SERVE);
+            OrderItemResponse response = orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.READY_TO_SERVE).build());
 
             assertNotNull(response);
             assertEquals(OrderItemStatus.READY_TO_SERVE, response.getStatus());
@@ -303,7 +313,7 @@ public class KitchenOrderTests {
         when(productRepository.findById(productId)).thenReturn(Optional.of(food));
 
         AppException exception = assertThrows(AppException.class, () -> {
-            orderItemService.updateStatus(itemId, OrderItemStatus.READY_TO_SERVE);
+            orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.READY_TO_SERVE).build());
         });
 
         assertEquals(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION, exception.getErrorCode());
@@ -331,7 +341,7 @@ public class KitchenOrderTests {
             authUtilsMockedStatic.when(AuthUtils::getEmployeeId).thenReturn(otherChefId);
 
             AppException exception = assertThrows(AppException.class, () -> {
-                orderItemService.updateStatus(itemId, OrderItemStatus.READY_TO_SERVE);
+                orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.READY_TO_SERVE).build());
             });
 
             assertEquals(ErrorCode.ORDER_ITEM_NOT_PREPARED_BY_YOU, exception.getErrorCode());
@@ -363,7 +373,7 @@ public class KitchenOrderTests {
         when(orderItemRepository.findByOrderId(any())).thenReturn(Collections.singletonList(orderItem));
         when(orderItemMapper.toOrderItemResponse(any(OrderItem.class))).thenReturn(expectedResponse);
 
-        OrderItemResponse response = orderItemService.updateStatus(itemId, OrderItemStatus.PENDING);
+        OrderItemResponse response = orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.PENDING).build());
 
         assertNotNull(response);
         assertEquals(OrderItemStatus.PENDING, response.getStatus());
@@ -384,7 +394,7 @@ public class KitchenOrderTests {
         when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(orderItem));
 
         AppException exception = assertThrows(AppException.class, () -> {
-            orderItemService.updateStatus(itemId, OrderItemStatus.IN_PROGRESS);
+            orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.IN_PROGRESS).build());
         });
 
         assertEquals(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION, exception.getErrorCode());
@@ -397,9 +407,111 @@ public class KitchenOrderTests {
         when(orderItemRepository.findById(itemId)).thenReturn(Optional.empty());
 
         assertThrows(AppException.class, () -> {
-            orderItemService.updateStatus(itemId, OrderItemStatus.IN_PROGRESS);
+            orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.IN_PROGRESS).build());
         });
 
         verify(orderItemRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateStatus_CancelItem_RecalculatesOrderFinancials() {
+        String itemId = "item-1";
+        String branchId = "branch-1";
+
+        Order order = Order.builder()
+                .id("order-1")
+                .branchId(branchId)
+                .subtotal(BigDecimal.valueOf(150000))
+                .discountAmount(BigDecimal.valueOf(15000))
+                .totalAmount(BigDecimal.valueOf(135000))
+                .build();
+
+        OrderItem orderItem = OrderItem.builder()
+                .id(itemId)
+                .status(OrderItemStatus.PENDING)
+                .subtotal(BigDecimal.valueOf(50000))
+                .order(order)
+                .build();
+
+        OrderItemResponse expectedResponse = OrderItemResponse.builder()
+                .orderItemId(itemId)
+                .status(OrderItemStatus.CANCELLED)
+                .build();
+
+        when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(orderItem));
+        when(customerVoucherRepository.findByOrderId("order-1")).thenReturn(Optional.empty());
+        when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderItemRepository.findByOrderId(any())).thenReturn(Collections.singletonList(orderItem));
+        when(orderItemMapper.toOrderItemResponse(any(OrderItem.class))).thenReturn(expectedResponse);
+
+        OrderItemResponse response = orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.CANCELLED).reason("Out of stock").build());
+
+        assertNotNull(response);
+        assertEquals(OrderItemStatus.CANCELLED, response.getStatus());
+
+        // original subtotal (150k) - cancelled item (50k) = 100k
+        assertEquals(0, BigDecimal.valueOf(100000).compareTo(order.getSubtotal()));
+        // no voucher -> discount = 0
+        assertEquals(0, BigDecimal.ZERO.compareTo(order.getDiscountAmount()));
+        // total = 100k
+        assertEquals(0, BigDecimal.valueOf(100000).compareTo(order.getTotalAmount()));
+
+        verify(orderRepository, times(1)).save(order);
+    }
+
+    @Test
+    public void testUpdateStatus_CancelItem_NoReason_ThrowsException() {
+        String itemId = "item-1";
+        OrderItem orderItem = OrderItem.builder()
+                .id(itemId)
+                .status(OrderItemStatus.PENDING)
+                .build();
+
+        when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(orderItem));
+
+        AppException exception = assertThrows(AppException.class, () -> {
+            orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.CANCELLED).reason(null).build());
+        });
+
+        assertEquals(ErrorCode.ORDER_ITEM_CANCEL_REASON_REQUIRED, exception.getErrorCode());
+        verify(orderItemRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateStatus_CancelItem_WithReason_SavesAuditDetails() {
+        String itemId = "item-1";
+        String branchId = "branch-1";
+        String employeeId = "chef-1";
+
+        Order order = Order.builder().id("order-1").branchId(branchId).subtotal(BigDecimal.valueOf(100)).totalAmount(BigDecimal.valueOf(100)).build();
+        OrderItem orderItem = OrderItem.builder()
+                .id(itemId)
+                .status(OrderItemStatus.PENDING)
+                .subtotal(BigDecimal.valueOf(100))
+                .order(order)
+                .build();
+
+        OrderItemResponse expectedResponse = OrderItemResponse.builder()
+                .orderItemId(itemId)
+                .status(OrderItemStatus.CANCELLED)
+                .build();
+
+        when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(orderItem));
+        when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderItemRepository.findByOrderId(any())).thenReturn(Collections.singletonList(orderItem));
+        when(orderItemMapper.toOrderItemResponse(any(OrderItem.class))).thenReturn(expectedResponse);
+
+        try (MockedStatic<AuthUtils> authUtilsMockedStatic = Mockito.mockStatic(AuthUtils.class)) {
+            authUtilsMockedStatic.when(AuthUtils::getEmployeeId).thenReturn(employeeId);
+
+            OrderItemResponse response = orderItemService.updateStatus(itemId, UpdateOrderItemStatusRequest.builder().status(OrderItemStatus.CANCELLED).reason("Out of stock").build());
+
+            assertNotNull(response);
+            assertEquals(OrderItemStatus.CANCELLED, response.getStatus());
+            assertEquals("Out of stock", orderItem.getCancelReason());
+            assertEquals(employeeId, orderItem.getCancelledBy());
+        }
     }
 }
