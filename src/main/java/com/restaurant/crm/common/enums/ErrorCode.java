@@ -181,6 +181,23 @@ public enum ErrorCode {
     SUBSCRIPTION_ALREADY_REVOKED("SUB_1001", "Subscription is already revoked", HttpStatus.CONFLICT),
     ACTIVE_SUBSCRIPTION_EXISTS("SUB_1002", "Organization already has an active subscription", HttpStatus.CONFLICT),
     LICENSE_LOCKED_CANNOT_ISSUE("SUB_1003", "License is locked, cannot issue new subscription", HttpStatus.CONFLICT),
+
+    // ==== TABLE QR / CUSTOMER SESSION ERRORS ====
+    TQR_TOKEN_INVALID("TQR_1000", "QR token is malformed or invalid", HttpStatus.BAD_REQUEST),
+    TQR_TOKEN_SIGNATURE_MISMATCH("TQR_1001", "QR token signature does not match", HttpStatus.UNAUTHORIZED),
+    TQR_TOKEN_CLAIM_MISSING("TQR_1002", "QR token is missing a required claim", HttpStatus.BAD_REQUEST),
+    TQR_VERSION_OUTDATED("TQR_1003", "QR version is outdated, please rescan the printed QR", HttpStatus.CONFLICT),
+    TQR_CONTEXT_MISMATCH("TQR_1004", "QR context does not match branch/table/session", HttpStatus.FORBIDDEN),
+    TQR_TABLE_NOT_IN_BRANCH("TQR_1005", "Table does not belong to the branch", HttpStatus.NOT_FOUND),
+    TQR_SESSION_NOT_FOUND("TQR_1006", "Ordering session not found or already closed", HttpStatus.NOT_FOUND),
+    TQR_SESSION_EXPIRED("TQR_1007", "Ordering session has expired", HttpStatus.UNAUTHORIZED),
+    TQR_SESSION_LOCKED_FOR_PAYMENT("TQR_1008", "Ordering session is locked for payment", HttpStatus.CONFLICT),
+    TQR_SESSION_MEMBER_LIMIT("TQR_1009", "Ordering session member limit reached", HttpStatus.CONFLICT),
+    TQR_GENERATION_FAILED("TQR_1010", "QR token generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+    TQR_TABLE_SESSION_EXISTS("TQR_1011", "Table already has an active session, ask the owner for the group QR", HttpStatus.CONFLICT),
+    TQR_GROUP_QR_EXPIRED("TQR_1012", "Group QR has expired, ask the owner for a new one", HttpStatus.UNAUTHORIZED),
+    TQR_NOT_SESSION_OWNER("TQR_1013", "Only the session owner can perform this action", HttpStatus.FORBIDDEN),
+    TQR_OTP_TICKET_INVALID("TQR_1014", "OTP ticket is invalid or expired", HttpStatus.UNAUTHORIZED),
     ;
 
     String code;
