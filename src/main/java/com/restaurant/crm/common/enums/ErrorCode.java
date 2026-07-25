@@ -58,6 +58,14 @@ public enum ErrorCode {
     EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ORG_ROLE_NOT_FOUND("EMP_1004", "Org role not found", HttpStatus.NOT_FOUND),
+    EMPLOYEE_SALARY_INVALID("EMP_1005", "Salary must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_USERNAME_REQUIRED("EMP_1006", "Username is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_EMAIL_REQUIRED("EMP_1007", "Email is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_PHONE_REQUIRED("EMP_1008", "Phone is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_BRANCH_REQUIRED("EMP_1009", "Branch id is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_START_DATE_REQUIRED("EMP_1010", "Start date is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ORG_ROLE_REQUIRED("EMP_1011", "Org role id is required", HttpStatus.BAD_REQUEST),
 
     // ==== ATTENDANCE ERRORS ====
     ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),

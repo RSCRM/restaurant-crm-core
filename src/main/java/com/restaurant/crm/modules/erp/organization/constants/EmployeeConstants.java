@@ -17,6 +17,7 @@ public class EmployeeConstants {
     public static final String COL_PHONE = "phone";
     public static final String COL_START_DATE = "start_date";
     public static final String COL_END_DATE = "end_date";
+    public static final String COL_SALARY = "salary";
 
     //======= Employee column definition ========
     public static final String EMAIL_DEFINITION = "VARCHAR(100)";
