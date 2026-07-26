@@ -69,6 +69,14 @@ public enum ErrorCode {
     ATTENDANCE_QR_CONTEXT_MISMATCH("ATT_1006", "Attendance QR does not match shift context", HttpStatus.FORBIDDEN),
     ATTENDANCE_QR_GENERATION_FAILED("ATT_1007", "Attendance QR generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // ==== SCHEDULE ERRORS ====
+    SCHEDULE_DATE_RANGE_INVALID("SCHEDULE_1000", "Schedule date range is invalid", HttpStatus.BAD_REQUEST),
+    SCHEDULE_DATE_RANGE_EXCEEDED(
+            "SCHEDULE_1001",
+            "Schedule date range cannot exceed 31 days",
+            HttpStatus.BAD_REQUEST
+    ),
+
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
     ORGANIZATION_EXISTS("ORG_1001", "Organization already exists", HttpStatus.BAD_REQUEST),
@@ -84,7 +92,6 @@ public enum ErrorCode {
     BRANCH_MANAGER_NOT_FOUND("BRANCH_MANAGER_1000", "Branch manager not found", HttpStatus.NOT_FOUND),
     BRANCH_MANAGER_ALREADY_ASSIGNED("BRANCH_MANAGER_1001", "Branch manager is already assigned to another branch", HttpStatus.BAD_REQUEST),
     BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1002", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
-    BRANCH_MANAGER_INVALID_REQUEST("BRANCH_MANAGER_1003", "Branch manager request is invalid", HttpStatus.BAD_REQUEST),
 
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),
@@ -97,6 +104,11 @@ public enum ErrorCode {
     ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
     // ==== BOOKING ERRORS ====
     BOOKING_NOT_FOUND("BOOKING_1000", "Booking not found", HttpStatus.NOT_FOUND),
+
+    // ==== TABLE ERRORS ====
+    TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
+    TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
+
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
     CUSTOMER_PHONE_REQUIRED("CUST_1001", "Phone number is required", HttpStatus.BAD_REQUEST),
@@ -116,17 +128,29 @@ public enum ErrorCode {
     ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
     ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
     ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_ALREADY_ACCEPTED("ORDER_1013", "Order item has already been accepted by another chef", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_INVALID_STATUS_TRANSITION("ORDER_1014", "Invalid status transition for order item", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_NOT_PREPARED_BY_YOU("ORDER_1015", "You are not the chef who accepted this order item", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_CANCEL_REASON_REQUIRED("ORDER_1016", "Reason is required when cancelling order item", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 
     // ==== TABLE OPERATION ERRORS ====
-    TABLE_NOT_FOUND("TABLE_1000", "Table not found in branch", HttpStatus.NOT_FOUND),
-    TABLE_NOT_AVAILABLE("TABLE_1001", "Table is not available", HttpStatus.CONFLICT),
-    TABLE_SESSION_ACTIVE_EXISTS("TABLE_1002", "Table already has an active session", HttpStatus.CONFLICT),
-    TABLE_PARTY_SIZE_EXCEEDS_CAPACITY("TABLE_1003", "Party size exceeds table capacity", HttpStatus.BAD_REQUEST),
-    TABLE_SESSION_NOT_FOUND("TABLE_1004", "Table session not found", HttpStatus.NOT_FOUND),
-    TABLE_SESSION_NOT_ACTIVE("TABLE_1005", "Table session is not active", HttpStatus.CONFLICT),
-    TABLE_TRANSFER_SAME_TABLE("TABLE_1006", "Source and target table must be different", HttpStatus.BAD_REQUEST),
-    TABLE_SESSION_UNPAID_ORDER("TABLE_1007", "Table session has an unpaid order", HttpStatus.CONFLICT),
+    TABLE_NOT_FOUND("TABLE_SESSION_1000", "Table not found in branch", HttpStatus.NOT_FOUND),
+    TABLE_NOT_AVAILABLE("TABLE_SESSION_1001", "Table is not available", HttpStatus.CONFLICT),
+    TABLE_SESSION_ACTIVE_EXISTS("TABLE_SESSION_1002", "Table already has an active session", HttpStatus.CONFLICT),
+    TABLE_PARTY_SIZE_EXCEEDS_CAPACITY(
+            "TABLE_SESSION_1003",
+            "Party size exceeds table capacity",
+            HttpStatus.BAD_REQUEST
+    ),
+    TABLE_SESSION_NOT_FOUND("TABLE_SESSION_1004", "Table session not found", HttpStatus.NOT_FOUND),
+    TABLE_SESSION_NOT_ACTIVE("TABLE_SESSION_1005", "Table session is not active", HttpStatus.CONFLICT),
+    TABLE_TRANSFER_SAME_TABLE(
+            "TABLE_SESSION_1006",
+            "Source and target table must be different",
+            HttpStatus.BAD_REQUEST
+    ),
+    TABLE_SESSION_UNPAID_ORDER("TABLE_SESSION_1007", "Table session has an unpaid order", HttpStatus.CONFLICT),
 
     // ==== INGREDIENT ERRORS ====
     INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
@@ -158,6 +182,7 @@ public enum ErrorCode {
     CUSTOMER_VOUCHER_NOT_FOUND("LOY_1004", "Customer voucher not found", HttpStatus.NOT_FOUND),
     CUSTOMER_VOUCHER_ALREADY_USED("LOY_1005", "Voucher has already been used", HttpStatus.BAD_REQUEST),
     CUSTOMER_VOUCHER_MIN_BILL_NOT_MET("LOY_1006", "Minimum bill amount not met", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
     VOUCHER_TITLE_REQUIRED("LOY_1007", "Voucher title is required", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_REQUIRED("LOY_1008", "Voucher discount percent is required", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_INVALID("LOY_1009", "Voucher discount percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
@@ -166,7 +191,6 @@ public enum ErrorCode {
     VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
-    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
@@ -191,6 +215,35 @@ public enum ErrorCode {
     SUBSCRIPTION_ALREADY_REVOKED("SUB_1001", "Subscription is already revoked", HttpStatus.CONFLICT),
     ACTIVE_SUBSCRIPTION_EXISTS("SUB_1002", "Organization already has an active subscription", HttpStatus.CONFLICT),
     LICENSE_LOCKED_CANNOT_ISSUE("SUB_1003", "License is locked, cannot issue new subscription", HttpStatus.CONFLICT),
+
+    // ==== TABLE QR / CUSTOMER SESSION ERRORS ====
+    TQR_TOKEN_INVALID("TQR_1000", "QR token is malformed or invalid", HttpStatus.BAD_REQUEST),
+    TQR_TOKEN_SIGNATURE_MISMATCH("TQR_1001", "QR token signature does not match", HttpStatus.UNAUTHORIZED),
+    TQR_TOKEN_CLAIM_MISSING("TQR_1002", "QR token is missing a required claim", HttpStatus.BAD_REQUEST),
+    TQR_VERSION_OUTDATED("TQR_1003", "QR version is outdated, please rescan the printed QR", HttpStatus.CONFLICT),
+    TQR_CONTEXT_MISMATCH("TQR_1004", "QR context does not match branch/table/session", HttpStatus.FORBIDDEN),
+    TQR_TABLE_NOT_IN_BRANCH("TQR_1005", "Table does not belong to the branch", HttpStatus.NOT_FOUND),
+    TQR_SESSION_NOT_FOUND("TQR_1006", "Ordering session not found or already closed", HttpStatus.NOT_FOUND),
+    TQR_SESSION_EXPIRED("TQR_1007", "Ordering session has expired", HttpStatus.UNAUTHORIZED),
+    TQR_SESSION_LOCKED_FOR_PAYMENT("TQR_1008", "Ordering session is locked for payment", HttpStatus.CONFLICT),
+    TQR_SESSION_MEMBER_LIMIT("TQR_1009", "Ordering session member limit reached", HttpStatus.CONFLICT),
+    TQR_GENERATION_FAILED("TQR_1010", "QR token generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+    TQR_TABLE_SESSION_EXISTS("TQR_1011", "Table already has an active session, ask the owner for the group QR", HttpStatus.CONFLICT),
+    TQR_GROUP_QR_EXPIRED("TQR_1012", "Group QR has expired, ask the owner for a new one", HttpStatus.UNAUTHORIZED),
+    TQR_NOT_SESSION_OWNER("TQR_1013", "Only the session owner can perform this action", HttpStatus.FORBIDDEN),
+    TQR_OTP_TICKET_INVALID("TQR_1014", "OTP ticket is invalid or expired", HttpStatus.UNAUTHORIZED),
+
+    // ==== CUSTOMER OTP ERRORS ====
+    OTP_INVALID("OTP_1000", "OTP code is invalid", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED("OTP_1001", "OTP code has expired or does not exist", HttpStatus.GONE),
+    OTP_MAX_ATTEMPTS("OTP_1002", "Too many wrong OTP attempts, phone temporarily locked", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_PHONE_LOCKED("OTP_1003", "Phone is temporarily locked, try again later", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_RESEND_TOO_SOON("OTP_1004", "Please wait before requesting another OTP", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_TABLE_RATE_LIMIT("OTP_1005", "Too many OTP requests for this table, try again later", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_SEND_FAILED("OTP_1006", "Failed to send OTP", HttpStatus.BAD_GATEWAY),
+    OTP_CUSTOMER_LOCKED("OTP_1007", "Customer account is locked", HttpStatus.FORBIDDEN),
+    OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
+    OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     String code;
