@@ -25,6 +25,7 @@ import com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucher
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -69,6 +70,8 @@ public class OrderCookingStatusTests {
     CustomerVoucherService customerVoucherService;
     @Mock
     CustomerVoucherRepository customerVoucherRepository;
+    @Mock
+    SseEmitterService sseEmitterService;
 
     @InjectMocks
     OrderServiceImpl orderService;
@@ -116,6 +119,8 @@ public class OrderCookingStatusTests {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(productRepository.findByIdAndBranchId("prod-1", branchId)).thenReturn(Optional.of(product));
         when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId("order-1")).thenReturn(Collections.emptyList());
 
         CreateOrderResponse response = orderService.create(request);
 
@@ -271,6 +276,8 @@ public class OrderCookingStatusTests {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(productRepository.findByIdAndBranchId("prod-1", branchId)).thenReturn(Optional.of(product));
         when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId("order-1")).thenReturn(Collections.emptyList());
 
         CreateOrderResponse response = orderService.create(request);
 

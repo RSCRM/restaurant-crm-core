@@ -9,6 +9,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -35,6 +36,11 @@ import lombok.experimental.SuperBuilder;
         name = "restaurant_tables",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_restaurant_tables_area_table_number", columnNames = {"area_id", "table_number"})
+        },
+        indexes = {
+                @Index(name = "idx_restaurant_tables_table_number", columnList = "table_number"),
+                @Index(name = "idx_restaurant_tables_status", columnList = "status"),
+                @Index(name = "idx_restaurant_tables_capacity", columnList = "capacity")
         }
 )
 @AttributeOverride(name = "id", column = @Column(name = "table_id", columnDefinition = "VARCHAR(36)"))
