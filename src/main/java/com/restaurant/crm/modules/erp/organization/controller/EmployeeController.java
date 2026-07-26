@@ -16,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -66,6 +67,20 @@ public class EmployeeController {
             @Valid @RequestBody AssignRoleRequest request
     ) {
         EmployeeResponse data = employeeService.assignRole(id, request);
+        return ResponseEntity.ok(
+                ApiResponse.<EmployeeResponse>builder()
+                        .success(ApiConstant.SUCCESS)
+                        .data(data)
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/employees/{id}/role")
+    @PreAuthorize("@employeeAccessChecker.canManage('" + EmployeeConstants.EMPLOYEE_ROLE_REVOKE + "')")
+    public ResponseEntity<ApiResponse<EmployeeResponse>> revokeRole(
+            @PathVariable String id
+    ) {
+        EmployeeResponse data = employeeService.revokeRole(id);
         return ResponseEntity.ok(
                 ApiResponse.<EmployeeResponse>builder()
                         .success(ApiConstant.SUCCESS)

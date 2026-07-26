@@ -12,4 +12,6 @@ public interface EmployeeService {
     EmployeeResponse addEmployee(CreateEmployeeRequest request);
 
     EmployeeResponse assignRole(String employeeId, AssignRoleRequest request);
+
+    EmployeeResponse revokeRole(String employeeId);
 }

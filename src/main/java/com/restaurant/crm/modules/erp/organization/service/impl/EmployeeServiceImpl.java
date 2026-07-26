@@ -124,6 +124,20 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
+    public EmployeeResponse revokeRole(String employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+
+        validateBranchAccess(employee.getBranch().getId());
+
+        // idempotent: neu da khong co role thi tra ve binh thuong
+        employee.setOrgRole(null);
+        employee = employeeRepository.save(employee);
+        return employeeMapper.toEmployeeResponse(employee);
+    }
+
+    @Override
+    @Transactional
     public EmployeeBranchAssignmentResponse assignToBranch(String branchId, EmployeeBranchAssignmentRequest request) {
         String ownerId = getCurrentOwnerId();
         OrganizationBranch targetBranch = findBranch(branchId, ownerId);
