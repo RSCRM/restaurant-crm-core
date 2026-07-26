@@ -23,4 +23,6 @@ public class UpdateOrderItemStatusRequest {
 
     @NotNull(message = "Status cannot be null")
     OrderItemStatus status;
+
+    String reason;
 }
