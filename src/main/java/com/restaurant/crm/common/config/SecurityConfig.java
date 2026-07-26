@@ -34,6 +34,8 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private static final String TOKEN_TYPE_CONTEXT = "CONTEXT";
+    private static final String TOKEN_TYPE_CUSTOMER_SESSION = "CUSTOMER_SESSION";
+    private static final String ROLE_CUSTOMER_SESSION = "ROLE_CUSTOMER_SESSION";
 
     private final String[] PUBLIC_POST_ENDPOINT = {
             "/api/v1/orders", // Also allow customers to place orders without token
@@ -41,7 +43,11 @@ public class SecurityConfig {
             "/api/v1/auth/login",
             "/api/v1/auth/introspect",
             "/api/v1/auth/register",
-            "/api/v1/crm/customers/identify" // Make customer identification public
+            "/api/v1/crm/customers/identify", // Make customer identification public
+            // uc-c-02 — QR table ordering (exact match, no wildcard)
+            "/api/v1/public/customer/qr/resolve",
+            "/api/v1/public/customer/qr/session",
+            "/api/v1/public/customer/qr/session/join"
     };
 
     private final String[] PUBLIC_GET_ENDPOINT = {
@@ -106,7 +112,10 @@ public class SecurityConfig {
 
             String tokenType = jwt.getClaimAsString(JwtClaimSetConstant.CLAIM_TYPE);
 
-            if (TOKEN_TYPE_CONTEXT.equals(tokenType)) {
+            if (TOKEN_TYPE_CUSTOMER_SESSION.equals(tokenType)) {
+                // Customer session token (uc-c-02): single authority, no staff roles/permissions.
+                authorities.add(new SimpleGrantedAuthority(ROLE_CUSTOMER_SESSION));
+            } else if (TOKEN_TYPE_CONTEXT.equals(tokenType)) {
                 // Context Token: extract orgRole + permissions
                 String orgRole = jwt.getClaimAsString(JwtClaimSetConstant.CLAIM_ORG_ROLE);
                 if (orgRole != null) {
