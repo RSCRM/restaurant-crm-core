@@ -59,16 +59,6 @@ public enum ErrorCode {
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
 
-    // ==== ATTENDANCE ERRORS ====
-    ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),
-    ATTENDANCE_ALREADY_CHECKED_IN("ATT_1001", "Shift already checked in", HttpStatus.CONFLICT),
-    ATTENDANCE_OPEN_RECORD_NOT_FOUND("ATT_1002", "No open attendance found", HttpStatus.NOT_FOUND),
-    ATTENDANCE_DATE_RANGE_INVALID("ATT_1003", "Attendance date range is invalid", HttpStatus.BAD_REQUEST),
-    ATTENDANCE_QR_INVALID("ATT_1004", "Attendance QR is invalid", HttpStatus.BAD_REQUEST),
-    ATTENDANCE_QR_EXPIRED("ATT_1005", "Attendance QR has expired", HttpStatus.BAD_REQUEST),
-    ATTENDANCE_QR_CONTEXT_MISMATCH("ATT_1006", "Attendance QR does not match shift context", HttpStatus.FORBIDDEN),
-    ATTENDANCE_QR_GENERATION_FAILED("ATT_1007", "Attendance QR generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
-
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
     ORGANIZATION_EXISTS("ORG_1001", "Organization already exists", HttpStatus.BAD_REQUEST),
@@ -84,7 +74,6 @@ public enum ErrorCode {
     BRANCH_MANAGER_NOT_FOUND("BRANCH_MANAGER_1000", "Branch manager not found", HttpStatus.NOT_FOUND),
     BRANCH_MANAGER_ALREADY_ASSIGNED("BRANCH_MANAGER_1001", "Branch manager is already assigned to another branch", HttpStatus.BAD_REQUEST),
     BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1002", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
-    BRANCH_MANAGER_INVALID_REQUEST("BRANCH_MANAGER_1003", "Branch manager request is invalid", HttpStatus.BAD_REQUEST),
 
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),
@@ -164,7 +153,6 @@ public enum ErrorCode {
     VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
-    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
