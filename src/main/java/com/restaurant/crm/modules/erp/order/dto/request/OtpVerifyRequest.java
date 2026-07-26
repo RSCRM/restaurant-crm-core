@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.dto.request;
+package com.restaurant.crm.modules.erp.order.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;

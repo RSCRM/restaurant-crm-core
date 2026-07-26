@@ -44,7 +44,7 @@ public class OtpTicketServiceImpl implements OtpTicketService {
     String otpSignerKey;
 
     @Override
-    public IssuedTicket issue(String customerPhone, String organizationId, String branchId, String tableId) {
+    public IssuedTicket issue(String customerPhone, String branchId, String tableId) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(CustomerOtpConstants.TICKET_TTL_SECONDS);
         try {
@@ -55,7 +55,6 @@ public class OtpTicketServiceImpl implements OtpTicketService {
                     .expirationTime(Date.from(expiresAt))
                     .claim(JwtClaimSetConstant.CLAIM_TYPE, CustomerOtpConstants.TICKET_TOKEN_TYPE)
                     .claim(JwtClaimSetConstant.CLAIM_CUSTOMER_PHONE, customerPhone)
-                    .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, organizationId)
                     .claim(JwtClaimSetConstant.CLAIM_BRANCH_ID, branchId)
                     .claim(JwtClaimSetConstant.CLAIM_TABLE_ID, tableId)
                     .build();
@@ -97,13 +96,12 @@ public class OtpTicketServiceImpl implements OtpTicketService {
             }
 
             String customerPhone = claims.getStringClaim(JwtClaimSetConstant.CLAIM_CUSTOMER_PHONE);
-            String organizationId = claims.getStringClaim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID);
             String tableId = claims.getStringClaim(JwtClaimSetConstant.CLAIM_TABLE_ID);
-            if (isBlank(customerPhone) || isBlank(organizationId) || isBlank(tableId)) {
+            if (isBlank(customerPhone) || isBlank(tableId)) {
                 return Optional.empty();
             }
 
-            return Optional.of(new OtpTicketPayload(customerPhone, organizationId, branchId, tableId));
+            return Optional.of(new OtpTicketPayload(customerPhone, branchId, tableId));
         } catch (ParseException | JOSEException | GeneralSecurityException exception) {
             return Optional.empty();
         }

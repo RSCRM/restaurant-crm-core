@@ -6,7 +6,6 @@ package com.restaurant.crm.modules.crm.customer_account.model;
  */
 public record OtpTicketPayload(
         String customerPhone,
-        String organizationId,
         String branchId,
         String tableId
 ) {

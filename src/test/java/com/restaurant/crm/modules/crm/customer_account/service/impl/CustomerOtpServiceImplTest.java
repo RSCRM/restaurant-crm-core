@@ -2,19 +2,14 @@ package com.restaurant.crm.modules.crm.customer_account.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.dto.request.OtpRequestRequest;
-import com.restaurant.crm.modules.crm.customer_account.dto.request.OtpVerifyRequest;
-import com.restaurant.crm.modules.crm.customer_account.dto.response.OtpRequestResponse;
-import com.restaurant.crm.modules.crm.customer_account.dto.response.OtpVerifyResponse;
 import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
 import com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus;
 import com.restaurant.crm.modules.crm.customer_account.model.OtpCodeEntry;
+import com.restaurant.crm.modules.crm.customer_account.model.OtpRequestResult;
 import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
 import com.restaurant.crm.modules.crm.customer_account.repository.OtpRedisRepository;
 import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpTicketService;
 import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpSender;
-import com.restaurant.crm.modules.erp.order.model.TableQrPayload;
-import com.restaurant.crm.modules.erp.order.service.interfaces.TableQrTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,13 +40,11 @@ class CustomerOtpServiceImplTest {
 
     private static final String TEST_KEY =
             "9a4f2c8d3b7e1a5f2c8d3b7e1a5f2c8d3b7e1a5f2c8d3b7e1a5f2c8d3b7e1a5f";
-    private static final String ORG = "organization-1";
     private static final String BRANCH = "branch-1";
     private static final String TABLE = "table-1";
     private static final String PHONE = "0987654321";
     private static final String CODE = "123456";
 
-    @Mock TableQrTokenService tableQrTokenService;
     @Mock CustomerRepository customerRepository;
     @Mock OtpRedisRepository otpRedisRepository;
     @Mock OtpTicketService otpTicketService;
@@ -66,28 +59,24 @@ class CustomerOtpServiceImplTest {
     // ==== request ====
 
     @Test
-    void requestSendsCodeAndReturnsMaskedResponse() {
-        stubQr();
+    void requestSendsCodeAndReturnsMaskedResult() {
         when(customerRepository.findByPhone(PHONE)).thenReturn(Optional.empty());
         when(otpRedisRepository.isPhoneLocked(PHONE)).thenReturn(false);
         when(otpRedisRepository.isResendBlocked(PHONE)).thenReturn(false);
         when(otpRedisRepository.incrementTableCounter(eq(BRANCH), eq(TABLE), anyLong())).thenReturn(1L);
 
-        OtpRequestResponse response = service.request(requestBody("+84987654321"));
+        OtpRequestResult result = service.request("+84987654321", BRANCH, TABLE);
 
-        assertEquals("0987***321", response.getMaskedPhone());
-        assertEquals(3, response.getAttemptsAllowed());
+        assertEquals("0987***321", result.maskedPhone());
         verify(otpRedisRepository).saveCode(eq(PHONE), anyString(), eq(BRANCH), eq(TABLE), anyLong());
-        verify(otpRedisRepository).markResend(eq(PHONE), anyLong());
         verify(otpSender).send(eq(PHONE), anyString());
+        verify(otpRedisRepository).markResend(eq(PHONE), anyLong());
     }
 
     @Test
     void requestRejectsInvalidPhone() {
-        stubQr();
-
         AppException exception = assertThrows(AppException.class,
-                () -> service.request(requestBody("0123456789")));
+                () -> service.request("0123456789", BRANCH, TABLE));
 
         assertEquals(ErrorCode.CUSTOMER_PHONE_INVALID, exception.getErrorCode());
         verify(otpSender, never()).send(anyString(), anyString());
@@ -96,12 +85,11 @@ class CustomerOtpServiceImplTest {
 
     @Test
     void requestRejectsLockedCustomer() {
-        stubQr();
         when(customerRepository.findByPhone(PHONE)).thenReturn(Optional.of(
                 Customer.builder().phone(PHONE).status(CustomerStatus.LOCKED).build()));
 
         AppException exception = assertThrows(AppException.class,
-                () -> service.request(requestBody(PHONE)));
+                () -> service.request(PHONE, BRANCH, TABLE));
 
         assertEquals(ErrorCode.OTP_CUSTOMER_LOCKED, exception.getErrorCode());
         verify(otpSender, never()).send(anyString(), anyString());
@@ -109,47 +97,43 @@ class CustomerOtpServiceImplTest {
 
     @Test
     void requestRejectsWhenPhoneLocked() {
-        stubQr();
         when(customerRepository.findByPhone(PHONE)).thenReturn(Optional.empty());
         when(otpRedisRepository.isPhoneLocked(PHONE)).thenReturn(true);
 
         AppException exception = assertThrows(AppException.class,
-                () -> service.request(requestBody(PHONE)));
+                () -> service.request(PHONE, BRANCH, TABLE));
 
         assertEquals(ErrorCode.OTP_PHONE_LOCKED, exception.getErrorCode());
     }
 
     @Test
     void requestRejectsResendTooSoon() {
-        stubQr();
         when(customerRepository.findByPhone(PHONE)).thenReturn(Optional.empty());
         when(otpRedisRepository.isPhoneLocked(PHONE)).thenReturn(false);
         when(otpRedisRepository.isResendBlocked(PHONE)).thenReturn(true);
 
         AppException exception = assertThrows(AppException.class,
-                () -> service.request(requestBody(PHONE)));
+                () -> service.request(PHONE, BRANCH, TABLE));
 
         assertEquals(ErrorCode.OTP_RESEND_TOO_SOON, exception.getErrorCode());
     }
 
     @Test
     void requestRejectsTableRateLimit() {
-        stubQr();
         when(customerRepository.findByPhone(PHONE)).thenReturn(Optional.empty());
         when(otpRedisRepository.isPhoneLocked(PHONE)).thenReturn(false);
         when(otpRedisRepository.isResendBlocked(PHONE)).thenReturn(false);
         when(otpRedisRepository.incrementTableCounter(eq(BRANCH), eq(TABLE), anyLong())).thenReturn(21L);
 
         AppException exception = assertThrows(AppException.class,
-                () -> service.request(requestBody(PHONE)));
+                () -> service.request(PHONE, BRANCH, TABLE));
 
         assertEquals(ErrorCode.OTP_TABLE_RATE_LIMIT, exception.getErrorCode());
         verify(otpSender, never()).send(anyString(), anyString());
     }
 
     @Test
-    void requestKeepsStoredCodeWhenSendFails() {
-        stubQr();
+    void requestDoesNotBurnCooldownWhenSendFails() {
         when(customerRepository.findByPhone(PHONE)).thenReturn(Optional.empty());
         when(otpRedisRepository.isPhoneLocked(PHONE)).thenReturn(false);
         when(otpRedisRepository.isResendBlocked(PHONE)).thenReturn(false);
@@ -158,59 +142,59 @@ class CustomerOtpServiceImplTest {
                 .when(otpSender).send(eq(PHONE), anyString());
 
         AppException exception = assertThrows(AppException.class,
-                () -> service.request(requestBody(PHONE)));
+                () -> service.request(PHONE, BRANCH, TABLE));
 
         assertEquals(ErrorCode.OTP_SEND_FAILED, exception.getErrorCode());
         verify(otpRedisRepository).saveCode(eq(PHONE), anyString(), eq(BRANCH), eq(TABLE), anyLong());
-        verify(otpRedisRepository, never()).deleteCode(anyString());
+        verify(otpRedisRepository, never()).markResend(anyString(), anyLong()); // send failed → no cooldown
+        verify(otpRedisRepository, never()).deleteCode(anyString());            // stored code kept
     }
 
     // ==== verify ====
 
     @Test
     void verifyReturnsTicketAndClearsCodeOnCorrectCode() {
-        stubQrVerify();
         when(otpRedisRepository.findCode(PHONE))
                 .thenReturn(Optional.of(entry(hmac(PHONE, CODE), BRANCH, TABLE)));
-        when(otpTicketService.issue(PHONE, ORG, BRANCH, TABLE))
+        when(otpTicketService.issue(PHONE, BRANCH, TABLE))
                 .thenReturn(new OtpTicketService.IssuedTicket("otp-ticket", Instant.now().plusSeconds(300)));
 
-        OtpVerifyResponse response = service.verify(verifyBody(CODE));
+        String ticket = service.verify(PHONE, BRANCH, TABLE, CODE);
 
-        assertEquals("otp-ticket", response.getOtpTicket());
+        assertEquals("otp-ticket", ticket);
         verify(otpRedisRepository).deleteCode(PHONE);
         verify(otpRedisRepository).unlockPhone(PHONE);
     }
 
     @Test
     void verifyRejectsWhenNoCode() {
-        stubQrVerify();
         when(otpRedisRepository.findCode(PHONE)).thenReturn(Optional.empty());
 
-        AppException exception = assertThrows(AppException.class, () -> service.verify(verifyBody(CODE)));
+        AppException exception = assertThrows(AppException.class,
+                () -> service.verify(PHONE, BRANCH, TABLE, CODE));
 
         assertEquals(ErrorCode.OTP_EXPIRED, exception.getErrorCode());
     }
 
     @Test
     void verifyRejectsContextMismatch() {
-        stubQrVerify();
         when(otpRedisRepository.findCode(PHONE))
                 .thenReturn(Optional.of(entry(hmac(PHONE, CODE), BRANCH, "other-table")));
 
-        AppException exception = assertThrows(AppException.class, () -> service.verify(verifyBody(CODE)));
+        AppException exception = assertThrows(AppException.class,
+                () -> service.verify(PHONE, BRANCH, TABLE, CODE));
 
         assertEquals(ErrorCode.OTP_CONTEXT_MISMATCH, exception.getErrorCode());
     }
 
     @Test
     void verifyWrongCodeFirstAttemptDoesNotLock() {
-        stubQrVerify();
         when(otpRedisRepository.findCode(PHONE))
                 .thenReturn(Optional.of(entry(hmac(PHONE, "999999"), BRANCH, TABLE)));
         when(otpRedisRepository.incrementAttempts(PHONE)).thenReturn(1L);
 
-        AppException exception = assertThrows(AppException.class, () -> service.verify(verifyBody(CODE)));
+        AppException exception = assertThrows(AppException.class,
+                () -> service.verify(PHONE, BRANCH, TABLE, CODE));
 
         assertEquals(ErrorCode.OTP_INVALID, exception.getErrorCode());
         verify(otpRedisRepository, never()).lockPhone(anyString(), anyLong());
@@ -219,12 +203,12 @@ class CustomerOtpServiceImplTest {
 
     @Test
     void verifyWrongCodeThirdAttemptLocksPhone() {
-        stubQrVerify();
         when(otpRedisRepository.findCode(PHONE))
                 .thenReturn(Optional.of(entry(hmac(PHONE, "999999"), BRANCH, TABLE)));
         when(otpRedisRepository.incrementAttempts(PHONE)).thenReturn(3L);
 
-        AppException exception = assertThrows(AppException.class, () -> service.verify(verifyBody(CODE)));
+        AppException exception = assertThrows(AppException.class,
+                () -> service.verify(PHONE, BRANCH, TABLE, CODE));
 
         assertEquals(ErrorCode.OTP_MAX_ATTEMPTS, exception.getErrorCode());
         verify(otpRedisRepository).deleteCode(PHONE);
@@ -232,24 +216,6 @@ class CustomerOtpServiceImplTest {
     }
 
     // ==== fixtures ====
-
-    private void stubQr() {
-        when(tableQrTokenService.verify("table-qr"))
-                .thenReturn(new TableQrPayload(ORG, BRANCH, TABLE, 1));
-    }
-
-    private void stubQrVerify() {
-        when(tableQrTokenService.verify("table-qr"))
-                .thenReturn(new TableQrPayload(ORG, BRANCH, TABLE, 1));
-    }
-
-    private OtpRequestRequest requestBody(String phone) {
-        return OtpRequestRequest.builder().qrToken("table-qr").customerPhone(phone).build();
-    }
-
-    private OtpVerifyRequest verifyBody(String code) {
-        return OtpVerifyRequest.builder().qrToken("table-qr").customerPhone(PHONE).otpCode(code).build();
-    }
 
     private OtpCodeEntry entry(String codeHmac, String branchId, String tableId) {
         return new OtpCodeEntry(codeHmac, 0, Instant.now(), branchId, tableId);

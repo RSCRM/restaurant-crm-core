@@ -25,7 +25,6 @@ class OtpTicketServiceImplTest {
     private static final String TEST_SIGNER_KEY =
             "9a4f2c8d3b7e1a5f2c8d3b7e1a5f2c8d3b7e1a5f2c8d3b7e1a5f2c8d3b7e1a5f";
     private static final String PHONE = "0987654321";
-    private static final String ORG = "organization-1";
     private static final String BRANCH = "branch-1";
     private static final String TABLE = "table-1";
 
@@ -39,12 +38,11 @@ class OtpTicketServiceImplTest {
 
     @Test
     void issueThenVerifyRoundTripReturnsPayload() {
-        String ticket = service.issue(PHONE, ORG, BRANCH, TABLE).token();
+        String ticket = service.issue(PHONE, BRANCH, TABLE).token();
 
         OtpTicketPayload payload = service.verify(ticket).orElseThrow();
 
         assertEquals(PHONE, payload.customerPhone());
-        assertEquals(ORG, payload.organizationId());
         assertEquals(BRANCH, payload.branchId());
         assertEquals(TABLE, payload.tableId());
     }
@@ -66,7 +64,7 @@ class OtpTicketServiceImplTest {
 
     @Test
     void verifyRejectsTamperedSignature() {
-        String ticket = service.issue(PHONE, ORG, BRANCH, TABLE).token();
+        String ticket = service.issue(PHONE, BRANCH, TABLE).token();
         String[] parts = ticket.split("\\.");
         parts[2] = (parts[2].startsWith("a") ? "b" : "a") + parts[2].substring(1);
         assertTrue(service.verify(String.join(".", parts)).isEmpty());
@@ -90,7 +88,6 @@ class OtpTicketServiceImplTest {
                 .issueTime(new Date())
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, CustomerOtpConstants.TICKET_TOKEN_TYPE)
                 .claim(JwtClaimSetConstant.CLAIM_CUSTOMER_PHONE, PHONE)
-                .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, ORG)
                 .claim(JwtClaimSetConstant.CLAIM_BRANCH_ID, BRANCH)
                 .claim(JwtClaimSetConstant.CLAIM_TABLE_ID, TABLE);
     }

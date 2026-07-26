@@ -17,7 +17,7 @@ public interface OtpTicketService {
      *
      * @return the serialized ticket and its exact expiry
      */
-    IssuedTicket issue(String customerPhone, String organizationId, String branchId, String tableId);
+    IssuedTicket issue(String customerPhone, String branchId, String tableId);
 
     /**
      * Verifies a ticket's signature, expiry and {@code type}, returning its trusted payload (uc-c-03).

@@ -3,21 +3,15 @@ package com.restaurant.crm.modules.crm.customer_account.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.crm.customer_account.constants.CustomerOtpConstants;
-import com.restaurant.crm.modules.crm.customer_account.dto.request.OtpRequestRequest;
-import com.restaurant.crm.modules.crm.customer_account.dto.request.OtpVerifyRequest;
-import com.restaurant.crm.modules.crm.customer_account.dto.response.OtpRequestResponse;
-import com.restaurant.crm.modules.crm.customer_account.dto.response.OtpVerifyResponse;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
 import com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus;
 import com.restaurant.crm.modules.crm.customer_account.model.OtpCodeEntry;
+import com.restaurant.crm.modules.crm.customer_account.model.OtpRequestResult;
 import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
 import com.restaurant.crm.modules.crm.customer_account.repository.OtpRedisRepository;
 import com.restaurant.crm.modules.crm.customer_account.service.interfaces.CustomerOtpService;
 import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpSender;
 import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpTicketService;
 import com.restaurant.crm.modules.crm.customer_account.utils.PhoneNumberUtils;
-import com.restaurant.crm.modules.erp.order.model.TableQrPayload;
-import com.restaurant.crm.modules.erp.order.service.interfaces.TableQrTokenService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,8 +32,8 @@ import java.util.Base64;
 import java.util.Optional;
 
 /**
- * OTP request/verify orchestration (uc-c-03, BR-CST-ACC-02). OTP lives in Redis only;
- * branch/table always come from a verified TABLE QR (NFR-07), never from client input.
+ * OTP request/verify orchestration (uc-c-03, BR-CST-ACC-02). QR-agnostic: branch/table arrive
+ * as trusted parameters, so this class imports nothing from the erp domain. OTP lives in Redis.
  */
 @Slf4j
 @Service
@@ -47,7 +41,6 @@ import java.util.Optional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomerOtpServiceImpl implements CustomerOtpService {
 
-    TableQrTokenService tableQrTokenService;
     CustomerRepository customerRepository;
     OtpRedisRepository otpRedisRepository;
     OtpTicketService otpTicketService;
@@ -61,9 +54,8 @@ public class CustomerOtpServiceImpl implements CustomerOtpService {
 
     @Override
     @Transactional(readOnly = true)
-    public OtpRequestResponse request(OtpRequestRequest request) {
-        TableQrPayload payload = tableQrTokenService.verify(request.getQrToken());
-        String phone = normalizeAndValidate(request.getCustomerPhone());
+    public OtpRequestResult request(String customerPhone, String branchId, String tableId) {
+        String phone = normalizeAndValidate(customerPhone);
 
         // Read-only LOCKED check — never create a customer here.
         customerRepository.findByPhone(phone)
@@ -78,42 +70,39 @@ public class CustomerOtpServiceImpl implements CustomerOtpService {
         }
 
         long tableCount = otpRedisRepository.incrementTableCounter(
-                payload.branchId(), payload.tableId(), CustomerOtpConstants.TABLE_RATE_TTL_SECONDS);
+                branchId, tableId, CustomerOtpConstants.TABLE_RATE_TTL_SECONDS);
         if (tableCount > CustomerOtpConstants.TABLE_RATE_LIMIT) {
             throw new AppException(ErrorCode.OTP_TABLE_RATE_LIMIT);
         }
 
         String code = generateCode();
         otpRedisRepository.saveCode(phone, hmacCode(phone, code),
-                payload.branchId(), payload.tableId(), CustomerOtpConstants.CODE_TTL_SECONDS);
+                branchId, tableId, CustomerOtpConstants.CODE_TTL_SECONDS);
+
+        // Send BEFORE marking the resend cooldown: a failed send must not burn the customer's
+        // 60s cooldown (and the stored code is kept so they can retry).
+        otpSender.send(phone, code);
         otpRedisRepository.markResend(phone, CustomerOtpConstants.RESEND_TTL_SECONDS);
 
-        // On send failure, keep the stored code (customer may retry sending is out of scope).
-        otpSender.send(phone, code);
-
         Instant now = Instant.now();
-        return OtpRequestResponse.builder()
-                .maskedPhone(PhoneNumberUtils.mask(phone))
-                .expiresAt(now.plusSeconds(CustomerOtpConstants.CODE_TTL_SECONDS))
-                .resendAvailableAt(now.plusSeconds(CustomerOtpConstants.RESEND_TTL_SECONDS))
-                .attemptsAllowed(CustomerOtpConstants.MAX_ATTEMPTS)
-                .build();
+        return new OtpRequestResult(
+                PhoneNumberUtils.mask(phone),
+                now.plusSeconds(CustomerOtpConstants.CODE_TTL_SECONDS),
+                now.plusSeconds(CustomerOtpConstants.RESEND_TTL_SECONDS));
     }
 
     @Override
-    public OtpVerifyResponse verify(OtpVerifyRequest request) {
-        TableQrPayload payload = tableQrTokenService.verify(request.getQrToken());
-        String phone = normalizeAndValidate(request.getCustomerPhone());
+    public String verify(String customerPhone, String branchId, String tableId, String otpCode) {
+        String phone = normalizeAndValidate(customerPhone);
 
         OtpCodeEntry entry = otpRedisRepository.findCode(phone)
                 .orElseThrow(() -> new AppException(ErrorCode.OTP_EXPIRED));
 
-        if (!payload.branchId().equals(entry.branchId())
-                || !payload.tableId().equals(entry.tableId())) {
+        if (!branchId.equals(entry.branchId()) || !tableId.equals(entry.tableId())) {
             throw new AppException(ErrorCode.OTP_CONTEXT_MISMATCH);
         }
 
-        if (!codeMatches(phone, request.getOtpCode(), entry.codeHmac())) {
+        if (!codeMatches(phone, otpCode, entry.codeHmac())) {
             long attempts = otpRedisRepository.incrementAttempts(phone);
             if (attempts >= CustomerOtpConstants.MAX_ATTEMPTS) {
                 otpRedisRepository.deleteCode(phone);
@@ -126,15 +115,10 @@ public class CustomerOtpServiceImpl implements CustomerOtpService {
         otpRedisRepository.deleteCode(phone);
         otpRedisRepository.unlockPhone(phone);
 
-        OtpTicketService.IssuedTicket ticket = otpTicketService.issue(
-                phone, payload.organizationId(), payload.branchId(), payload.tableId());
+        OtpTicketService.IssuedTicket ticket = otpTicketService.issue(phone, branchId, tableId);
         log.info("OTP verified for {} at branch {} table {}",
-                PhoneNumberUtils.mask(phone), payload.branchId(), payload.tableId());
-
-        return OtpVerifyResponse.builder()
-                .otpTicket(ticket.token())
-                .ticketExpiresAt(ticket.expiresAt())
-                .build();
+                PhoneNumberUtils.mask(phone), branchId, tableId);
+        return ticket.token();
     }
 
     // ==== helpers ====
