@@ -33,4 +33,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, String> {
         String ingredientName,
         Pageable pageable
     );
+
+    Page<Inventory> findByIngredientBranchIdAndStatus(
+        String branchId,
+        InventoryStatus status,
+        Pageable pageable
+    );
 }
