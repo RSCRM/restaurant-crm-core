@@ -16,4 +16,8 @@ public class JwtClaimSetConstant {
     public static final String CLAIM_DEVICE_ID = "deviceId";
     public static final String CLAIM_SESSION_ROLE = "sessionRole";
     public static final String CLAIM_QR_VERSION = "qrVersion";
+
+    // ==== OTP ticket claims (uc-c-03) ====
+    public static final String CLAIM_CUSTOMER_PHONE = "customerPhone";
+    public static final String CLAIM_JTI = "jti";
 }

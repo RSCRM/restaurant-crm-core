@@ -33,6 +33,26 @@ public class RedisKeyGenerator {
         return RedisConstants.QR_ORDER_PREFIX + orderId;
     }
 
+    /** OTP code hash: {@code otp:code:{phone}} → codeHmac, attempts, issuedAt, branchId, tableId (uc-c-03). */
+    public static String generateOtpCodeKey(String phone) {
+        return RedisConstants.OTP_CODE_PREFIX + phone;
+    }
+
+    /** Phone lockout flag: {@code otp:lock:{phone}} (uc-c-03). */
+    public static String generateOtpLockKey(String phone) {
+        return RedisConstants.OTP_LOCK_PREFIX + phone;
+    }
+
+    /** Resend cooldown flag: {@code otp:resend:{phone}} (uc-c-03). */
+    public static String generateOtpResendKey(String phone) {
+        return RedisConstants.OTP_RESEND_PREFIX + phone;
+    }
+
+    /** Per-table OTP request counter: {@code otp:table:{branchId}:{tableId}} (uc-c-03). */
+    public static String generateOtpTableKey(String branchId, String tableId) {
+        return RedisConstants.OTP_TABLE_PREFIX + branchId + ":" + tableId;
+    }
+
     private static String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
