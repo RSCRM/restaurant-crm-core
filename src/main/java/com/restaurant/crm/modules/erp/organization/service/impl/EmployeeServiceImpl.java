@@ -6,6 +6,7 @@ import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountCons
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
@@ -132,6 +133,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // idempotent: neu da khong co role thi tra ve binh thuong
         employee.setOrgRole(null);
+        employee = employeeRepository.save(employee);
+        return employeeMapper.toEmployeeResponse(employee);
+    }
+
+    @Override
+    @Transactional
+    public EmployeeResponse configSalary(String employeeId, SalaryConfigRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+
+        validateBranchAccess(employee.getBranch().getId());
+
+        employee.setSalary(request.getSalary());
         employee = employeeRepository.save(employee);
         return employeeMapper.toEmployeeResponse(employee);
     }
