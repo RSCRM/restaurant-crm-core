@@ -1,0 +1,26 @@
+package com.restaurant.crm.modules.crm.customer_account.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+/** Body of {@code POST /public/customer/otp/request} — scanned TABLE QR + phone (uc-c-03). */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class OtpRequestRequest {
+
+    @NotBlank(message = "TQR_TOKEN_INVALID")
+    String qrToken;
+
+    @NotBlank(message = "CUSTOMER_PHONE_REQUIRED")
+    String customerPhone;
+}
