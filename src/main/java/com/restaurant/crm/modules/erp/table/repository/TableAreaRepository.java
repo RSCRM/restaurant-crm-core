@@ -12,4 +12,8 @@ public interface TableAreaRepository extends JpaRepository<TableArea, String> {
     List<TableArea> findByBranchIdOrderByDisplayOrderAscAreaNameAsc(String branchId);
 
     Optional<TableArea> findByIdAndBranchId(String id, String branchId);
+
+    boolean existsByBranchIdAndAreaName(String branchId, String areaName);
+
+    boolean existsByBranchIdAndAreaNameAndIdNot(String branchId, String areaName, String id);
 }
