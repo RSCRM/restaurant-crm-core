@@ -23,7 +23,6 @@ public class InventoryTransactionResponse {
     InventoryTransactionDirection transactionDirection;
     BigDecimal quantity;
     String note;
-    String referenceId;
     Instant transactionTime;
     Instant createdAt;
     Instant updatedAt;
