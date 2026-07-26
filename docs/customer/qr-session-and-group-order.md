@@ -159,3 +159,84 @@ from request params (NFR-07).
 6. Is a 30-min GROUP QR TTL right for long sittings, and who may refresh it?
 7. Who closes the session when the invoice is `PAID` (BR-CST-GRP-04) — uc-c-05, invoice, or an
    `OrderStatus` listener?
+
+---
+
+# OTP identification (uc-c-03)
+
+Phone + OTP is the gate before opening a session: it produces the `otpTicket` that
+`POST /public/customer/qr/session` (uc-c-02) consumes.
+
+```
+Scan TABLE QR
+  → POST /public/customer/otp/request  { qrToken, customerPhone }            → sends a 6-digit OTP
+  → POST /public/customer/otp/verify   { qrToken, customerPhone, otpCode }   → returns otpTicket
+  → POST /public/customer/qr/session   { qrToken, customerPhone, otpTicket } → opens the session (uc-c-02)
+```
+
+## Module layout (no cross-module cycle)
+
+- `crm/customer_account` owns the OTP domain and is **QR-agnostic** — it imports nothing from erp.
+  `CustomerOtpService` takes `branchId`/`tableId` as already-trusted parameters:
+  ```java
+  OtpRequestResult request(String customerPhone, String branchId, String tableId);
+  String           verify (String customerPhone, String branchId, String tableId, String otpCode);
+  ```
+- `erp/order` is the composition layer: `CustomerOtpController` verifies the TABLE QR (erp), then
+  delegates to `CustomerOtpService` (crm). The uc-c-02 plug point `OtpTicketVerifierImpl`
+  (`@Profile("!dev")`) also lives here and calls back into `OtpTicketService` (crm).
+
+## Redis schema (uc-c-03)
+
+| Key | Type | Value | TTL |
+| :-- | :-- | :-- | :-- |
+| `otp:code:{phone}` | Hash | `codeHmac, attempts, issuedAt, branchId, tableId` | 180s |
+| `otp:lock:{phone}` | String | `1` | 900s |
+| `otp:resend:{phone}` | String | `1` | 60s |
+| `otp:table:{branchId}:{tableId}` | String | counter (`INCR`) | 3600s |
+
+- The OTP code is **never** stored raw: `codeHmac = HMAC-SHA256(otpSignerKey, phone + ":" + code)`
+  — the phone is mixed in so each code has its own hash space (a Redis dump can't be table-attacked).
+- Wrong attempts are counted with `HINCRBY`, the per-table rate limit with `INCR` — atomic, never
+  read-modify-write. Verify compares with `MessageDigest.isEqual` (constant-time).
+- BR-CST-ACC-02: 180s validity, 3 wrong attempts → invalidate + lock the phone 900s, resend
+  cooldown 60s, ≤ 20 requests/hour/table. The code is never returned or logged (except the dev sender).
+
+## OTP ticket payload
+
+Signed with `security.otp.signer-key` (falls back to `security.jwt.signer-key`).
+
+| Property | Value |
+| :-- | :-- |
+| `type` | `OTP_TICKET` |
+| Secret | `HMAC(otpSignerKey, "OTP_TICKET:" + branchId)` |
+| `exp` | 5 min |
+| Claims | `type`, `customerPhone` (normalized), `branchId`, `tableId`, `jti`, `iat`, `exp` |
+
+`OtpTicketPayload = (customerPhone, branchId, tableId)` — no `organizationId` (branch implies it;
+the uc-c-02 verifier only matches phone/branch/table).
+
+> 🔒 The uc-c-02 `OtpTicketVerifier` takes `isValid(customerPhone, branchId, tableId, otpTicket)`:
+> the ticket is bound to branch **and** table, so a ticket earned at table A cannot open table B or
+> another branch (NFR-07). The verifier normalizes the incoming phone before comparing.
+
+## Error codes (`OTP_*`)
+
+| Code | HTTP | Meaning |
+| :-- | :-- | :-- |
+| `OTP_1000` | 400 | wrong code |
+| `OTP_1001` | 410 | code expired / not found |
+| `OTP_1002` | 429 | too many wrong attempts (phone locked) |
+| `OTP_1003` | 429 | phone temporarily locked |
+| `OTP_1004` | 429 | resend requested too soon |
+| `OTP_1005` | 429 | per-table rate limit |
+| `OTP_1006` | 502 | send failed (no provider wired) |
+| `OTP_1007` | 403 | customer account locked |
+| `OTP_1008` | 403 | OTP requested for a different table |
+| `OTP_1009` | 500 | ticket generation failed |
+
+## Sender (not wired yet)
+
+`OtpSender` has two profile-scoped beans: `LogOtpSender` (`@Profile("dev")`, logs the code for local
+testing) and `NoopOtpSender` (`@Profile("!dev") @Primary`, throws `OTP_SEND_FAILED`). A real provider
+(Zalo ZNS / SMS gateway via RabbitMQ, SRS §IV) is a TODO and not in `pom.xml` yet.
