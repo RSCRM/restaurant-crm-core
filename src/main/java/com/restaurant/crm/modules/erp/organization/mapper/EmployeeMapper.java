@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.organization.mapper;
 
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
+import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -19,4 +20,10 @@ public interface EmployeeMapper {
     @Mapping(target = "orgRoleId", source = "orgRole.id")
     @Mapping(target = "orgRoleName", source = "orgRole.roleName")
     EmployeeBranchAssignmentResponse toEmployeeBranchAssignmentResponse(Employee employee);
+
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "branchId", source = "branch.id")
+    @Mapping(target = "orgRoleName", source = "orgRole.roleName")
+    EmployeeResponse toEmployeeResponse(Employee employee);
 }
