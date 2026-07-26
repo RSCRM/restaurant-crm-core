@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.organization.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
+import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
@@ -51,6 +52,21 @@ public class EmployeeController {
     ) {
         EmployeeResponse data = employeeService.addEmployee(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.<EmployeeResponse>builder()
+                        .success(ApiConstant.SUCCESS)
+                        .data(data)
+                        .build()
+        );
+    }
+
+    @PutMapping("/employees/{id}/role")
+    @PreAuthorize("@employeeAccessChecker.canManage('" + EmployeeConstants.EMPLOYEE_ROLE_ASSIGN + "')")
+    public ResponseEntity<ApiResponse<EmployeeResponse>> assignRole(
+            @PathVariable String id,
+            @Valid @RequestBody AssignRoleRequest request
+    ) {
+        EmployeeResponse data = employeeService.assignRole(id, request);
+        return ResponseEntity.ok(
                 ApiResponse.<EmployeeResponse>builder()
                         .success(ApiConstant.SUCCESS)
                         .data(data)

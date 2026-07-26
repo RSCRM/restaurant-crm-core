@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.organization.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
+import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
@@ -103,6 +104,22 @@ public class EmployeeServiceImpl implements EmployeeService {
         } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
+    }
+
+    @Override
+    @Transactional
+    public EmployeeResponse assignRole(String employeeId, AssignRoleRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+
+        validateBranchAccess(employee.getBranch().getId());
+
+        OrgRole orgRole = orgRoleRepository.findById(request.getOrgRoleId())
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
+
+        employee.setOrgRole(orgRole);
+        employee = employeeRepository.save(employee);
+        return employeeMapper.toEmployeeResponse(employee);
     }
 
     @Override
