@@ -47,7 +47,10 @@ public class SecurityConfig {
             // uc-c-02 — QR table ordering (exact match, no wildcard)
             "/api/v1/public/customer/qr/resolve",
             "/api/v1/public/customer/qr/session",
-            "/api/v1/public/customer/qr/session/join"
+            "/api/v1/public/customer/qr/session/join",
+            // uc-c-03 — phone + OTP identification
+            "/api/v1/public/customer/otp/request",
+            "/api/v1/public/customer/otp/verify"
     };
 
     private final String[] PUBLIC_GET_ENDPOINT = {

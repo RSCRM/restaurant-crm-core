@@ -85,7 +85,9 @@ public class QrSessionServiceImpl implements QrSessionService {
         TableContext context = validateTableContext(payload);
 
         // OTP is proven by uc-c-03's ticket; uc-c-02 only consumes it. Fail before any write.
-        if (!otpTicketVerifier.isValid(request.getCustomerPhone(), request.getOtpTicket())) {
+        // The ticket must be bound to THIS branch+table (from the verified QR), not just the phone.
+        if (!otpTicketVerifier.isValid(request.getCustomerPhone(), payload.branchId(),
+                payload.tableId(), request.getOtpTicket())) {
             throw new AppException(ErrorCode.TQR_OTP_TICKET_INVALID);
         }
 

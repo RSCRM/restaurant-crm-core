@@ -76,7 +76,7 @@ class QrSessionServiceImplTest {
     @Test
     void startOpensSessionAsOwnerWithoutOrder() {
         stubValidTableContext();
-        when(otpTicketVerifier.isValid("0900000000", "ticket")).thenReturn(true);
+        when(otpTicketVerifier.isValid("0900000000", BRANCH, TABLE, "ticket")).thenReturn(true);
         when(sessionRedisRepository.tryReserveTable(eq(BRANCH), eq(TABLE), anyString(), anyLong()))
                 .thenReturn(true);
         when(groupQrTokenService.generate(any(GroupQrPayload.class), anyLong())).thenReturn("group-qr");
@@ -93,7 +93,7 @@ class QrSessionServiceImplTest {
     @Test
     void startRejectsInvalidOtpTicketWithoutCreatingSession() {
         stubValidTableContext();
-        when(otpTicketVerifier.isValid("0900000000", "ticket")).thenReturn(false);
+        when(otpTicketVerifier.isValid("0900000000", BRANCH, TABLE, "ticket")).thenReturn(false);
 
         AppException exception = assertThrows(AppException.class, () -> service.start(startRequest()));
 
@@ -104,9 +104,30 @@ class QrSessionServiceImplTest {
     }
 
     @Test
+    void startRejectsOtpTicketBoundToAnotherTable() {
+        // Customer passed OTP at table-A but scans the TABLE QR of a different table (table-B).
+        // start() must forward the SCANNED branch/table to the verifier, which rejects the
+        // mismatched ticket → TQR_1014 (the PART A vulnerability fix).
+        String tableB = "table-B";
+        when(tableQrTokenService.verify("table-qr"))
+                .thenReturn(new TableQrPayload(ORG, BRANCH, tableB, 1));
+        when(organizationBranchRepository.findById(BRANCH)).thenReturn(Optional.of(activeBranch()));
+        when(restaurantTableRepository.existsByIdAndAreaBranchId(tableB, BRANCH)).thenReturn(true);
+        when(restaurantTableRepository.findById(tableB)).thenReturn(Optional.of(table()));
+        when(otpTicketVerifier.isValid("0900000000", BRANCH, tableB, "ticket")).thenReturn(false);
+
+        AppException exception = assertThrows(AppException.class, () -> service.start(startRequest()));
+
+        assertEquals(ErrorCode.TQR_OTP_TICKET_INVALID, exception.getErrorCode());
+        verify(otpTicketVerifier).isValid("0900000000", BRANCH, tableB, "ticket");
+        verify(sessionRedisRepository, never())
+                .tryReserveTable(anyString(), anyString(), anyString(), anyLong());
+    }
+
+    @Test
     void startRejectsWhenTableAlreadyReserved() {
         stubValidTableContext();
-        when(otpTicketVerifier.isValid("0900000000", "ticket")).thenReturn(true);
+        when(otpTicketVerifier.isValid("0900000000", BRANCH, TABLE, "ticket")).thenReturn(true);
         when(sessionRedisRepository.tryReserveTable(eq(BRANCH), eq(TABLE), anyString(), anyLong()))
                 .thenReturn(false);
 

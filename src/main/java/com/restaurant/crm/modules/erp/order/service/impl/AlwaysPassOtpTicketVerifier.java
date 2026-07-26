@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 public class AlwaysPassOtpTicketVerifier implements OtpTicketVerifier {
 
     @Override
-    public boolean isValid(String customerPhone, String otpTicket) {
+    public boolean isValid(String customerPhone, String branchId, String tableId, String otpTicket) {
         log.warn("DEV OtpTicketVerifier active — accepting OTP ticket without real verification. "
                 + "This must not run in production (uc-c-03).");
         return otpTicket != null && !otpTicket.isBlank();

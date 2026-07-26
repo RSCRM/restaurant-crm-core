@@ -206,6 +206,18 @@ public enum ErrorCode {
     TQR_GROUP_QR_EXPIRED("TQR_1012", "Group QR has expired, ask the owner for a new one", HttpStatus.UNAUTHORIZED),
     TQR_NOT_SESSION_OWNER("TQR_1013", "Only the session owner can perform this action", HttpStatus.FORBIDDEN),
     TQR_OTP_TICKET_INVALID("TQR_1014", "OTP ticket is invalid or expired", HttpStatus.UNAUTHORIZED),
+
+    // ==== CUSTOMER OTP ERRORS ====
+    OTP_INVALID("OTP_1000", "OTP code is invalid", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED("OTP_1001", "OTP code has expired or does not exist", HttpStatus.GONE),
+    OTP_MAX_ATTEMPTS("OTP_1002", "Too many wrong OTP attempts, phone temporarily locked", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_PHONE_LOCKED("OTP_1003", "Phone is temporarily locked, try again later", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_RESEND_TOO_SOON("OTP_1004", "Please wait before requesting another OTP", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_TABLE_RATE_LIMIT("OTP_1005", "Too many OTP requests for this table, try again later", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_SEND_FAILED("OTP_1006", "Failed to send OTP", HttpStatus.BAD_GATEWAY),
+    OTP_CUSTOMER_LOCKED("OTP_1007", "Customer account is locked", HttpStatus.FORBIDDEN),
+    OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
+    OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     String code;
