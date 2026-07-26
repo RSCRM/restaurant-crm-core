@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.erp.employee.dto.response;
+package com.restaurant.crm.modules.erp.organization.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

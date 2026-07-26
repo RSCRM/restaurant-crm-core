@@ -3,16 +3,20 @@ package com.restaurant.crm.modules.erp.organization.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
+import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
+import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,5 +42,19 @@ public class EmployeeController {
                 .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/employees")
+    @PreAuthorize("@employeeAccessChecker.canManage('" + EmployeeConstants.EMPLOYEE_ADD + "')")
+    public ResponseEntity<ApiResponse<EmployeeResponse>> addEmployee(
+            @Valid @RequestBody CreateEmployeeRequest request
+    ) {
+        EmployeeResponse data = employeeService.addEmployee(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.<EmployeeResponse>builder()
+                        .success(ApiConstant.SUCCESS)
+                        .data(data)
+                        .build()
+        );
     }
 }

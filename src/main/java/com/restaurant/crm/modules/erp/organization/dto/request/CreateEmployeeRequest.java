@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.erp.employee.dto.request;
+package com.restaurant.crm.modules.erp.organization.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

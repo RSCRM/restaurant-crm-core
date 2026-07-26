@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.erp.employee.repository;
+package com.restaurant.crm.modules.erp.organization.repository;
 
 import com.restaurant.crm.modules.erp.organization.entity.OrgPermission;
 import org.springframework.data.jpa.repository.JpaRepository;

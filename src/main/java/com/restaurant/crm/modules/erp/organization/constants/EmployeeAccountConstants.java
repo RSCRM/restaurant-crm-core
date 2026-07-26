@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.erp.employee.constants;
+package com.restaurant.crm.modules.erp.organization.constants;
 
 public final class EmployeeAccountConstants {
     private EmployeeAccountConstants() {}
