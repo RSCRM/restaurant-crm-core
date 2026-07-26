@@ -72,7 +72,8 @@ class QrSessionConcurrencyTest {
         when(organizationBranchRepository.findById(BRANCH)).thenReturn(Optional.of(activeBranch()));
         when(restaurantTableRepository.existsByIdAndAreaBranchId(TABLE, BRANCH)).thenReturn(true);
         when(restaurantTableRepository.findById(TABLE)).thenReturn(Optional.of(table()));
-        when(otpTicketVerifier.isValid(anyString(), anyString())).thenReturn(true);
+        when(otpTicketVerifier.isValid(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(true);
         when(groupQrTokenService.generate(any(GroupQrPayload.class), anyLong())).thenReturn("group-qr");
         when(customerSessionTokenService.issue(anyString(), anyString(), anyString(), anyString(),
                 anyString(), any(SessionMemberRole.class), anyLong()))
