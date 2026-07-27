@@ -1,8 +1,9 @@
-package com.restaurant.crm.modules.crm.customer_account.entity;
+package com.restaurant.crm.modules.crm.customeraccount.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerConstants;
-import com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus;
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerConstants;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
