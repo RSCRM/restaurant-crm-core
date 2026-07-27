@@ -3,10 +3,8 @@ package com.restaurant.crm.modules.erp.order.service.interfaces;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemStatusRequest;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemResponse;
-import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 
 /**
  * Service interface for managing order items.
@@ -21,12 +19,21 @@ public interface OrderItemService {
 
     void removeOrderItem(String orderId, String orderItemId);
 
-    /**
-     * Updates the preparation status of an order item and triggers a notification if ready.
-     *
-     * @param orderItemId the ID of the order item to update
-     * @param request the request body containing the new status and reason
-     * @return the updated OrderItemResponse
-     */
-    OrderItemResponse updateStatus(String orderItemId, UpdateOrderItemStatusRequest request);
+    /** Kitchen accepts the item for preparation: PENDING -> IN_PROGRESS (uc-scf-03). */
+    OrderItemResponse accept(String orderItemId);
+
+    /** Kitchen marks preparation done: IN_PROGRESS -> READY_TO_SERVE (uc-scf-05). */
+    OrderItemResponse complete(String orderItemId);
+
+    /** Kitchen releases an accepted item back to the queue: IN_PROGRESS -> PENDING. */
+    OrderItemResponse release(String orderItemId);
+
+    /** Kitchen cancels the item (reason required): PENDING/IN_PROGRESS -> CANCELLED (uc-scf-06). */
+    OrderItemResponse cancel(String orderItemId, String reason);
+
+    /** Service marks a no-preparation item ready: PENDING -> READY_TO_SERVE. */
+    OrderItemResponse markReady(String orderItemId);
+
+    /** Service delivers the item to the table: READY_TO_SERVE -> SERVED (uc-sw-14). */
+    OrderItemResponse serve(String orderItemId);
 }

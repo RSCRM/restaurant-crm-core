@@ -36,7 +36,7 @@ public class KdsController {
     EmployeeRepository employeeRepository;
 
     @GetMapping("/items")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).KITCHEN_ORDER_READ)")
     public ResponseEntity<ApiResponse<Object>> getKdsItems(
             @RequestParam(value = "section", defaultValue = "ACTIVE") String section
     ) {
@@ -56,9 +56,8 @@ public class KdsController {
         return ResponseEntity.ok(response);
     }
 
-
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).KITCHEN_ORDER_READ)")
     public SseEmitter subscribe() {
         String employeeId = AuthUtils.getEmployeeId();
         Employee employee = employeeRepository.findById(employeeId)
