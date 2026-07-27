@@ -116,6 +116,15 @@ public enum ErrorCode {
     // ==== TABLE ERRORS ====
     TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
     TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_NAME_EXISTS("TABLE_1002", "Area name already exists in this branch", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_BRANCH_REQUIRED("TABLE_1003", "Branch id is required", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_NAME_REQUIRED("TABLE_1004", "Area name is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_NOT_FOUND("TABLE_1005", "Restaurant table not found", HttpStatus.NOT_FOUND),
+    RESTAURANT_TABLE_NUMBER_EXISTS("TABLE_1006", "Table number already exists in this area", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_AREA_REQUIRED("TABLE_1007", "Area id is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_NUMBER_REQUIRED("TABLE_1008", "Table number is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_CAPACITY_REQUIRED("TABLE_1009", "Capacity is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_CAPACITY_INVALID("TABLE_1010", "Capacity must be at least 1", HttpStatus.BAD_REQUEST),
 
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
