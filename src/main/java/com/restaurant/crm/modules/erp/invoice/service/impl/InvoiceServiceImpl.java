@@ -2,9 +2,9 @@ package com.restaurant.crm.modules.erp.invoice.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
-import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
-import com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
 import com.restaurant.crm.modules.erp.invoice.constants.InvoiceConstants;
 import com.restaurant.crm.modules.erp.invoice.dto.request.CheckoutRequestDto;
 import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceItemModifierResponse;
