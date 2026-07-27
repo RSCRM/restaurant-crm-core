@@ -234,6 +234,18 @@ public enum ErrorCode {
     OTP_CUSTOMER_LOCKED("OTP_1007", "Customer account is locked", HttpStatus.FORBIDDEN),
     OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
     OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // ==== GROUP CART ERRORS ====
+    CART_EMPTY("CART_1000", "Cart is empty", HttpStatus.BAD_REQUEST),
+    CART_ITEM_NOT_FOUND("CART_1001", "Cart item not found", HttpStatus.NOT_FOUND),
+    CART_ITEM_UNAVAILABLE("CART_1002", "One or more items are no longer available", HttpStatus.CONFLICT),
+    CART_ITEM_LOCKED("CART_1003", "Another guest is editing this item", HttpStatus.CONFLICT),
+    CART_LOCK_NOT_HELD("CART_1004", "This device does not hold the item lock", HttpStatus.FORBIDDEN),
+    CART_SUBMIT_IN_PROGRESS("CART_1005", "The order is already being submitted", HttpStatus.CONFLICT),
+    CART_MENU_ITEM_NOT_IN_BRANCH("CART_1006", "Menu item does not belong to this branch", HttpStatus.NOT_FOUND),
+    CART_MODIFIER_INVALID("CART_1007", "Modifier option is invalid for this item", HttpStatus.BAD_REQUEST),
+    CART_MEMBER_NOT_FOUND("CART_1008", "Session member not found for this device", HttpStatus.FORBIDDEN),
+    CART_ITEM_REQUEST_INVALID("CART_1009", "Cart item request is invalid", HttpStatus.BAD_REQUEST),
     ;
 
     String code;

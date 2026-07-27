@@ -35,13 +35,6 @@ public class KdsController {
     SseEmitterService sseEmitterService;
     EmployeeRepository employeeRepository;
 
-    /**
-     * Retrieves the KDS items list.
-     * Accessible by employees with ORDER_READ permission (Chefs).
-     *
-     * @param section the section to query (ACTIVE or HISTORY)
-     * @return the ApiResponse containing active groups/items or history items
-     */
     @GetMapping("/items")
     @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
     public ResponseEntity<ApiResponse<Object>> getKdsItems(
@@ -63,12 +56,7 @@ public class KdsController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Subscribes the KDS screen to real-time events for the chef's branch.
-     * Accessible by employees with ORDER_READ permission.
-     *
-     * @return the SseEmitter connection
-     */
+
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
     public SseEmitter subscribe() {
