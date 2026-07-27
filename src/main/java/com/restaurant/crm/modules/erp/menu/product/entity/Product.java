@@ -70,4 +70,9 @@ public class Product extends BaseEntity {
     @Size(max = 20)
     @Column(name = "status", nullable = false, length = 20)
     String status = "AVAILABLE";
+
+    @Builder.Default
+    @NotNull
+    @Column(name = "requires_preparation", nullable = false)
+    Boolean requiresPreparation = true;
 }

@@ -100,6 +100,7 @@ public enum ErrorCode {
 
     // ==== TABLE ERRORS ====
     TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
+    TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
 
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
@@ -120,6 +121,10 @@ public enum ErrorCode {
     ORDER_ITEM_MODIFIER_NOT_FOUND("ORDER_1010", "Order item modifier not found", HttpStatus.NOT_FOUND),
     ORDER_STATUS_NOT_MODIFIABLE("ORDER_1011", "Only pending orders can be modified by staff", HttpStatus.BAD_REQUEST),
     ORDER_ALREADY_PAID("ORDER_1012", "Order has already been paid", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_ALREADY_ACCEPTED("ORDER_1013", "Order item has already been accepted by another chef", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_INVALID_STATUS_TRANSITION("ORDER_1014", "Invalid status transition for order item", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_NOT_PREPARED_BY_YOU("ORDER_1015", "You are not the chef who accepted this order item", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_CANCEL_REASON_REQUIRED("ORDER_1016", "Reason is required when cancelling order item", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
 
     // ==== INGREDIENT ERRORS ====
@@ -185,6 +190,35 @@ public enum ErrorCode {
     SUBSCRIPTION_ALREADY_REVOKED("SUB_1001", "Subscription is already revoked", HttpStatus.CONFLICT),
     ACTIVE_SUBSCRIPTION_EXISTS("SUB_1002", "Organization already has an active subscription", HttpStatus.CONFLICT),
     LICENSE_LOCKED_CANNOT_ISSUE("SUB_1003", "License is locked, cannot issue new subscription", HttpStatus.CONFLICT),
+
+    // ==== TABLE QR / CUSTOMER SESSION ERRORS ====
+    TQR_TOKEN_INVALID("TQR_1000", "QR token is malformed or invalid", HttpStatus.BAD_REQUEST),
+    TQR_TOKEN_SIGNATURE_MISMATCH("TQR_1001", "QR token signature does not match", HttpStatus.UNAUTHORIZED),
+    TQR_TOKEN_CLAIM_MISSING("TQR_1002", "QR token is missing a required claim", HttpStatus.BAD_REQUEST),
+    TQR_VERSION_OUTDATED("TQR_1003", "QR version is outdated, please rescan the printed QR", HttpStatus.CONFLICT),
+    TQR_CONTEXT_MISMATCH("TQR_1004", "QR context does not match branch/table/session", HttpStatus.FORBIDDEN),
+    TQR_TABLE_NOT_IN_BRANCH("TQR_1005", "Table does not belong to the branch", HttpStatus.NOT_FOUND),
+    TQR_SESSION_NOT_FOUND("TQR_1006", "Ordering session not found or already closed", HttpStatus.NOT_FOUND),
+    TQR_SESSION_EXPIRED("TQR_1007", "Ordering session has expired", HttpStatus.UNAUTHORIZED),
+    TQR_SESSION_LOCKED_FOR_PAYMENT("TQR_1008", "Ordering session is locked for payment", HttpStatus.CONFLICT),
+    TQR_SESSION_MEMBER_LIMIT("TQR_1009", "Ordering session member limit reached", HttpStatus.CONFLICT),
+    TQR_GENERATION_FAILED("TQR_1010", "QR token generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+    TQR_TABLE_SESSION_EXISTS("TQR_1011", "Table already has an active session, ask the owner for the group QR", HttpStatus.CONFLICT),
+    TQR_GROUP_QR_EXPIRED("TQR_1012", "Group QR has expired, ask the owner for a new one", HttpStatus.UNAUTHORIZED),
+    TQR_NOT_SESSION_OWNER("TQR_1013", "Only the session owner can perform this action", HttpStatus.FORBIDDEN),
+    TQR_OTP_TICKET_INVALID("TQR_1014", "OTP ticket is invalid or expired", HttpStatus.UNAUTHORIZED),
+
+    // ==== CUSTOMER OTP ERRORS ====
+    OTP_INVALID("OTP_1000", "OTP code is invalid", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED("OTP_1001", "OTP code has expired or does not exist", HttpStatus.GONE),
+    OTP_MAX_ATTEMPTS("OTP_1002", "Too many wrong OTP attempts, phone temporarily locked", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_PHONE_LOCKED("OTP_1003", "Phone is temporarily locked, try again later", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_RESEND_TOO_SOON("OTP_1004", "Please wait before requesting another OTP", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_TABLE_RATE_LIMIT("OTP_1005", "Too many OTP requests for this table, try again later", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_SEND_FAILED("OTP_1006", "Failed to send OTP", HttpStatus.BAD_GATEWAY),
+    OTP_CUSTOMER_LOCKED("OTP_1007", "Customer account is locked", HttpStatus.FORBIDDEN),
+    OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
+    OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     String code;

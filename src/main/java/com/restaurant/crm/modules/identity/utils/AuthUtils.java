@@ -46,6 +46,24 @@ public class AuthUtils {
         return getJwtClaimAsString(JwtClaimSetConstant.CLAIM_ORG_ROLE);
     }
 
+    // ==== QR ordering / customer session claims (uc-c-02) ====
+
+    public static String getSessionId() {
+        return getJwtClaimAsString(JwtClaimSetConstant.CLAIM_SESSION_ID);
+    }
+
+    public static String getDeviceId() {
+        return getJwtClaimAsString(JwtClaimSetConstant.CLAIM_DEVICE_ID);
+    }
+
+    public static String getSessionRole() {
+        return getJwtClaimAsString(JwtClaimSetConstant.CLAIM_SESSION_ROLE);
+    }
+
+    public static String getTableId() {
+        return getJwtClaimAsString(JwtClaimSetConstant.CLAIM_TABLE_ID);
+    }
+
     private static String getJwtClaimAsString(String claimName) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {

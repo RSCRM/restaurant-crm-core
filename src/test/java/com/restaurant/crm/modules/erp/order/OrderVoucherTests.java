@@ -28,6 +28,7 @@ import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranch
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.entity.OrderItem;
 import com.restaurant.crm.modules.erp.menu.product.entity.Product;
@@ -79,6 +80,8 @@ public class OrderVoucherTests {
     CustomerRepository customerRepository;
     @Mock
     PointWalletService pointWalletService;
+    @Mock
+    SseEmitterService sseEmitterService;
 
     @InjectMocks
     OrderServiceImpl orderService;
@@ -135,6 +138,8 @@ public class OrderVoucherTests {
         when(orderRepository.save(any())).thenReturn(testOrder);
         when(customerRepository.findByPhone("0987654321")).thenReturn(Optional.empty());
         when(customerRepository.save(any())).thenReturn(testCustomer);
+        when(orderRepository.findById(testOrder.getId())).thenReturn(Optional.of(testOrder));
+        when(orderItemRepository.findByOrderId(testOrder.getId())).thenReturn(new ArrayList<>());
 
         CreateOrderResponse response = orderService.create(request);
 

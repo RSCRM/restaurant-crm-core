@@ -37,12 +37,12 @@ public class OrderItemController {
      * @return the ApiResponse containing the updated order item details
      */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_UPDATE)")
+    @PreAuthorize("hasAnyAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_UPDATE, T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
     public ResponseEntity<ApiResponse<OrderItemResponse>> updateStatus(
             @PathVariable String id,
             @Valid @RequestBody UpdateOrderItemStatusRequest request
     ) {
-        OrderItemResponse updatedItem = orderItemService.updateStatus(id, request.getStatus());
+        OrderItemResponse updatedItem = orderItemService.updateStatus(id, request);
         ApiResponse<OrderItemResponse> response = ApiResponse.<OrderItemResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(updatedItem)
