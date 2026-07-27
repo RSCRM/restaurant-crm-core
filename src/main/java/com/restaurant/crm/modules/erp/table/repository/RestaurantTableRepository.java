@@ -23,4 +23,8 @@ public interface RestaurantTableRepository
     List<RestaurantTable> findByAreaBranchIdOrderByAreaAreaNameAscTableNumberAsc(String branchId);
 
     List<RestaurantTable> findByAreaIdOrderByTableNumberAsc(String areaId);
+
+    boolean existsByArea_IdAndTableNumber(String areaId, String tableNumber);
+
+    boolean existsByArea_IdAndTableNumberAndIdNot(String areaId, String tableNumber, String id);
 }
