@@ -116,6 +116,15 @@ public enum ErrorCode {
     // ==== TABLE ERRORS ====
     TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
     TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_NAME_EXISTS("TABLE_1002", "Area name already exists in this branch", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_BRANCH_REQUIRED("TABLE_1003", "Branch id is required", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_NAME_REQUIRED("TABLE_1004", "Area name is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_NOT_FOUND("TABLE_1005", "Restaurant table not found", HttpStatus.NOT_FOUND),
+    RESTAURANT_TABLE_NUMBER_EXISTS("TABLE_1006", "Table number already exists in this area", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_AREA_REQUIRED("TABLE_1007", "Area id is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_NUMBER_REQUIRED("TABLE_1008", "Table number is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_CAPACITY_REQUIRED("TABLE_1009", "Capacity is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_CAPACITY_INVALID("TABLE_1010", "Capacity must be at least 1", HttpStatus.BAD_REQUEST),
 
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
@@ -141,6 +150,24 @@ public enum ErrorCode {
     ORDER_ITEM_NOT_PREPARED_BY_YOU("ORDER_1015", "You are not the chef who accepted this order item", HttpStatus.BAD_REQUEST),
     ORDER_ITEM_CANCEL_REASON_REQUIRED("ORDER_1016", "Reason is required when cancelling order item", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FOUND("INVOICE_1000", "Invoice not found", HttpStatus.NOT_FOUND),
+
+    // ==== TABLE OPERATION ERRORS ====
+    TABLE_NOT_FOUND("TABLE_SESSION_1000", "Table not found in branch", HttpStatus.NOT_FOUND),
+    TABLE_NOT_AVAILABLE("TABLE_SESSION_1001", "Table is not available", HttpStatus.CONFLICT),
+    TABLE_SESSION_ACTIVE_EXISTS("TABLE_SESSION_1002", "Table already has an active session", HttpStatus.CONFLICT),
+    TABLE_PARTY_SIZE_EXCEEDS_CAPACITY(
+            "TABLE_SESSION_1003",
+            "Party size exceeds table capacity",
+            HttpStatus.BAD_REQUEST
+    ),
+    TABLE_SESSION_NOT_FOUND("TABLE_SESSION_1004", "Table session not found", HttpStatus.NOT_FOUND),
+    TABLE_SESSION_NOT_ACTIVE("TABLE_SESSION_1005", "Table session is not active", HttpStatus.CONFLICT),
+    TABLE_TRANSFER_SAME_TABLE(
+            "TABLE_SESSION_1006",
+            "Source and target table must be different",
+            HttpStatus.BAD_REQUEST
+    ),
+    TABLE_SESSION_UNPAID_ORDER("TABLE_SESSION_1007", "Table session has an unpaid order", HttpStatus.CONFLICT),
 
     // ==== INGREDIENT ERRORS ====
     INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
@@ -246,6 +273,10 @@ public enum ErrorCode {
     CART_MODIFIER_INVALID("CART_1007", "Modifier option is invalid for this item", HttpStatus.BAD_REQUEST),
     CART_MEMBER_NOT_FOUND("CART_1008", "Session member not found for this device", HttpStatus.FORBIDDEN),
     CART_ITEM_REQUEST_INVALID("CART_1009", "Cart item request is invalid", HttpStatus.BAD_REQUEST),
+    // ==== CUSTOMER MENU ERRORS ====
+    MENU_BRANCH_CONTEXT_MISSING("MENU_1000", "Branch context is missing from the session", HttpStatus.FORBIDDEN),
+    MENU_PRODUCT_NOT_FOUND("MENU_1001", "Product not found in this branch", HttpStatus.NOT_FOUND),
+    MENU_EMPTY("MENU_1002", "Menu is not configured for this branch", HttpStatus.NOT_FOUND),
     ;
 
     String code;

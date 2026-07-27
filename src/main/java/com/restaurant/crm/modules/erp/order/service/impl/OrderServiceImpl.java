@@ -66,10 +66,10 @@ public class OrderServiceImpl implements OrderService {
     RestaurantTableRepository restaurantTableRepository;
     SseEmitterService sseEmitterService;
     CustomerSseService customerSseService;
-    com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.CustomerVoucherService customerVoucherService;
-    com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository customerVoucherRepository;
-    com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository customerRepository;
-    com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService pointWalletService;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService customerVoucherService;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository customerVoucherRepository;
+    com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository customerRepository;
+    com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService pointWalletService;
 
     @Override
     @Transactional
@@ -127,7 +127,7 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 activeOrder.setSubtotal(orderSubtotal);
-                com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher appliedVoucher =
+                com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher appliedVoucher =
                         customerVoucherRepository.findByOrderId(activeOrder.getId()).orElse(null);
                 if (appliedVoucher != null) {
                     BigDecimal discountPercent = BigDecimal.valueOf(appliedVoucher.getVoucher().getDiscountPercent());
@@ -196,10 +196,10 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(savedOrder);
 
         if (StringUtils.hasText(request.getCustomerPhone())) {
-            com.restaurant.crm.modules.crm.customer_account.entity.Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
-                    .orElseGet(() -> customerRepository.save(com.restaurant.crm.modules.crm.customer_account.entity.Customer.builder()
+            com.restaurant.crm.modules.crm.customeraccount.entity.Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
+                    .orElseGet(() -> customerRepository.save(com.restaurant.crm.modules.crm.customeraccount.entity.Customer.builder()
                             .phone(request.getCustomerPhone())
-                            .status(com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus.ACTIVE)
+                            .status(com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus.ACTIVE)
                             .build()));
             pointWalletService.initializeWallet(customer.getId(), branchId);
         }
@@ -317,7 +317,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse> getApplicableVouchers(String orderId) {
+    public List<com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherApplicableResponse> getApplicableVouchers(String orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
@@ -325,7 +325,7 @@ public class OrderServiceImpl implements OrderService {
             return List.of();
         }
 
-        com.restaurant.crm.modules.crm.customer_account.entity.Customer customer = customerRepository.findByPhone(order.getCustomerPhone())
+        com.restaurant.crm.modules.crm.customeraccount.entity.Customer customer = customerRepository.findByPhone(order.getCustomerPhone())
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
 
         return customerVoucherService.getApplicableVouchers(customer.getId(), order.getBranchId(), order.getSubtotal());
@@ -343,7 +343,7 @@ public class OrderServiceImpl implements OrderService {
 
         customerVoucherService.releaseVoucher(orderId);
 
-        com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherResponse cv =
+        com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherResponse cv =
                 customerVoucherService.useVoucher(customerVoucherId, orderId, order.getSubtotal());
 
         BigDecimal discountPercent = BigDecimal.valueOf(cv.getVoucher().getDiscountPercent());

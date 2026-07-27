@@ -1,9 +1,12 @@
 package com.restaurant.crm.modules.erp.booking.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
 import com.restaurant.crm.modules.erp.booking.constants.BookingConstants;
 import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,16 +39,15 @@ import java.time.Instant;
 @Table(name = BookingConstants.TABLE_NAME)
 public class Booking extends BaseEntity {
 
-    // TODO: Refactor to @ManyToOne when Branch module/entity is initialized.
-    // FK: FK_BOOKINGS_BRANCH_ID -> branches(id)
+    
+    @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
-    @Column(name = BookingConstants.COL_BRANCH_ID, nullable = false)
-    String branchId;
+    @JoinColumn(name = BookingConstants.COL_BRANCH_ID, nullable = false)
+    OrganizationBranch branch;
 
-    // TODO: Refactor to @ManyToOne when Restaurant Table module/entity is initialized.
-    // FK: FK_BOOKINGS_TABLE_ID -> restaurant_tables(id)
-    @Column(name = BookingConstants.COL_TABLE_ID)
-    String tableId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = BookingConstants.COL_TABLE_ID)
+    RestaurantTable tables;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

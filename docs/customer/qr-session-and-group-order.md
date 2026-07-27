@@ -176,7 +176,7 @@ Scan TABLE QR
 
 ## Module layout (no cross-module cycle)
 
-- `crm/customer_account` owns the OTP domain and is **QR-agnostic** — it imports nothing from erp.
+- `crm/customeraccount` owns the OTP domain and is **QR-agnostic** — it imports nothing from erp.
   `CustomerOtpService` takes `branchId`/`tableId` as already-trusted parameters:
   ```java
   OtpRequestResult request(String customerPhone, String branchId, String tableId);
@@ -243,6 +243,7 @@ testing) and `NoopOtpSender` (`@Profile("!dev") @Primary`, throws `OTP_SEND_FAIL
 
 ---
 
+<<<<<<< HEAD
 # Shared group cart & order submission (uc-c-05)
 
 The whole table shares one Redis-backed cart; only the OWNER submits; every item funnels into one
@@ -327,3 +328,57 @@ through `ErrorCode.valueOf`).
 - **SSE latency** for item locking; WebSocket would be better but `pom.xml` has none.
 - `customerName` submitted as `null` (Customer has only phone + status); order `note` is null (notes
   are per line).
+=======
+# Browse digital menu (uc-c-04)
+
+Once a session exists, a seated customer browses the digital menu of **their own branch**.
+
+## Endpoint
+
+```
+GET /api/v1/customer/menu                       → CUSTOMER_SESSION token required
+GET /api/v1/customer/menu/products/{productId}  → CUSTOMER_SESSION token required
+```
+
+`GET /customer/menu` returns the whole tree in one shot (no pagination, NFR-09):
+
+```
+ApiResponse<CustomerMenuResponse>
+{
+  "branchId": "...",
+  "categories": [ { "categoryId", "categoryName": null,
+                    "products": [ { "productId","productName","description","price","imageUrl",
+                                    "available", "requiresPreparation" } ] } ],
+  "combos":     [ { "comboId","comboName","description","price","imageUrl","available","items": [] } ],
+  "modifierGroups": [ { "modifierGroupId","groupName","description","minSelection","maxSelection",
+                        "options": [ { "modifierOptionId","optionName","additionalPrice","available" } ] } ]
+}
+```
+
+## Rules
+
+- **Branch isolation (NFR-07):** `branchId` always comes from `AuthUtils.getBranchId()` — never from
+  a param/path/body. Product objects deliberately do **not** expose `branchId`.
+- **Availability (BR-CST-QR-02):** `available = "AVAILABLE".equals(status)`. Non-available items are
+  still returned with `available = false` (the FE greys out "add to cart") rather than vanishing.
+- **Stable order:** categories by `categoryId` asc, products by `productName` asc — identical across calls.
+- **Fixed query count:** exactly 4 queries (products, combos, groups, options) regardless of how many
+  groups exist — options are fetched with one `findByModifierGroupIdIn` (no N+1).
+- **Cache:** `@Cacheable` keyed by `branchId`, cache `customerMenu`.
+
+## Known gaps (out of uc-c-04 scope — belong to menu/inventory modules)
+
+| # | Missing | Effect | Current behavior |
+| :-- | :-- | :-- | :-- |
+| 1 | No `Category` entity (`Product.categoryId` is a bare String) | FR-03.1 wants named categories | group by `categoryId`, return `categoryName = null` (TODO) |
+| 2 | No `Product ↔ ModifierGroup` join | can't attach option groups per dish | modifier groups returned at **menu level**, not per product (TODO) |
+| 3 | No `Combo ↔ Product` join | combo has only name + price | combos returned flat, `items = []` (TODO) |
+| 4 | No `Recipe/BOM` (`Product ↔ Ingredient`) | **BR-CST-QR-02 auto-hide on out-of-stock not possible** | filter by `Product.status` only (TODO) |
+
+## Cache caveat
+
+The menu uses an in-memory `ConcurrentMapCacheManager` (explicit, so Redis auto-config doesn't demand a
+running server). It does **not** enforce `CACHE_TTL_SECONDS` — entries persist until app restart. Once
+uc-m-* ships menu-edit endpoints they must `@CacheEvict`, or the cache should move to a TTL-capable
+manager (Caffeine/Redis, needs a dependency + NFR-03 multi-instance decision).
+>>>>>>> origin/dev

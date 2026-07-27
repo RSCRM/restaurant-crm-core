@@ -2,9 +2,9 @@ package com.restaurant.crm.modules.erp.order.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerOtpConstants;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpRequestResult;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.CustomerOtpService;
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerOtpConstants;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpRequestResult;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.CustomerOtpService;
 import com.restaurant.crm.modules.erp.order.constants.CustomerOtpControllerConstants;
 import com.restaurant.crm.modules.erp.order.dto.request.OtpRequestRequest;
 import com.restaurant.crm.modules.erp.order.dto.request.OtpVerifyRequest;
