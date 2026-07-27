@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
 import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
 import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
@@ -9,14 +10,9 @@ import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRep
 import com.restaurant.crm.modules.erp.menu.product.entity.Product;
 import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
-import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemModifierRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemModifierRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderBlockedItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CancelOrderResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
@@ -33,10 +29,11 @@ import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OrderService;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
-import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -47,10 +44,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -59,10 +53,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
 
-    private static final Set<OrderStatus> MODIFIABLE_ORDER_STATUSES =
-            EnumSet.of(OrderStatus.PENDING);
-    private static final Set<OrderItemStatus> MODIFIABLE_ORDER_ITEM_STATUSES =
-            EnumSet.of(OrderItemStatus.PENDING);
     private static final Set<OrderItemStatus> ORDER_CANCELLABLE_ORDER_ITEM_STATUSES =
             EnumSet.of(OrderItemStatus.PENDING, OrderItemStatus.CANCELLED);
 
@@ -74,11 +64,12 @@ public class OrderServiceImpl implements OrderService {
     ComboRepository comboRepository;
     ModifierOptionRepository modifierOptionRepository;
     RestaurantTableRepository restaurantTableRepository;
+    SseEmitterService sseEmitterService;
     CustomerSseService customerSseService;
-    com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.CustomerVoucherService customerVoucherService;
-    com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository customerVoucherRepository;
-    com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository customerRepository;
-    com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService pointWalletService;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService customerVoucherService;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository customerVoucherRepository;
+    com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository customerRepository;
+    com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService pointWalletService;
 
     @Override
     @Transactional
@@ -136,7 +127,8 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 activeOrder.setSubtotal(orderSubtotal);
-                com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher appliedVoucher = customerVoucherRepository.findByOrderId(activeOrder.getId()).orElse(null);
+                com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher appliedVoucher =
+                        customerVoucherRepository.findByOrderId(activeOrder.getId()).orElse(null);
                 if (appliedVoucher != null) {
                     BigDecimal discountPercent = BigDecimal.valueOf(appliedVoucher.getVoucher().getDiscountPercent());
                     BigDecimal discountAmount = orderSubtotal.multiply(discountPercent).divide(BigDecimal.valueOf(100));
@@ -149,6 +141,8 @@ public class OrderServiceImpl implements OrderService {
 
                 OrderCookingStatusResponse updatedStatus = getOrderCookingStatus(activeOrder.getId());
                 customerSseService.broadcastOrderUpdate(activeOrder.getId(), updatedStatus);
+                broadcastOrderUpdateToBranch(activeOrder.getId(), activeOrder.getBranchId());
+                broadcastKdsOrderEvent(activeOrder.getBranchId(), "KDS_ORDER_UPDATED", activeOrder.getId());
 
                 return CreateOrderResponse.builder()
                         .orderId(activeOrder.getId())
@@ -201,102 +195,26 @@ public class OrderServiceImpl implements OrderService {
         savedOrder.setTotalAmount(orderSubtotal.subtract(savedOrder.getDiscountAmount()));
         orderRepository.save(savedOrder);
 
-        // Ensure customer is registered in CRM if phone is provided
         if (StringUtils.hasText(request.getCustomerPhone())) {
-            com.restaurant.crm.modules.crm.customer_account.entity.Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
-                    .orElseGet(() -> customerRepository.save(com.restaurant.crm.modules.crm.customer_account.entity.Customer.builder()
+            com.restaurant.crm.modules.crm.customeraccount.entity.Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
+                    .orElseGet(() -> customerRepository.save(com.restaurant.crm.modules.crm.customeraccount.entity.Customer.builder()
                             .phone(request.getCustomerPhone())
-                            .status(com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus.ACTIVE)
+                            .status(com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus.ACTIVE)
                             .build()));
             pointWalletService.initializeWallet(customer.getId(), branchId);
         }
 
-        // Update table status to OCCUPIED
         if (table != null) {
             table.setStatus(RestaurantTableStatus.OCCUPIED);
             restaurantTableRepository.save(table);
         }
 
+        broadcastOrderUpdateToBranch(savedOrder.getId(), savedOrder.getBranchId());
+        broadcastKdsOrderEvent(savedOrder.getBranchId(), "KDS_ORDER_CREATED", savedOrder.getId());
+
         return CreateOrderResponse.builder()
                 .orderId(savedOrder.getId())
                 .build();
-    }
-
-    @Override
-    @Transactional
-    public AddOrderItemResponse addOrderItem(String orderId, AddOrderItemRequestDto request) {
-        Order existingOrder = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-        validateOrderStatusForOrderItemMutation(existingOrder);
-
-        BigDecimal unitPrice = resolveUnitPrice(existingOrder.getBranchId(), request.getProductId(), request.getComboId());
-
-        OrderItem orderItem = OrderItem.builder()
-                .order(existingOrder)
-                .productId(request.getProductId())
-                .comboId(request.getComboId())
-                .quantity(request.getQuantity())
-                .unitPrice(unitPrice)
-                .subtotal(unitPrice.multiply(BigDecimal.valueOf(request.getQuantity())))
-                .status(OrderItemStatus.PENDING)
-                .note(request.getNote())
-                .build();
-        OrderItem savedOrderItem = orderItemRepository.save(orderItem);
-
-        BigDecimal modifierTotal = createOrderItemModifiers(savedOrderItem, request.getModifiers());
-
-        savedOrderItem.setSubtotal(savedOrderItem.getSubtotal().add(modifierTotal));
-        orderItemRepository.save(savedOrderItem);
-        applyOrderSubtotalDelta(existingOrder, savedOrderItem.getSubtotal());
-
-        return AddOrderItemResponse.builder()
-                .orderItemId(savedOrderItem.getId())
-                .build();
-    }
-
-    @Override
-    @Transactional
-    public void updateOrderItemQuantity(
-            String orderId,
-            String orderItemId,
-            UpdateOrderItemQuantityRequestDto request
-    ) {
-        OrderItem existingOrderItem = getOrderItem(orderId, orderItemId);
-
-        validateOrderStatusForOrderItemMutation(existingOrderItem.getOrder());
-        validateOrderItemQuantityChange(existingOrderItem, request.getQuantity());
-
-        if (request.getQuantity().equals(existingOrderItem.getQuantity())) {
-            return;
-        }
-
-        BigDecimal quantityDelta = existingOrderItem.getUnitPrice()
-                .multiply(BigDecimal.valueOf(request.getQuantity() - existingOrderItem.getQuantity()));
-        existingOrderItem.setQuantity(request.getQuantity());
-        existingOrderItem.setSubtotal(existingOrderItem.getSubtotal().add(quantityDelta));
-        orderItemRepository.save(existingOrderItem);
-
-        applyOrderSubtotalDelta(existingOrderItem.getOrder(), quantityDelta);
-    }
-
-    @Override
-    @Transactional
-    public void updateOrderItemModifiers(
-            String orderId,
-            String orderItemId,
-            UpdateOrderItemModifiersRequestDto request
-    ) {
-        OrderItem existingOrderItem = getOrderItem(orderId, orderItemId);
-        List<OrderItemModifier> currentModifiers = orderItemModifierRepository.findAllByOrderItemId(orderItemId);
-
-        validateOrderStatusForOrderItemMutation(existingOrderItem.getOrder());
-        validateOrderItemStatusForModifierMutation(existingOrderItem);
-
-        BigDecimal oldModifierSubtotal = calculateModifierTotal(currentModifiers);
-        BigDecimal newModifierSubtotal = syncOrderItemModifiers(existingOrderItem, currentModifiers, request.getModifiers());
-        BigDecimal modifierSubtotalDelta = newModifierSubtotal.subtract(oldModifierSubtotal);
-
-        applyOrderItemSubtotalDelta(existingOrderItem, modifierSubtotalDelta);
     }
 
     @Override
@@ -329,6 +247,8 @@ public class OrderServiceImpl implements OrderService {
         order.setSubtotal(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
         orderRepository.save(order);
+
+        broadcastKdsOrderEvent(order.getBranchId(), "KDS_ORDER_UPDATED", order.getId());
 
         return CancelOrderResponse.builder()
                 .cancelled(true)
@@ -396,28 +316,94 @@ public class OrderServiceImpl implements OrderService {
         return getOrderCookingStatus(activeOrder.getId());
     }
 
+    @Override
+    public List<com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherApplicableResponse> getApplicableVouchers(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!StringUtils.hasText(order.getCustomerPhone())) {
+            return List.of();
+        }
+
+        com.restaurant.crm.modules.crm.customeraccount.entity.Customer customer = customerRepository.findByPhone(order.getCustomerPhone())
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+
+        return customerVoucherService.getApplicableVouchers(customer.getId(), order.getBranchId(), order.getSubtotal());
+    }
+
+    @Override
+    @Transactional
+    public void applyVoucher(String orderId, String customerVoucherId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new AppException(ErrorCode.ORDER_ALREADY_PAID);
+        }
+
+        customerVoucherService.releaseVoucher(orderId);
+
+        com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherResponse cv =
+                customerVoucherService.useVoucher(customerVoucherId, orderId, order.getSubtotal());
+
+        BigDecimal discountPercent = BigDecimal.valueOf(cv.getVoucher().getDiscountPercent());
+        BigDecimal discountAmount = order.getSubtotal().multiply(discountPercent).divide(BigDecimal.valueOf(100));
+
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(order.getSubtotal().subtract(discountAmount));
+        orderRepository.save(order);
+
+        customerSseService.broadcastOrderUpdate(orderId, getOrderCookingStatus(orderId));
+    }
+
+    @Override
+    @Transactional
+    public void removeVoucher(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new AppException(ErrorCode.ORDER_ALREADY_PAID);
+        }
+
+        customerVoucherService.releaseVoucher(orderId);
+
+        order.setDiscountAmount(BigDecimal.ZERO);
+        order.setTotalAmount(order.getSubtotal());
+        orderRepository.save(order);
+
+        customerSseService.broadcastOrderUpdate(orderId, getOrderCookingStatus(orderId));
+    }
+
     private String generateOrderCode() {
         return OrderConstants.ORDER_CODE_PREFIX
                 + UUID.randomUUID().toString().substring(0, OrderConstants.ORDER_CODE_RANDOM_LENGTH).toUpperCase();
     }
 
-    private void validateOrderItemQuantityChange(OrderItem existingOrderItem, Integer requestedQuantity) {
-        if (!requestedQuantity.equals(existingOrderItem.getQuantity())
-                && !MODIFIABLE_ORDER_ITEM_STATUSES.contains(existingOrderItem.getStatus())) {
-            throw new AppException(ErrorCode.ORDER_ITEM_STATUS_NOT_MODIFIABLE);
+    private void broadcastOrderUpdateToBranch(String orderId, String branchId) {
+        if (!StringUtils.hasText(branchId)) {
+            return;
         }
+
+        sseEmitterService.broadcastToBranch(
+                branchId,
+                "ORDER_UPDATED",
+                getOrderCookingStatus(orderId),
+                StartDefinedOrgPermission.ORDER_READ
+        );
     }
 
-    private void validateOrderItemStatusForModifierMutation(OrderItem existingOrderItem) {
-        if (!MODIFIABLE_ORDER_ITEM_STATUSES.contains(existingOrderItem.getStatus())) {
-            throw new AppException(ErrorCode.ORDER_ITEM_STATUS_NOT_MODIFIABLE);
+    private void broadcastKdsOrderEvent(String branchId, String eventName, String orderId) {
+        if (!StringUtils.hasText(branchId)) {
+            return;
         }
-    }
 
-    private void validateOrderStatusForOrderItemMutation(Order order) {
-        if (!MODIFIABLE_ORDER_STATUSES.contains(order.getStatus())) {
-            throw new AppException(ErrorCode.ORDER_STATUS_NOT_MODIFIABLE);
-        }
+        sseEmitterService.broadcastToBranch(
+                branchId,
+                eventName,
+                orderId,
+                StartDefinedOrgPermission.ORDER_READ
+        );
     }
 
     private void validateOrderStatusForOrderCancellation(Order order) {
@@ -426,10 +412,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private OrderItem getOrderItem(String orderId, String orderItemId) {
-        return orderItemRepository.findByIdAndOrderIdWithOrder(orderItemId, orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
-    }
     private BigDecimal resolveUnitPrice(String branchId, String productId, String comboId) {
         if (StringUtils.hasText(productId)) {
             Product product = productRepository.findByIdAndBranchId(productId, branchId)
@@ -442,29 +424,6 @@ public class OrderServiceImpl implements OrderService {
         return combo.getPrice();
     }
 
-    private BigDecimal createOrderItemModifiers(OrderItem orderItem, List<AddOrderItemModifierRequestDto> modifiers) {
-        if (modifiers == null || modifiers.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
-        BigDecimal modifierTotal = BigDecimal.ZERO;
-        List<OrderItemModifier> modifiersToSave = new ArrayList<>();
-        for (AddOrderItemModifierRequestDto modifierRequest : modifiers) {
-            BigDecimal additionalPrice = resolveModifierAdditionalPrice(modifierRequest.getModifierOptionId());
-            BigDecimal modifierSubtotal = calculateModifierSubtotal(additionalPrice, modifierRequest.getQuantity());
-            modifierTotal = modifierTotal.add(modifierSubtotal);
-
-            modifiersToSave.add(OrderItemModifier.builder()
-                    .orderItem(orderItem)
-                    .modifierOptionId(modifierRequest.getModifierOptionId())
-                    .additionalPrice(additionalPrice)
-                    .quantity(modifierRequest.getQuantity())
-                    .build());
-        }
-
-        orderItemModifierRepository.saveAll(modifiersToSave);
-        return modifierTotal;
-    }
     private BigDecimal saveOrderItemModifiers(
             OrderItem orderItem,
             List<CreateOrderItemModifierRequestDto> modifierRequests
@@ -495,102 +454,6 @@ public class OrderServiceImpl implements OrderService {
         return modifierTotal;
     }
 
-    private BigDecimal resolveModifierAdditionalPrice(String modifierOptionId) {
-        ModifierOption modifierOption = modifierOptionRepository.findById(modifierOptionId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_MODIFIER_OPTION_NOT_FOUND));
-        return modifierOption.getAdditionalPrice();
-    }
-
-    private BigDecimal syncOrderItemModifiers(
-            OrderItem orderItem,
-            List<OrderItemModifier> currentModifiers,
-            List<AddOrderItemModifierRequestDto> requestedModifiers
-    ) {
-        if (requestedModifiers == null) {
-            requestedModifiers = List.of();
-        }
-
-        Map<String, OrderItemModifier> currentModifierMap = new HashMap<>();
-        for (OrderItemModifier currentModifier : currentModifiers) {
-            currentModifierMap.put(currentModifier.getModifierOptionId(), currentModifier);
-        }
-
-        Set<String> requestedModifierOptionIds = new HashSet<>();
-        List<OrderItemModifier> modifiersToUpsert = new ArrayList<>();
-        List<OrderItemModifier> modifiersToDelete = new ArrayList<>();
-        BigDecimal newModifierSubtotal = BigDecimal.ZERO;
-
-        for (AddOrderItemModifierRequestDto requestedModifier : requestedModifiers) {
-            String modifierOptionId = requestedModifier.getModifierOptionId();
-            requestedModifierOptionIds.add(modifierOptionId);
-
-            BigDecimal additionalPrice = resolveModifierAdditionalPrice(modifierOptionId);
-            newModifierSubtotal = newModifierSubtotal.add(
-                    calculateModifierSubtotal(additionalPrice, requestedModifier.getQuantity())
-            );
-
-            OrderItemModifier existingModifier = currentModifierMap.get(modifierOptionId);
-            if (existingModifier != null) {
-                existingModifier.setAdditionalPrice(additionalPrice);
-                existingModifier.setQuantity(requestedModifier.getQuantity());
-                modifiersToUpsert.add(existingModifier);
-                continue;
-            }
-
-            modifiersToUpsert.add(OrderItemModifier.builder()
-                    .orderItem(orderItem)
-                    .modifierOptionId(modifierOptionId)
-                    .additionalPrice(additionalPrice)
-                    .quantity(requestedModifier.getQuantity())
-                    .build());
-        }
-
-        for (OrderItemModifier currentModifier : currentModifiers) {
-            if (!requestedModifierOptionIds.contains(currentModifier.getModifierOptionId())) {
-                modifiersToDelete.add(currentModifier);
-            }
-        }
-
-        if (!modifiersToDelete.isEmpty()) {
-            orderItemModifierRepository.deleteAll(modifiersToDelete);
-        }
-        if (!modifiersToUpsert.isEmpty()) {
-            orderItemModifierRepository.saveAll(modifiersToUpsert);
-        }
-
-        return newModifierSubtotal;
-    }
-
-    private void applyOrderItemSubtotalDelta(OrderItem orderItem, BigDecimal subtotalDelta) {
-        if (BigDecimal.ZERO.compareTo(subtotalDelta) == 0) {
-            return;
-        }
-
-        orderItem.setSubtotal(orderItem.getSubtotal().add(subtotalDelta));
-        orderItemRepository.save(orderItem);
-        applyOrderSubtotalDelta(orderItem.getOrder(), subtotalDelta);
-    }
-
-    private void applyOrderSubtotalDelta(Order order, BigDecimal subtotalDelta) {
-        if (BigDecimal.ZERO.compareTo(subtotalDelta) == 0) {
-            return;
-        }
-
-        order.setSubtotal(order.getSubtotal().add(subtotalDelta));
-        order.setTotalAmount(order.getSubtotal().subtract(order.getDiscountAmount()));
-        orderRepository.save(order);
-    }
-
-    private BigDecimal calculateModifierSubtotal(BigDecimal additionalPrice, Integer quantity) {
-        return additionalPrice.multiply(BigDecimal.valueOf(quantity));
-    }
-
-    private BigDecimal calculateModifierTotal(List<OrderItemModifier> modifiers) {
-        return modifiers.stream()
-                .map(modifier -> calculateModifierSubtotal(modifier.getAdditionalPrice(), modifier.getQuantity()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
     private List<CancelOrderBlockedItemResponse> getBlockedItemsForOrderCancellation(List<OrderItem> orderItems) {
         List<CancelOrderBlockedItemResponse> blockedItems = new ArrayList<>();
         for (OrderItem orderItem : orderItems) {
@@ -609,68 +472,5 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return blockedItems;
-    }
-
-    @Override
-    public List<com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse> getApplicableVouchers(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-        if (!StringUtils.hasText(order.getCustomerPhone())) {
-            return List.of();
-        }
-
-        com.restaurant.crm.modules.crm.customer_account.entity.Customer customer = customerRepository.findByPhone(order.getCustomerPhone())
-                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
-
-        return customerVoucherService.getApplicableVouchers(customer.getId(), order.getBranchId(), order.getSubtotal());
-    }
-
-    @Override
-    @Transactional
-    public void applyVoucher(String orderId, String customerVoucherId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-        if (order.getStatus() == OrderStatus.PAID) {
-            throw new AppException(ErrorCode.ORDER_ALREADY_PAID);
-        }
-
-        // Release any currently applied voucher on this order first
-        customerVoucherService.releaseVoucher(orderId);
-
-        // Apply the new voucher
-        com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherResponse cv = customerVoucherService.useVoucher(customerVoucherId, orderId, order.getSubtotal());
-
-        // Recalculate discount
-        BigDecimal discountPercent = BigDecimal.valueOf(cv.getVoucher().getDiscountPercent());
-        BigDecimal discountAmount = order.getSubtotal().multiply(discountPercent).divide(BigDecimal.valueOf(100));
-
-        order.setDiscountAmount(discountAmount);
-        order.setTotalAmount(order.getSubtotal().subtract(discountAmount));
-        orderRepository.save(order);
-
-        // Broadcast SSE update
-        customerSseService.broadcastOrderUpdate(orderId, getOrderCookingStatus(orderId));
-    }
-
-    @Override
-    @Transactional
-    public void removeVoucher(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-        if (order.getStatus() == OrderStatus.PAID) {
-            throw new AppException(ErrorCode.ORDER_ALREADY_PAID);
-        }
-
-        customerVoucherService.releaseVoucher(orderId);
-
-        order.setDiscountAmount(BigDecimal.ZERO);
-        order.setTotalAmount(order.getSubtotal());
-        orderRepository.save(order);
-
-        // Broadcast SSE update
-        customerSseService.broadcastOrderUpdate(orderId, getOrderCookingStatus(orderId));
     }
 }

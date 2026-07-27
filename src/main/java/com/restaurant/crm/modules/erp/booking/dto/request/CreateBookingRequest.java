@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.erp.booking.dto.request;
 
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerConstants;
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerConstants;
 import com.restaurant.crm.modules.erp.booking.constants.BookingConstants;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;

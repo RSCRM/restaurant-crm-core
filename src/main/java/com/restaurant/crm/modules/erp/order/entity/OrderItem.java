@@ -70,4 +70,14 @@ public class OrderItem extends BaseEntity {
 
     @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
     String note;
+
+    @Column(name = "prepared_by", columnDefinition = OrderConstants.UUID_DEFINITION)
+    String preparedBy;
+
+    @Column(name = "cancel_reason")
+    String cancelReason;
+
+    @Column(name = "cancelled_by", columnDefinition = OrderConstants.UUID_DEFINITION)
+    String cancelledBy;
 }
+

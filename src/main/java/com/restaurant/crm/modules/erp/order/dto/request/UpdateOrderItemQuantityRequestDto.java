@@ -20,6 +20,6 @@ import lombok.experimental.FieldDefaults;
 public class UpdateOrderItemQuantityRequestDto {
 
     @NotNull
-    @Min(OrderConstants.MIN_QUANTITY)
+    @Min(OrderConstants.MIN_UPDATE_ORDER_ITEM_QUANTITY)
     Integer quantity;
 }

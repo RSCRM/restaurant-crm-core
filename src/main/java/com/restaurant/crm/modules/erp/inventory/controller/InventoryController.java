@@ -5,6 +5,7 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -101,6 +102,30 @@ public class InventoryController {
 
         return ResponseEntity.ok(
             ApiResponse.<InventoryResponse>builder()
+                .data(response)
+                .build()
+        );
+    }
+
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
+    @GetMapping("/branch/{branchId}/status/{status}")
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryResponse>>> getInventoriesByStatus(
+        @PathVariable String branchId,
+        @PathVariable InventoryStatus status,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+
+        PagingResponse<InventoryResponse> response =
+            inventoryService.getInventoriesByStatus(
+                branchId,
+                status,
+                page,
+                size
+            );
+
+        return ResponseEntity.ok(
+            ApiResponse.<PagingResponse<InventoryResponse>>builder()
                 .data(response)
                 .build()
         );
