@@ -5,12 +5,12 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherRedeemRequest;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherResponse;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService;
-
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +30,7 @@ public class CustomerVoucherController {
     CustomerVoucherService customerVoucherService;
 
     @PostMapping("/redeem")
+    @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_REDEEM')")
     public ResponseEntity<ApiResponse<CustomerVoucherResponse>> redeemVoucher(@RequestBody @Valid VoucherRedeemRequest request) {
         CustomerVoucherResponse response = customerVoucherService.redeemVoucher(request);
         return ResponseEntity.ok(ApiResponse.<CustomerVoucherResponse>builder()
@@ -39,6 +40,7 @@ public class CustomerVoucherController {
     }
 
     @PostMapping("/give")
+    @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_GIVE')")
     public ResponseEntity<ApiResponse<CustomerVoucherResponse>> giveVoucher(
             @RequestParam String customerId,
             @RequestParam String restaurantId,
@@ -52,6 +54,7 @@ public class CustomerVoucherController {
     }
 
     @PostMapping("/use/{id}")
+    @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_USE')")
     public ResponseEntity<ApiResponse<CustomerVoucherResponse>> useVoucher(
             @PathVariable String id,
             @RequestParam String orderId,
@@ -65,6 +68,7 @@ public class CustomerVoucherController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerVoucherResponse>>> getCustomerVouchers(
             @RequestParam String customerId,
             @RequestParam String restaurantId,

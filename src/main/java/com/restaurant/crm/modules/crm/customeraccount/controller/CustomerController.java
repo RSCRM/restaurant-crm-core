@@ -5,12 +5,12 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.crm.customeraccount.dto.request.CustomerIdentifyRequest;
 import com.restaurant.crm.modules.crm.customeraccount.dto.response.CustomerResponse;
 import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.CustomerService;
-
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +28,7 @@ public class CustomerController {
     CustomerService customerService;
 
     @PostMapping("/identify")
+    @PreAuthorize("hasAuthority('CUSTOMER_CREATE')")
     public ResponseEntity<ApiResponse<CustomerResponse>> identifyCustomer(@RequestBody @Valid CustomerIdentifyRequest request) {
         CustomerResponse response = customerService.identifyAndInitializeWallet(request);
         return ResponseEntity.ok(ApiResponse.<CustomerResponse>builder()
@@ -37,6 +38,7 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('CUSTOMER_READ')")
     public ResponseEntity<ApiResponse<CustomerResponse>> getCustomerById(@PathVariable String id) {
         CustomerResponse response = customerService.getCustomerById(id);
         return ResponseEntity.ok(ApiResponse.<CustomerResponse>builder()
@@ -46,6 +48,7 @@ public class CustomerController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CUSTOMER_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerResponse>>> getAllCustomers(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size

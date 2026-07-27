@@ -10,7 +10,8 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.mapper.VoucherMapper;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.VoucherService;
-
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,11 +28,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class VoucherServiceImpl implements VoucherService {
 
     VoucherRepository voucherRepository;
+    OrganizationBranchRepository branchRepository;
     VoucherMapper voucherMapper;
+
+    private void validateBranchAccess(String targetBranchId) {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
+            return;
+        }
+        String actorUserId = AuthUtils.getCurrentUserId();
+        if (AuthUtils.getEmployeeId() == null) {
+            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
+        } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
 
     @Override
     @Transactional
     public VoucherResponse createVoucher(VoucherCreationRequest request) {
+        validateBranchAccess(request.getRestaurantId());
+
         Voucher voucher = voucherMapper.toVoucher(request);
         voucher.setIsActive((short) 1); // default
         voucher = voucherRepository.save(voucher);
@@ -44,6 +62,8 @@ public class VoucherServiceImpl implements VoucherService {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_FOUND));
 
+        validateBranchAccess(voucher.getRestaurantId());
+
         voucherMapper.updateVoucher(request, voucher);
         voucher = voucherRepository.save(voucher);
         return voucherMapper.toVoucherResponse(voucher);
@@ -51,6 +71,8 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     public PagingResponse<VoucherResponse> getActiveVouchersByRestaurant(String restaurantId, int page, int size) {
+        validateBranchAccess(restaurantId);
+
         int adjustedPage = Math.max(0, page - 1);
         Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Voucher> voucherPage = voucherRepository.findByRestaurantIdAndIsActive(restaurantId, (short) 1, pageable);
