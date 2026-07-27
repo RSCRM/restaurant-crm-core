@@ -78,7 +78,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     NotificationService notificationService;
     SseEmitterService sseEmitterService;
     CustomerSseService customerSseService;
-    com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository customerVoucherRepository;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository customerVoucherRepository;
     OrderItemMapper orderItemMapper;
     NotificationMapper notificationMapper;
 
@@ -506,7 +506,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     }
 
     private void recalculateOrderFinancials(Order order) {
-        com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher appliedVoucher =
+        com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher appliedVoucher =
                 customerVoucherRepository.findByOrderId(order.getId()).orElse(null);
 
         if (appliedVoucher != null) {

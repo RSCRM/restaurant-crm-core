@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.order;
 
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.enums.ErrorCode;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository;
 import com.restaurant.crm.modules.erp.menu.product.entity.Product;
 import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.notification.dto.response.NotificationResponse;
@@ -19,7 +20,6 @@ import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import com.restaurant.crm.modules.erp.order.mapper.OrderItemMapper;
 import com.restaurant.crm.modules.erp.order.repository.OrderItemRepository;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository;
 import com.restaurant.crm.modules.erp.order.service.impl.OrderItemServiceImpl;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.entity.TableArea;

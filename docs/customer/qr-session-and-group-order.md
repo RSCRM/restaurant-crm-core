@@ -176,7 +176,7 @@ Scan TABLE QR
 
 ## Module layout (no cross-module cycle)
 
-- `crm/customer_account` owns the OTP domain and is **QR-agnostic** — it imports nothing from erp.
+- `crm/customeraccount` owns the OTP domain and is **QR-agnostic** — it imports nothing from erp.
   `CustomerOtpService` takes `branchId`/`tableId` as already-trusted parameters:
   ```java
   OtpRequestResult request(String customerPhone, String branchId, String tableId);
