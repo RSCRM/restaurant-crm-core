@@ -12,6 +12,12 @@ public class StartDefinedOrgPermission {
     public static final String ORDER_UPDATE = "ORDER_UPDATE";
     public static final String ORDER_DELETE = "ORDER_DELETE";
 
+    // Kitchen Display (KDS) Permissions
+    public static final String KITCHEN_ORDER_READ = "KITCHEN_ORDER_READ";
+    public static final String KITCHEN_ITEM_ACCEPT = "KITCHEN_ITEM_ACCEPT";
+    public static final String KITCHEN_ITEM_UPDATE = "KITCHEN_ITEM_UPDATE";
+    public static final String KITCHEN_ITEM_CANCEL = "KITCHEN_ITEM_CANCEL";
+
     // Payment Permissions
     public static final String PAYMENT_READ = "PAYMENT_READ";
     public static final String PAYMENT_CREATE = "PAYMENT_CREATE";
