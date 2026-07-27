@@ -85,24 +85,6 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST
     ),
 
-    // ==== ATTENDANCE ERRORS ====
-    ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),
-    ATTENDANCE_ALREADY_CHECKED_IN("ATT_1001", "Shift already checked in", HttpStatus.CONFLICT),
-    ATTENDANCE_OPEN_RECORD_NOT_FOUND("ATT_1002", "No open attendance found", HttpStatus.NOT_FOUND),
-    ATTENDANCE_DATE_RANGE_INVALID("ATT_1003", "Attendance date range is invalid", HttpStatus.BAD_REQUEST),
-    ATTENDANCE_QR_INVALID("ATT_1004", "Attendance QR is invalid", HttpStatus.BAD_REQUEST),
-    ATTENDANCE_QR_EXPIRED("ATT_1005", "Attendance QR has expired", HttpStatus.BAD_REQUEST),
-    ATTENDANCE_QR_CONTEXT_MISMATCH("ATT_1006", "Attendance QR does not match shift context", HttpStatus.FORBIDDEN),
-    ATTENDANCE_QR_GENERATION_FAILED("ATT_1007", "Attendance QR generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
-
-    // ==== SCHEDULE ERRORS ====
-    SCHEDULE_DATE_RANGE_INVALID("SCHEDULE_1000", "Schedule date range is invalid", HttpStatus.BAD_REQUEST),
-    SCHEDULE_DATE_RANGE_EXCEEDED(
-            "SCHEDULE_1001",
-            "Schedule date range cannot exceed 31 days",
-            HttpStatus.BAD_REQUEST
-    ),
-
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
     ORGANIZATION_EXISTS("ORG_1001", "Organization already exists", HttpStatus.BAD_REQUEST),
@@ -208,7 +190,6 @@ public enum ErrorCode {
     CUSTOMER_VOUCHER_NOT_FOUND("LOY_1004", "Customer voucher not found", HttpStatus.NOT_FOUND),
     CUSTOMER_VOUCHER_ALREADY_USED("LOY_1005", "Voucher has already been used", HttpStatus.BAD_REQUEST),
     CUSTOMER_VOUCHER_MIN_BILL_NOT_MET("LOY_1006", "Minimum bill amount not met", HttpStatus.BAD_REQUEST),
-    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
     VOUCHER_TITLE_REQUIRED("LOY_1007", "Voucher title is required", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_REQUIRED("LOY_1008", "Voucher discount percent is required", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_INVALID("LOY_1009", "Voucher discount percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
