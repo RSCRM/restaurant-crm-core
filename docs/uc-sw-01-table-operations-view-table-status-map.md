@@ -4,7 +4,7 @@
 
 - **Actor:** Authenticated employee working in a branch.
 - **Goal:** View table areas, table positions, capacities, and live statuses for the current branch.
-- **Preconditions:** The context token contains a valid `branchId`; the branch exists and is active.
+- **Preconditions:** The access token contains a valid `branchId`; the branch exists and is active.
 - **Postcondition:** The system returns a read-only table map grouped by area.
 
 ## Main flow
@@ -35,10 +35,11 @@
 
 Response: `ApiResponse<TableMapResponse>`.
 
-## Database design
+## Database design (code-first draft)
 
 Existing tables are reused:
 
-- `table_areas`: nullable `display_order` controls map ordering.
-- `restaurant_tables`: nullable `position_x` and `position_y` store map positions.
-- The existing relations and unique `(area_id, table_number)` key remain unchanged.
+- `table_areas`: adds nullable `display_order` for map ordering.
+- `restaurant_tables`: adds nullable `position_x` and `position_y`.
+- Existing relations and the unique `(area_id, table_number)` key remain unchanged.
+

@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.table.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
+import com.restaurant.crm.modules.erp.table.constants.TableMapConstants;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,4 +48,7 @@ public class TableArea extends BaseEntity {
     @Size(max = 255)
     @Column(name = "description", length = 255)
     String description;
+
+    @Column(name = TableMapConstants.COL_DISPLAY_ORDER)
+    Integer displayOrder;
 }

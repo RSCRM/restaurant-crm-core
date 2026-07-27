@@ -1,37 +1,21 @@
-# UC-SW-04 - Table operations: Transfer table
+# UC-SW-04 - Transfer Table
 
-## Business analysis
+## Objective
 
-- **Actor:** Authenticated employee working in a branch.
-- **Goal:** Move an active guest session and its unpaid order to another available table.
-- **Preconditions:** The source session is active and belongs to the token branch.
-- **Postcondition:** The session and pending order reference the destination table; table statuses and transfer history are updated.
+Move an active guest session and its unpaid order from the current table to another available table.
 
-## Main flow
+## Business Rules
 
-1. The employee selects an active table session and a destination table.
-2. The system resolves the branch and employee from the context token.
-3. The system locks and validates the source and destination tables.
-4. The system moves the active session and pending order to the destination.
-5. The source becomes `AVAILABLE`, the destination becomes `OCCUPIED`, and transfer history is recorded in one transaction.
+1. The request uses a context token; branch and employee are read from its claims.
+2. The table session must exist in the token branch and have `ACTIVE` status.
+3. The destination must be a different table in the same branch.
+4. The destination table must be `AVAILABLE` and have no active session.
+5. The source table becomes `AVAILABLE`; the destination becomes `OCCUPIED`.
+6. A pending order at the source table moves to the destination table.
+7. Session, tables, order and transfer history are updated in one transaction.
+8. Locked table rows prevent another operation from taking the destination during transfer.
 
-## Business rules and alternate flows
-
-- The destination must be a different `AVAILABLE` table in the same branch.
-- The destination cannot already have an active session.
-- The source session must have `ACTIVE` status.
-- A pending order moves with the session; no new order is created.
-- Cross-branch, same-table, inactive-session, and unavailable-target requests are rejected.
-
-## Acceptance criteria
-
-1. A valid transfer atomically moves the session and pending order.
-2. The operation cannot expose or update another branch's data.
-3. Both table statuses are updated consistently.
-4. Every successful transfer creates one audit history row.
-5. Concurrent operations cannot take the destination table twice.
-
-## API contract
+## API Contract
 
 `PUT /api/v1/table-sessions/{sessionId}/transfer`
 
@@ -41,6 +25,14 @@
 }
 ```
 
-## Database design
+## Data Design
 
-`table_transfer_history` records the session, source table, destination table, employee, and transfer time. Existing `table_sessions`, `restaurant_tables`, and `orders` rows are updated.
+`table_transfer_history` records the session, source table, destination table, employee and transfer time. Existing `table_sessions`, `restaurant_tables` and `orders` rows are updated; no new order is created.
+
+Hibernate code-first manages the schema. No Flyway migration is added before a project migration baseline is agreed.
+
+## Acceptance Criteria
+
+- A valid transfer atomically moves the session and pending order.
+- Cross-branch, same-table, inactive-session and unavailable-target requests are rejected.
+- Every successful transfer leaves an audit history row.
