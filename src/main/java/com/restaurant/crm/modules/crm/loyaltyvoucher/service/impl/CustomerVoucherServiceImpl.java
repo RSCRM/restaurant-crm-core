@@ -16,7 +16,8 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherR
 import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
-
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -40,12 +41,29 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     CustomerVoucherRepository customerVoucherRepository;
     VoucherRepository voucherRepository;
     CustomerRepository customerRepository;
+    OrganizationBranchRepository branchRepository;
     PointWalletService pointWalletService;
     CustomerVoucherMapper customerVoucherMapper;
+
+    private void validateBranchAccess(String targetBranchId) {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
+            return;
+        }
+        String actorUserId = AuthUtils.getCurrentUserId();
+        if (AuthUtils.getEmployeeId() == null) {
+            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
+        } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
 
     @Override
     @Transactional
     public CustomerVoucherResponse redeemVoucher(VoucherRedeemRequest request) {
+        validateBranchAccess(request.getRestaurantId());
+
         // 1. Load Voucher
         Voucher voucher = voucherRepository.findById(request.getVoucherId())
                 .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_FOUND));
@@ -81,6 +99,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     @Override
     @Transactional
     public CustomerVoucherResponse giveVoucherDirectly(String customerId, String restaurantId, String voucherId) {
+        validateBranchAccess(restaurantId);
+
         // 1. Load Voucher
         Voucher voucher = voucherRepository.findById(voucherId)
                 .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_FOUND));
@@ -117,6 +137,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         CustomerVoucher customerVoucher = customerVoucherRepository.findById(customerVoucherId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_VOUCHER_NOT_FOUND));
 
+        validateBranchAccess(customerVoucher.getRestaurantId());
+
         if (customerVoucher.getStatus() != CustomerVoucherStatus.AVAILABLE) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_ALREADY_USED);
         }
@@ -144,6 +166,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
     @Override
     public List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String restaurantId, BigDecimal subtotal) {
+        validateBranchAccess(restaurantId);
+
         List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId);
         return customerVouchers.stream().map(cv -> {
             Voucher voucher = cv.getVoucher();
@@ -183,6 +207,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     @Transactional
     public void releaseVoucher(String orderId) {
         customerVoucherRepository.findByOrderId(orderId).ifPresent(cv -> {
+            // Internal operation, no direct HTTP access, but let's check branch if needed.
+            // Since it's triggered internally on order cancel, we can trust it or validate if actor is present.
             if (cv.getStatus() == CustomerVoucherStatus.USED) {
                 cv.setStatus(CustomerVoucherStatus.AVAILABLE);
                 cv.setUsedAt(null);
@@ -194,6 +220,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
     @Override
     public PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String restaurantId, String status, int page, int size) {
+        validateBranchAccess(restaurantId);
+
         int adjustedPage = Math.max(0, page - 1);
         Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 

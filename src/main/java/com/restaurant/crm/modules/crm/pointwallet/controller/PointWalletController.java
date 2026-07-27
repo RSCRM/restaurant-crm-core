@@ -5,11 +5,11 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,6 +24,7 @@ public class PointWalletController {
     PointWalletService pointWalletService;
 
     @GetMapping("/balance")
+    @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<CustomerPointResponse>> getBalance(
             @RequestParam String customerId,
             @RequestParam String restaurantId
@@ -36,6 +37,7 @@ public class PointWalletController {
     }
 
     @GetMapping("/history")
+    @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerPointHistoryResponse>>> getHistory(
             @RequestParam String customerId,
             @RequestParam String restaurantId,

@@ -6,12 +6,12 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherCreation
 import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherUpdateRequest;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.VoucherResponse;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.VoucherService;
-
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +30,7 @@ public class VoucherController {
     VoucherService voucherService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('VOUCHER_CREATE')")
     public ResponseEntity<ApiResponse<VoucherResponse>> createVoucher(@RequestBody @Valid VoucherCreationRequest request) {
         VoucherResponse response = voucherService.createVoucher(request);
         return ResponseEntity.ok(ApiResponse.<VoucherResponse>builder()
@@ -39,6 +40,7 @@ public class VoucherController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('VOUCHER_UPDATE')")
     public ResponseEntity<ApiResponse<VoucherResponse>> updateVoucher(
             @PathVariable String id,
             @RequestBody @Valid VoucherUpdateRequest request
@@ -51,6 +53,7 @@ public class VoucherController {
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAuthority('VOUCHER_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<VoucherResponse>>> getActiveVouchers(
             @RequestParam String restaurantId,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
