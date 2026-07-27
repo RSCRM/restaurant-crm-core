@@ -8,4 +8,6 @@ public interface LicenseSubscriptionService {
     SubscriptionResponse grantSubscription(GrantSubscriptionRequest request);
 
     SubscriptionResponse renewSubscription(String id);
+
+    SubscriptionResponse revokeSubscription(String id);
 }

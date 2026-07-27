@@ -82,17 +82,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponse>> getMyInfo() {
-        ApiResponse<UserResponse> response = ApiResponse.<UserResponse>builder()
-                .success(ApiConstant.SUCCESS)
-                .data(userService.getMyInfo())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userId) {
         userService.deleteById(userId);

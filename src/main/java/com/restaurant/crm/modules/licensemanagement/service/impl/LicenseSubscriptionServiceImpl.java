@@ -110,4 +110,20 @@ public class LicenseSubscriptionServiceImpl implements LicenseSubscriptionServic
 
         return licenseSubscriptionMapper.toSubscriptionResponse(saved);
     }
+
+    @Override
+    @Transactional
+    public SubscriptionResponse revokeSubscription(String id) {
+        LicenseSubscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
+
+        if (subscription.getStatus() == SubscriptionStatus.REVOKED) {
+            throw new AppException(ErrorCode.SUBSCRIPTION_ALREADY_REVOKED);
+        }
+
+        subscription.setStatus(SubscriptionStatus.REVOKED);
+        LicenseSubscription saved = subscriptionRepository.save(subscription);
+
+        return licenseSubscriptionMapper.toSubscriptionResponse(saved);
+    }
 }

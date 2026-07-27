@@ -5,6 +5,7 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
+import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseResponse;
 
 public interface LicenseService {
@@ -18,4 +19,8 @@ public interface LicenseService {
     DeleteLicenseResponse deleteLicense(String id);
 
     LicenseResponse lockLicense(String id);
+
+    LicenseResponse reactivateLicense(String id);
+
+    LicenseDetailResponse getLicenseDetail(String id, int page, int size);
 }

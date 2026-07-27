@@ -34,12 +34,30 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private static final String TOKEN_TYPE_CONTEXT = "CONTEXT";
+    private static final String TOKEN_TYPE_CUSTOMER_SESSION = "CUSTOMER_SESSION";
+    private static final String ROLE_CUSTOMER_SESSION = "ROLE_CUSTOMER_SESSION";
 
     private final String[] PUBLIC_POST_ENDPOINT = {
+            "/api/v1/orders", // Also allow customers to place orders without token
             "/api/v1/users",
             "/api/v1/auth/login",
             "/api/v1/auth/introspect",
-            "/api/v1/auth/register"
+            "/api/v1/auth/register",
+            "/api/v1/crm/customers/identify", // Make customer identification public
+            // uc-c-02 — QR table ordering (exact match, no wildcard)
+            "/api/v1/public/customer/qr/resolve",
+            "/api/v1/public/customer/qr/session",
+            "/api/v1/public/customer/qr/session/join",
+            // uc-c-03 — phone + OTP identification
+            "/api/v1/public/customer/otp/request",
+            "/api/v1/public/customer/otp/verify"
+    };
+
+    private final String[] PUBLIC_GET_ENDPOINT = {
+            "/api/v1/orders/*/cooking-status",
+            "/api/v1/orders/tables/*/active-order/cooking-status",
+            "/api/v1/orders/*/cooking-status/subscribe",
+            "/api/v1/orders/*/bill"
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {
@@ -71,6 +89,7 @@ public class SecurityConfig {
                 //authorization rules
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINT).permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINT).permitAll()
                         .requestMatchers(WHITELIST_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -96,7 +115,10 @@ public class SecurityConfig {
 
             String tokenType = jwt.getClaimAsString(JwtClaimSetConstant.CLAIM_TYPE);
 
-            if (TOKEN_TYPE_CONTEXT.equals(tokenType)) {
+            if (TOKEN_TYPE_CUSTOMER_SESSION.equals(tokenType)) {
+                // Customer session token (uc-c-02): single authority, no staff roles/permissions.
+                authorities.add(new SimpleGrantedAuthority(ROLE_CUSTOMER_SESSION));
+            } else if (TOKEN_TYPE_CONTEXT.equals(tokenType)) {
                 // Context Token: extract orgRole + permissions
                 String orgRole = jwt.getClaimAsString(JwtClaimSetConstant.CLAIM_ORG_ROLE);
                 if (orgRole != null) {

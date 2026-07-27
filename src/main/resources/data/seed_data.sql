@@ -1,6 +1,5 @@
--- =============================================================================
--- SEED DATA: Authentication & Context-Based Authorization Test Scenarios
--- =============================================================================
+-- Ensure requires_preparation column exists on products table
+ALTER TABLE products ADD COLUMN IF NOT EXISTS requires_preparation BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Ensure non-Hibernate entities tables exist
 CREATE TABLE IF NOT EXISTS owners (
@@ -23,6 +22,7 @@ CREATE TABLE IF NOT EXISTS product_categories (
 );
 
 -- Clean up existing tables to prevent foreign key & duplicate key violations
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
 TRUNCATE TABLE 
     order_items,
     orders,
@@ -41,7 +41,12 @@ TRUNCATE TABLE
     roles_permissions,
     users,
     roles,
-    permissions 
+    permissions,
+    customer_point_history,
+    customer_vouchers,
+    customer_point,
+    vouchers,
+    customers
     CASCADE;
 
 -- =============================================================================
@@ -111,6 +116,17 @@ ON CONFLICT (username) DO NOTHING;
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
 ('c0000000-0000-0000-0000-000000000004', 0, 'manager', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'manager@restaurant.com', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
+
+-- =============================================================================
+-- 4.1. USER PROFILES
+-- =============================================================================
+
+INSERT INTO user_profiles (id, version, user_id, full_name, phone, created_at, updated_at) VALUES
+('c1000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'System Admin',       '0900000000', NOW(), NOW()),
+('c1000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000002', 'Restaurant Owner A', '0901000000', NOW(), NOW()),
+('c1000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000003', 'Restaurant Owner B', '0902000000', NOW(), NOW()),
+('c1000000-0000-0000-0000-000000000004', 0, 'c0000000-0000-0000-0000-000000000004', 'Restaurant Manager', '0904000001', NOW(), NOW())
+ON CONFLICT DO NOTHING;
 
 -- =============================================================================
 -- 5. USER <-> ROLE (user_roles)
@@ -291,6 +307,15 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 ('c0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000002')
 ON CONFLICT DO NOTHING;
 
+-- Chef 2 user: username = chef_q2, email = chef_q2@restaurant.com
+INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
+('c0000000-0000-0000-0000-000000000010', 0, 'chef_q2', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'chef_q2@restaurant.com', 'ACTIVE', true, NOW(), NOW())
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role_id) VALUES
+('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000002')
+ON CONFLICT DO NOTHING;
+
 -- Employees:
 -- Chef at Phở Việt Q1
 INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
@@ -302,6 +327,11 @@ INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, ema
 ('f0000000-0000-0000-0000-000000000009', 0, 'c0000000-0000-0000-0000-000000000009', 'r0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'waiter_q1@restaurant.com', '0905000002', '2024-01-15', NULL, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
+-- Chef 2 at Phở Việt Q1
+INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
 -- Table Area: Khu A at branch Phở Việt Q1 (e0000000-0000-0000-0000-000000000001)
 INSERT INTO table_areas (area_id, version, branch_id, area_name, description, created_at, updated_at) VALUES
 ('a0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Khu A', 'Khu vực trong nhà', NOW(), NOW())
@@ -309,7 +339,8 @@ ON CONFLICT (area_id) DO NOTHING;
 
 -- Restaurant Table: Bàn 01 inside Khu A
 INSERT INTO restaurant_tables (table_id, version, area_id, table_number, capacity, status, created_at, updated_at) VALUES
-('t0000000-0000-0000-0000-000000000001', 0, 'a0000000-0000-0000-0000-000000000001', 'Bàn 01', 4, 'AVAILABLE', NOW(), NOW())
+('t0000000-0000-0000-0000-000000000001', 0, 'a0000000-0000-0000-0000-000000000001', 'Bàn 01', 4, 'AVAILABLE', NOW(), NOW()),
+('t0000000-0000-0000-0000-000000000002', 0, 'a0000000-0000-0000-0000-000000000001', 'Bàn 02', 4, 'AVAILABLE', NOW(), NOW())
 ON CONFLICT (table_id) DO NOTHING;
 
 -- Product Category: Món nước
@@ -317,19 +348,40 @@ INSERT INTO product_categories (category_id, branch_id, category_name, descripti
 ('ac000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Món nước', 'Các món bún, phở', 1, NOW(), NOW())
 ON CONFLICT (category_id) DO NOTHING;
 
--- Product: Phở Bò
-INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, created_at, updated_at) VALUES
-('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', NOW(), NOW())
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000103', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Coca Cola', 'Lon nước ngọt Coca Cola', 15000.00, NULL, 'AVAILABLE', false, NOW(), NOW())
 ON CONFLICT (product_id) DO NOTHING;
+
+-- Customer: Test customer for CRM Loyalty points test
+INSERT INTO customers (id, version, phone, status, created_at, updated_at) VALUES
+('c0000000-0000-0000-0000-000000000001', 0, '0987654321', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (phone) DO NOTHING;
+
+-- Customer Point: Test customer point wallet
+INSERT INTO customer_point (id, version, customer_id, restaurant_id, current_points, lifetime_points, updated_at) VALUES
+('cp000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 500, 500, NOW())
+ON CONFLICT (customer_id, restaurant_id) DO NOTHING;
 
 -- Order: Order for Table 01 created by Waiter f0000000-0000-0000-0000-000000000009
 INSERT INTO orders (id, version, branch_id, table_id, reservation_id, order_code, order_type, status, note, subtotal, discount_amount, total_amount, created_by, created_at, updated_at) VALUES
-('o0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 't0000000-0000-0000-0000-000000000001', NULL, 'ORD-TEST001', 'DINE_IN', 'PENDING', 'Nước dùng trong', 55000.00, 0.00, 55000.00, 'f0000000-0000-0000-0000-000000000009', NOW(), NOW())
+('o0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 't0000000-0000-0000-0000-000000000001', NULL, 'ORD-TEST001', 'DINE_IN', 'PENDING', 'Nước dùng trong', 130000.00, 0.00, 130000.00, 'f0000000-0000-0000-0000-000000000009', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Order Item: 1 Phở Bò chín
 INSERT INTO order_items (id, version, order_id, product_id, combo_id, quantity, unit_price, subtotal, note, status, created_at, updated_at) VALUES
 ('oi000000-0000-0000-0000-000000000101', 0, 'o0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000101', NULL, 1, 55000.00, 55000.00, NULL, 'PENDING', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Order Item: 1 Bún Chả (Food - pending status to test direct serve block)
+INSERT INTO order_items (id, version, order_id, product_id, combo_id, quantity, unit_price, subtotal, note, status, created_at, updated_at) VALUES
+('oi000000-0000-0000-0000-000000000102', 0, 'o0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000102', NULL, 1, 60000.00, 60000.00, NULL, 'PENDING', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Order Item: 1 Coca Cola (Drink - direct ready to serve test)
+INSERT INTO order_items (id, version, order_id, product_id, combo_id, quantity, unit_price, subtotal, note, status, created_at, updated_at) VALUES
+('oi000000-0000-0000-0000-000000000103', 0, 'o0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000103', NULL, 1, 15000.00, 15000.00, NULL, 'PENDING', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
@@ -367,5 +419,23 @@ ON CONFLICT (id) DO NOTHING;
 -- │   → contexts:                                                               │
 -- │     { employeeId:"f0...01", org:"Phở Việt",    branch:"Q1",     MANAGER }  │
 -- │     { employeeId:"f0...02", org:"Sushi Tokyo", branch:"Ng.Huệ", CASHIER }  │
--- │     { employeeId:"f0...03", org:"BBQ Garden",  branch:"Q3",     MANAGER }  │
+--     { employeeId:"f0...03", org:"Sushi Tokyo", branch:"Q7",     WAITER }   │
 -- └──────────────────────────────────────────────────────────────────────────────┘
+
+-- Vouchers: Test vouchers for branch e0000000-0000-0000-0000-000000000001
+-- 1. Active, 10% discount, min bill 0
+-- 2. Active, 20% discount, min bill 200,000 VNĐ
+-- 3. Expired, 30% discount, min bill 0
+INSERT INTO vouchers (id, version, restaurant_id, title, discount_percent, min_bill_amount, points_required, is_active, created_at, expired_at) VALUES
+('v0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 10%', 10, 0.00, 0, 1, NOW(), NULL),
+('v0000000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 20% Đơn Tối Thiểu 200k', 20, 200000.00, 0, 1, NOW(), NULL),
+('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 30% Hết Hạn', 30, 0.00, 0, 1, NOW() - INTERVAL '2 days', NOW() - INTERVAL '1 day'),
+('v0000000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Giảm 15% (100 Điểm)', 15, 0.00, 100, 1, NOW(), NULL)
+ON CONFLICT (id) DO NOTHING;
+
+-- Customer Vouchers: Assign these vouchers to customer c0000000-0000-0000-0000-000000000001
+INSERT INTO customer_vouchers (id, version, customer_id, restaurant_id, voucher_id, voucher_sn, status, created_at, used_at, order_id) VALUES
+('cv000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'v0000000-0000-0000-0000-000000000001', 'VSN-TEST001', 'AVAILABLE', NOW(), NULL, NULL),
+('cv000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'v0000000-0000-0000-0000-000000000002', 'VSN-TEST002', 'AVAILABLE', NOW(), NULL, NULL),
+('cv000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'v0000000-0000-0000-0000-000000000003', 'VSN-TEST003', 'AVAILABLE', NOW(), NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
