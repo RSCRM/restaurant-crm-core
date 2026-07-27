@@ -100,22 +100,22 @@ ON CONFLICT DO NOTHING;
 
 -- Case 1: Admin
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-('c0000000-0000-0000-0000-000000000001', 0, 'admin', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'admin@system.local', 'ACTIVE', true, NOW(), NOW())
+('c0000000-0000-0000-0000-000000000001', 0, 'admin', '$2a$10$cp7SZbM6XwzS.Dq5F8acDOypX.OSTMNT5rN/F4fyqDSRzjJDpLXMy', 'admin@system.local', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 -- Case 2: Owner A (1 organization)
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-('c0000000-0000-0000-0000-000000000002', 0, 'owner_a', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'owner_a@restaurant.com', 'ACTIVE', true, NOW(), NOW())
+('c0000000-0000-0000-0000-000000000002', 0, 'owner_a', '$2a$10$cp7SZbM6XwzS.Dq5F8acDOypX.OSTMNT5rN/F4fyqDSRzjJDpLXMy', 'owner_a@restaurant.com', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 -- Case 3: Owner B (2 organizations)
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-('c0000000-0000-0000-0000-000000000003', 0, 'owner_b', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'owner_b@restaurant.com', 'ACTIVE', true, NOW(), NOW())
+('c0000000-0000-0000-0000-000000000003', 0, 'owner_b', '$2a$10$cp7SZbM6XwzS.Dq5F8acDOypX.OSTMNT5rN/F4fyqDSRzjJDpLXMy', 'owner_b@restaurant.com', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 -- Case 4 & 5: Manager
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-('c0000000-0000-0000-0000-000000000004', 0, 'manager', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'manager@restaurant.com', 'ACTIVE', true, NOW(), NOW())
+('c0000000-0000-0000-0000-000000000004', 0, 'manager', '$2a$10$cp7SZbM6XwzS.Dq5F8acDOypX.OSTMNT5rN/F4fyqDSRzjJDpLXMy', 'manager@restaurant.com', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 -- =============================================================================
@@ -156,7 +156,8 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
 ('p0000000-0000-0000-0000-000000000009', 0, 'REPORT_VIEW',     NOW(), NOW()),
 ('p0000000-0000-0000-0000-000000000010', 0, 'STAFF_MANAGE',    NOW(), NOW()),
 ('p0000000-0000-0000-0000-000000000011', 0, 'BRANCH_MANAGE',   NOW(), NOW()),
-('p0000000-0000-0000-0000-000000000012', 0, 'ORG_MANAGE',      NOW(), NOW())
+('p0000000-0000-0000-0000-000000000012', 0, 'ORG_MANAGE',      NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000013', 0, 'BRANCH_MANAGER_ASSIGN', NOW(), NOW())
 ON CONFLICT (permission_name) DO NOTHING;
 
 -- =============================================================================
@@ -188,7 +189,8 @@ INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
 ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000009'),
 ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000010'),
 ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000011'),
-('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000012')
+('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000012'),
+('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000013')
 ON CONFLICT DO NOTHING;
 
 -- MANAGER: daily operations
@@ -263,6 +265,16 @@ ON CONFLICT (id) DO NOTHING;
 -- 11. EMPLOYEES
 -- =============================================================================
 
+-- Owner users as employee contexts for permission-based personal APIs:
+--   f010: OWNER @ Pho Viet Q1       (Owner A)
+--   f011: OWNER @ Sushi Tokyo Hue   (Owner B, org1)
+--   f012: OWNER @ BBQ Garden Q3     (Owner B, org2)
+INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000002', 'r0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'owner_a@restaurant.com', '0901000001', '2024-01-01', NULL, NOW(), NOW()),
+('f0000000-0000-0000-0000-000000000011', 0, 'c0000000-0000-0000-0000-000000000003', 'r0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'owner_b@restaurant.com', '0902000001', '2024-01-01', NULL, NOW(), NOW()),
+('f0000000-0000-0000-0000-000000000012', 0, 'c0000000-0000-0000-0000-000000000003', 'r0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000005', 'ACTIVE', 'owner_b@restaurant.com', '0902000002', '2024-01-01', NULL, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
 -- Manager user as employee at 3 branches:
 --   f001: MANAGER @ Phở Việt Q1       (Owner A)
 --   f002: CASHIER @ Sushi Tokyo Huệ   (Owner B, org1)
@@ -292,7 +304,7 @@ ON CONFLICT (role_name) DO NOTHING;
 
 -- Chef user: username = chef_q1, email = chef_q1@restaurant.com
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-('c0000000-0000-0000-0000-000000000008', 0, 'chef_q1', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'chef_q1@restaurant.com', 'ACTIVE', true, NOW(), NOW())
+('c0000000-0000-0000-0000-000000000008', 0, 'chef_q1', '$2a$10$cp7SZbM6XwzS.Dq5F8acDOypX.OSTMNT5rN/F4fyqDSRzjJDpLXMy', 'chef_q1@restaurant.com', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO user_roles (user_id, role_id) VALUES
@@ -301,7 +313,7 @@ ON CONFLICT DO NOTHING;
 
 -- Waiter user: username = waiter_q1, email = waiter_q1@restaurant.com
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-('c0000000-0000-0000-0000-000000000009', 0, 'waiter_q1', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'waiter_q1@restaurant.com', 'ACTIVE', true, NOW(), NOW())
+('c0000000-0000-0000-0000-000000000009', 0, 'waiter_q1', '$2a$10$cp7SZbM6XwzS.Dq5F8acDOypX.OSTMNT5rN/F4fyqDSRzjJDpLXMy', 'waiter_q1@restaurant.com', 'ACTIVE', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO user_roles (user_id, role_id) VALUES
@@ -335,9 +347,9 @@ INSERT INTO product_categories (category_id, branch_id, category_name, descripti
 ('ac000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Món nước', 'Các món bún, phở', 1, NOW(), NOW())
 ON CONFLICT (category_id) DO NOTHING;
 
-INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, created_at, updated_at) VALUES
-('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', NOW(), NOW()),
-('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', NOW(), NOW())
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', true, NOW(), NOW())
 ON CONFLICT (product_id) DO NOTHING;
 
 -- Customer: Test customer for CRM Loyalty points test
@@ -346,8 +358,8 @@ INSERT INTO customers (id, version, phone, status, created_at, updated_at) VALUE
 ON CONFLICT (phone) DO NOTHING;
 
 -- Customer Point: Test customer point wallet
-INSERT INTO customer_point (id, version, customer_id, restaurant_id, current_points, lifetime_points, updated_at) VALUES
-('cp000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 500, 500, NOW())
+INSERT INTO customer_point (id, version, customer_id, restaurant_id, current_points, lifetime_points, created_at, updated_at) VALUES
+('cp000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW())
 ON CONFLICT (customer_id, restaurant_id) DO NOTHING;
 
 -- Order: Order for Table 01 created by Waiter f0000000-0000-0000-0000-000000000009

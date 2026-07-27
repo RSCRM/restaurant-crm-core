@@ -84,7 +84,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 && currentBranch.getManager() != null
                 && employee.getId().equals(currentBranch.getManager().getId())) {
             currentBranch.setManager(null);
-            branchRepository.save(currentBranch);
+            branchRepository.saveAndFlush(currentBranch);
         }
     }
 
