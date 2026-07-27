@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.schedule.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.schedule.dto.response.PersonalScheduleResponse;
@@ -118,6 +119,27 @@ class ScheduleServiceImplTest {
                     () -> scheduleService.getPersonalSchedule(date, date)
             );
             assertEquals(ErrorCode.EMPLOYEE_NOT_ACTIVE, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void getStaffSchedule_rejectsEmployeeFromAnotherBranch() {
+        LocalDate date = LocalDate.of(2026, 7, 28);
+        Employee employee = Employee.builder()
+                .id("employee-2")
+                .branch(OrganizationBranch.builder().id("branch-2").build())
+                .status(EmployeeStatus.ACTIVE)
+                .build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            when(employeeRepository.findById("employee-2")).thenReturn(Optional.of(employee));
+
+            AppException exception = assertThrows(
+                    AppException.class,
+                    () -> scheduleService.getStaffSchedule("employee-2", date, date)
+            );
+            assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
         }
     }
 }

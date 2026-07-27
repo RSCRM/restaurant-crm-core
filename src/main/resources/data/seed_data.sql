@@ -155,7 +155,9 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
 ('p0000000-0000-0000-0000-000000000009', 0, 'REPORT_VIEW',     NOW(), NOW()),
 ('p0000000-0000-0000-0000-000000000010', 0, 'STAFF_MANAGE',    NOW(), NOW()),
 ('p0000000-0000-0000-0000-000000000011', 0, 'BRANCH_MANAGE',   NOW(), NOW()),
-('p0000000-0000-0000-0000-000000000012', 0, 'ORG_MANAGE',      NOW(), NOW())
+('p0000000-0000-0000-0000-000000000012', 0, 'ORG_MANAGE',      NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000013', 0, 'SCHEDULE_STAFF_READ', NOW(), NOW()),
+('p0000000-0000-0000-0000-000000000014', 0, 'SCHEDULE_MANAGE',  NOW(), NOW())
 ON CONFLICT (permission_name) DO NOTHING;
 
 -- =============================================================================
@@ -199,7 +201,9 @@ INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
 ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000006'),
 ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000007'),
 ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000008'),
-('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000009')
+('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000009'),
+('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000013'),
+('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000014')
 ON CONFLICT DO NOTHING;
 
 -- CASHIER: orders + payments
@@ -332,6 +336,14 @@ INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, ema
 ('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
+-- Personal schedules for CM-07 Swagger testing
+INSERT INTO work_schedules (
+    id, version, employee_id, branch_id, work_date, start_time, end_time, note, created_at, updated_at
+) VALUES
+('07000000-0000-0000-0000-000000000001', 0, 'f0000000-0000-0000-0000-000000000009', 'e0000000-0000-0000-0000-000000000001', CURRENT_DATE, '08:00:00', '16:00:00', 'CM-07 waiter test shift', NOW(), NOW()),
+('07000000-0000-0000-0000-000000000002', 0, 'f0000000-0000-0000-0000-000000000008', 'e0000000-0000-0000-0000-000000000001', CURRENT_DATE, '09:00:00', '17:00:00', 'CM-07 chef test shift', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
 -- Table Area: Khu A at branch Phở Việt Q1 (e0000000-0000-0000-0000-000000000001)
 INSERT INTO table_areas (area_id, version, branch_id, area_name, description, created_at, updated_at) VALUES
 ('a0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Khu A', 'Khu vực trong nhà', NOW(), NOW())
@@ -388,7 +400,7 @@ ON CONFLICT (id) DO NOTHING;
 -- TEST SCENARIOS SUMMARY
 -- =============================================================================
 --
--- Login: POST /api/v1/auth/login  |  Password: "password123"
+-- Login: POST /api/v1/auth/login  |  Password: "catsocute"
 --
 -- ┌──────────────────────────────────────────────────────────────────────────────┐
 -- │ Case 1: ADMIN                                                               │
