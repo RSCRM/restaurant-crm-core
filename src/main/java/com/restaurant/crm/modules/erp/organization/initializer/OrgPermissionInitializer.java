@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.organization.initializer;
 
 import com.restaurant.crm.common.constant.InitializerOrder;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.modules.erp.organization.entity.OrgPermission;
 import com.restaurant.crm.modules.erp.organization.repository.OrgPermissionRepository;
 import lombok.AccessLevel;
@@ -33,7 +34,12 @@ public class OrgPermissionInitializer implements ApplicationRunner {
                 EmployeeConstants.EMPLOYEE_UPDATE,
                 EmployeeConstants.EMPLOYEE_DELETE,
                 EmployeeConstants.EMPLOYEE_ROLE_ASSIGN,
-                EmployeeConstants.EMPLOYEE_ROLE_REVOKE
+                EmployeeConstants.EMPLOYEE_ROLE_REVOKE,
+                // Kitchen Display (KDS) permissions — uc-scf-01..06
+                StartDefinedOrgPermission.KITCHEN_ORDER_READ,
+                StartDefinedOrgPermission.KITCHEN_ITEM_ACCEPT,
+                StartDefinedOrgPermission.KITCHEN_ITEM_UPDATE,
+                StartDefinedOrgPermission.KITCHEN_ITEM_CANCEL
         );
         names.forEach(name -> {
             if (!orgPermissionRepository.existsByPermissionName(name)) {
