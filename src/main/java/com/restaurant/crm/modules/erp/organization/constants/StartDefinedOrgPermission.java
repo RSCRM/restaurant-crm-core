@@ -25,4 +25,10 @@ public class StartDefinedOrgPermission {
     public static final String STAFF_MANAGE = "STAFF_MANAGE";
     public static final String BRANCH_MANAGE = "BRANCH_MANAGE";
     public static final String ORG_MANAGE = "ORG_MANAGE";
+
+    // Branch Manager Permissions
+    public static final String BRANCH_MANAGER_VIEW = "BRANCH_MANAGER_VIEW";
+    public static final String BRANCH_MANAGER_CREATE = "BRANCH_MANAGER_CREATE";
+    public static final String BRANCH_MANAGER_UPDATE = "BRANCH_MANAGER_UPDATE";
+    public static final String BRANCH_MANAGER_DELETE = "BRANCH_MANAGER_DELETE";
 }

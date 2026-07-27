@@ -6,7 +6,6 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.utils.PagingUtil;
-import com.restaurant.crm.modules.erp.organization.constants.BranchManagerConstants;
 import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.modules.erp.organization.dto.request.BranchManagerCreationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.BranchManagerUpdateRequest;
@@ -22,6 +21,7 @@ import com.restaurant.crm.modules.erp.organization.repository.OrgPermissionRepos
 import com.restaurant.crm.modules.erp.organization.repository.OrgRoleRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.BranchManagerService;
+import com.restaurant.crm.modules.erp.shared.constants.org_role.PredefinedOrgRole;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -107,12 +107,12 @@ public class BranchManagerServiceImpl implements BranchManagerService {
 
         Page<Employee> employeePage = StringUtils.hasText(branchId)
                 ? employeeRepository.findAllByOrgRole_RoleNameAndBranch_IdAndBranch_Organization_Owner_Id(
-                        BranchManagerConstants.BRANCH_MANAGER_ROLE,
+                        PredefinedOrgRole.BRANCH_MANAGER,
                         branchId,
                         ownerId,
                         pageable)
                 : employeeRepository.findAllByOrgRole_RoleNameAndBranch_Organization_Owner_Id(
-                        BranchManagerConstants.BRANCH_MANAGER_ROLE,
+                        PredefinedOrgRole.BRANCH_MANAGER,
                         ownerId,
                         pageable);
 
@@ -190,7 +190,7 @@ public class BranchManagerServiceImpl implements BranchManagerService {
     private Employee findBranchManager(String branchManagerId, String ownerId) {
         return employeeRepository.findByIdAndOrgRole_RoleNameAndBranch_Organization_Owner_Id(
                         branchManagerId,
-                        BranchManagerConstants.BRANCH_MANAGER_ROLE,
+                        PredefinedOrgRole.BRANCH_MANAGER,
                         ownerId)
                 .orElseThrow(() -> new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND));
     }
@@ -201,9 +201,9 @@ public class BranchManagerServiceImpl implements BranchManagerService {
     }
 
     private OrgRole getOrCreateBranchManagerRole() {
-        return orgRoleRepository.findByRoleName(BranchManagerConstants.BRANCH_MANAGER_ROLE)
+        return orgRoleRepository.findByRoleName(PredefinedOrgRole.BRANCH_MANAGER)
                 .orElseGet(() -> orgRoleRepository.save(OrgRole.builder()
-                        .roleName(BranchManagerConstants.BRANCH_MANAGER_ROLE)
+                        .roleName(PredefinedOrgRole.BRANCH_MANAGER)
                         .orgPermissions(getDefaultBranchManagerPermissions())
                         .build()));
     }
@@ -255,11 +255,11 @@ public class BranchManagerServiceImpl implements BranchManagerService {
         boolean existed = currentEmployeeId == null
                 ? employeeRepository.existsByBranch_IdAndOrgRole_RoleNameAndStatus(
                         branchId,
-                        BranchManagerConstants.BRANCH_MANAGER_ROLE,
+                        PredefinedOrgRole.BRANCH_MANAGER,
                         EmployeeStatus.ACTIVE)
                 : employeeRepository.existsByBranch_IdAndOrgRole_RoleNameAndStatusAndIdNot(
                         branchId,
-                        BranchManagerConstants.BRANCH_MANAGER_ROLE,
+                        PredefinedOrgRole.BRANCH_MANAGER,
                         EmployeeStatus.ACTIVE,
                         currentEmployeeId);
 
