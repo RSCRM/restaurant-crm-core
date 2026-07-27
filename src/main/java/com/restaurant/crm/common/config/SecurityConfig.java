@@ -39,6 +39,7 @@ public class SecurityConfig {
             "/api/v1/orders", // Also allow customers to place orders without token
             "/api/v1/users",
             "/api/v1/auth/login",
+            "/api/v1/auth/context",
             "/api/v1/auth/introspect",
             "/api/v1/auth/register",
             "/api/v1/crm/customers/identify" // Make customer identification public

@@ -16,20 +16,20 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
     Optional<Employee> findByIdAndUserId(String id, String userId);
 
-    Optional<Employee> findByIdAndOrgRole_RoleNameAndBranch_Organization_OwnerId(
+    Optional<Employee> findByIdAndOrgRole_RoleNameAndBranch_Organization_Owner_Id(
             String id,
             String roleName,
             String ownerId
     );
 
-    Page<Employee> findAllByOrgRole_RoleNameAndBranch_IdAndBranch_Organization_OwnerId(
+    Page<Employee> findAllByOrgRole_RoleNameAndBranch_IdAndBranch_Organization_Owner_Id(
             String roleName,
             String branchId,
             String ownerId,
             Pageable pageable
     );
 
-    Page<Employee> findAllByOrgRole_RoleNameAndBranch_Organization_OwnerId(
+    Page<Employee> findAllByOrgRole_RoleNameAndBranch_Organization_Owner_Id(
             String roleName,
             String ownerId,
             Pageable pageable

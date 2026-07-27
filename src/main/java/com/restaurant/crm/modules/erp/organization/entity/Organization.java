@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.organization.entity;
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.organization.constants.OrganizationConstants;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
+import com.restaurant.crm.modules.identity.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -22,10 +23,10 @@ import lombok.experimental.SuperBuilder;
 @Table(name = OrganizationConstants.TABLE_ORGANIZATION)
 public class Organization extends BaseEntity {
 
-    @NotBlank
     @NotNull
-    @Column(name = OrganizationConstants.COL_OWNER_ID, nullable = false)
-    String ownerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = OrganizationConstants.COL_OWNER_ID, nullable = false)
+    User owner;
 
     @NotBlank
     @NotNull

@@ -6,7 +6,7 @@ import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
-import com.restaurant.crm.modules.erp.organization.constants.BranchManagerConstants;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.modules.erp.organization.dto.request.BranchManagerCreationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.BranchManagerUpdateRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.BranchManagerResponse;
@@ -36,7 +36,7 @@ public class BranchManagerController {
     BranchManagerService branchManagerService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('" + BranchManagerConstants.BRANCH_MANAGER_CREATE + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.BRANCH_MANAGER_CREATE + "')")
     public ResponseEntity<ApiResponse<BranchManagerResponse>> createBranchManager(
             @Valid @RequestBody BranchManagerCreationRequest request
     ) {
@@ -49,7 +49,7 @@ public class BranchManagerController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('" + BranchManagerConstants.BRANCH_MANAGER_VIEW + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.BRANCH_MANAGER_VIEW + "')")
     public ResponseEntity<ApiResponse<PagingResponse<BranchManagerResponse>>> getBranchManagers(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size,
@@ -76,7 +76,7 @@ public class BranchManagerController {
     }
 
     @GetMapping("/{branchManagerId}")
-    @PreAuthorize("hasAuthority('" + BranchManagerConstants.BRANCH_MANAGER_VIEW + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.BRANCH_MANAGER_VIEW + "')")
     public ResponseEntity<ApiResponse<BranchManagerResponse>> getBranchManagerById(
             @PathVariable String branchManagerId
     ) {
@@ -89,7 +89,7 @@ public class BranchManagerController {
     }
 
     @PutMapping("/{branchManagerId}")
-    @PreAuthorize("hasAuthority('" + BranchManagerConstants.BRANCH_MANAGER_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.BRANCH_MANAGER_UPDATE + "')")
     public ResponseEntity<ApiResponse<BranchManagerResponse>> updateBranchManager(
             @PathVariable String branchManagerId,
             @Valid @RequestBody BranchManagerUpdateRequest request
@@ -103,7 +103,7 @@ public class BranchManagerController {
     }
 
     @DeleteMapping("/{branchManagerId}")
-    @PreAuthorize("hasAuthority('" + BranchManagerConstants.BRANCH_MANAGER_DELETE + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.BRANCH_MANAGER_DELETE + "')")
     public ResponseEntity<ApiResponse<Void>> deleteBranchManager(@PathVariable String branchManagerId) {
         branchManagerService.deleteById(branchManagerId);
 

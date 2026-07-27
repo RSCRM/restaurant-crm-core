@@ -13,6 +13,7 @@ public interface OrganizationMapper {
 
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "owner", ignore = true)
     @Mapping(target = "status", ignore = true)
 
     @Mapping(target = "createdBy", ignore = true)
@@ -24,14 +25,14 @@ public interface OrganizationMapper {
             CreateOrganizationRequest request
     );
 
-
+    @Mapping(target = "ownerId", source = "owner.id")
     OrganizationResponse toOrganizationResponse(
             Organization organization
     );
 
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "ownerId", ignore = true)
+    @Mapping(target = "owner", ignore = true)
     @Mapping(target = "status", ignore = true)
 
     @Mapping(target = "createdBy", ignore = true)
