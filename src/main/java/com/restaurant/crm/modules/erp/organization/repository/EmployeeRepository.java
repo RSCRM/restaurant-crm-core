@@ -19,4 +19,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
             String organizationId,
             String ownerId
     );
+
+    Optional<Employee> findByUser_IdAndBranch_Organization_IdAndBranch_Organization_Owner_Id(
+            String userId,
+            String organizationId,
+            String ownerId
+    );
 }

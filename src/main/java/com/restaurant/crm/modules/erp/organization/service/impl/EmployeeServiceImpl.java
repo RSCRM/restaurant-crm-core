@@ -160,17 +160,17 @@ public class EmployeeServiceImpl implements EmployeeService {
                 targetBranch.getOrganization().getId(),
                 ownerId
         );
-        String managerId = branchManager.getId();
+        String managerEmployeeId = branchManager.getId();
 
         if (!EmployeeStatus.ACTIVE.equals(branchManager.getStatus()) || !branchManager.getUser().isEnabled()) {
             throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
         }
 
-        if (targetBranch.getManager() != null && managerId.equals(targetBranch.getManager().getId())) {
+        if (targetBranch.getManager() != null && managerEmployeeId.equals(targetBranch.getManager().getId())) {
             return employeeMapper.toEmployeeBranchAssignmentResponse(branchManager);
         }
 
-        ensureBranchHasNoOtherManager(targetBranch, managerId);
+        ensureBranchHasNoOtherManager(targetBranch, managerEmployeeId);
         clearCurrentBranchAssignment(branchManager);
 
         branchManager.setBranch(targetBranch);
@@ -182,7 +182,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private Employee findEmployeeByManagerId(String managerId, String organizationId, String ownerId) {
-        return employeeRepository.findByIdAndBranch_Organization_IdAndBranch_Organization_Owner_Id(
+        return employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_Owner_Id(
                         managerId,
                         organizationId,
                         ownerId)

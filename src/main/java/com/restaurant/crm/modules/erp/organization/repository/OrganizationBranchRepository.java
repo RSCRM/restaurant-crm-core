@@ -47,4 +47,9 @@ public interface OrganizationBranchRepository extends JpaRepository<Organization
             String id,
             String ownerId
     );
+
+    Optional<OrganizationBranch> findByIdAndOrganization_OwnerId(
+            String id,
+            String ownerId
+    );
 }
