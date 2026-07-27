@@ -1,7 +1,7 @@
 package com.restaurant.crm.modules.erp.booking.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
 import com.restaurant.crm.modules.erp.booking.constants.BookingConstants;
 import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;

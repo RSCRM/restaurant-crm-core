@@ -1,6 +1,5 @@
-package com.restaurant.crm.modules.crm.point_wallet.dto.response;
+package com.restaurant.crm.modules.crm.pointwallet.dto.response;
 
-import com.restaurant.crm.modules.crm.point_wallet.enums.PointTransactionType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +9,8 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
+
+import com.restaurant.crm.modules.crm.pointwallet.enums.PointTransactionType;
 
 @Getter
 @Setter
