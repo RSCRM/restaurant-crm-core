@@ -15,6 +15,10 @@ import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
 import com.restaurant.crm.modules.erp.booking.mapper.BookingMapper;
 import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
 import com.restaurant.crm.modules.erp.booking.service.interfaces.BookingService;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
+import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,6 +35,8 @@ public class BookingServiceImpl implements BookingService {
 
     BookingRepository bookingRepository;
     CustomerRepository customerRepository;
+    OrganizationBranchRepository branchRepository;
+    RestaurantTableRepository tableRepository;
     BookingMapper bookingMapper;
 
     @Override
@@ -42,8 +48,19 @@ public class BookingServiceImpl implements BookingService {
                         .status(CustomerStatus.ACTIVE)
                         .build()));
 
+        OrganizationBranch branch = branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new AppException(ErrorCode.BRANCH_NOT_FOUND));
+
+        RestaurantTable table = null;
+        if (request.getTableId() != null && !request.getTableId().isBlank()) {
+            table = tableRepository.findById(request.getTableId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_TABLE_NOT_FOUND));
+        }
+
         Booking booking = bookingMapper.toBooking(request);
         booking.setCustomer(customer);
+        booking.setBranch(branch);
+        booking.setTables(table);
         booking.setStatus(BookingStatus.PENDING);
 
         Booking savedBooking = bookingRepository.save(booking);
