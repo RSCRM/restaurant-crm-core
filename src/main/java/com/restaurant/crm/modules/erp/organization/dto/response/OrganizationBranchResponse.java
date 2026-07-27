@@ -17,6 +17,7 @@ import java.time.Instant;
 public class OrganizationBranchResponse {
     String id;
     String organizationId;
+    String managerId;
     String branchName;
     String address;
     String phone;

@@ -16,6 +16,7 @@ public interface OrganizationBranchMapper {
 
     // Set manually in service
     @Mapping(target = "organization", ignore = true)
+    @Mapping(target = "manager", ignore = true)
 
     @Mapping(target = "status", ignore = true)
 
@@ -33,6 +34,7 @@ public interface OrganizationBranchMapper {
             source = "organization.id",
             target = "organizationId"
     )
+    @Mapping(target = "managerId", source = "manager.id")
     OrganizationBranchResponse toOrganizationBranchResponse(
             OrganizationBranch branch
     );
@@ -42,6 +44,7 @@ public interface OrganizationBranchMapper {
 
     // Prevent changing parent organization
     @Mapping(target = "organization", ignore = true)
+    @Mapping(target = "manager", ignore = true)
 
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)

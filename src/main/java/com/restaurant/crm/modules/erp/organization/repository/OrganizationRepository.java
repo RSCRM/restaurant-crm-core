@@ -13,9 +13,7 @@ import java.util.Optional;
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, String> {
 
-    Optional<Organization> findByOwnerId(String ownerId);
-
-    boolean existsByOwnerId(String ownerId);
+    Optional<Organization> findFirstByOwner_Id(String ownerId);
 
     List<Organization> findByStatus(OrganizationStatus status);
 

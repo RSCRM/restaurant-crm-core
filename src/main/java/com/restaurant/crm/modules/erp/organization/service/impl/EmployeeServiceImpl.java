@@ -38,13 +38,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                 targetBranch.getOrganization().getId(),
                 ownerId
         );
-        String managerId = branchManager.getUser().getId();
+        String managerId = branchManager.getId();
 
         if (!EmployeeStatus.ACTIVE.equals(branchManager.getStatus()) || !branchManager.getUser().isEnabled()) {
             throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
         }
 
-        if (managerId.equals(targetBranch.getManagerId())) {
+        if (targetBranch.getManager() != null && managerId.equals(targetBranch.getManager().getId())) {
             return employeeMapper.toEmployeeBranchAssignmentResponse(branchManager);
         }
 
@@ -52,7 +52,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         clearCurrentBranchAssignment(branchManager);
 
         branchManager.setBranch(targetBranch);
-        targetBranch.setManagerId(managerId);
+        targetBranch.setManager(branchManager);
         branchRepository.save(targetBranch);
 
         Employee assigned = employeeRepository.save(branchManager);
@@ -60,7 +60,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private Employee findEmployeeByManagerId(String managerId, String organizationId, String ownerId) {
-        return employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
+        return employeeRepository.findByIdAndBranch_Organization_IdAndBranch_Organization_Owner_Id(
                         managerId,
                         organizationId,
                         ownerId)
@@ -68,20 +68,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private OrganizationBranch findBranch(String branchId, String ownerId) {
-        return branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId)
+        return branchRepository.findByIdAndOrganization_Owner_Id(branchId, ownerId)
                 .orElseThrow(() -> new AppException(ErrorCode.BRANCH_NOT_FOUND));
     }
 
     private void ensureBranchHasNoOtherManager(OrganizationBranch targetBranch, String managerId) {
-        if (StringUtils.hasText(targetBranch.getManagerId()) && !managerId.equals(targetBranch.getManagerId())) {
+        if (targetBranch.getManager() != null && !managerId.equals(targetBranch.getManager().getId())) {
             throw new AppException(ErrorCode.BRANCH_MANAGER_ALREADY_ASSIGNED);
         }
     }
 
     private void clearCurrentBranchAssignment(Employee employee) {
         OrganizationBranch currentBranch = employee.getBranch();
-        if (currentBranch != null && employee.getUser().getId().equals(currentBranch.getManagerId())) {
-            currentBranch.setManagerId(null);
+        if (currentBranch != null
+                && currentBranch.getManager() != null
+                && employee.getId().equals(currentBranch.getManager().getId())) {
+            currentBranch.setManager(null);
             branchRepository.save(currentBranch);
         }
     }
