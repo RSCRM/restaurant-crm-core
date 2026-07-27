@@ -144,13 +144,13 @@ public enum ErrorCode {
 
     // ==== INGREDIENT ERRORS ====
     INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
-    INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.BAD_REQUEST),
+    INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.CONFLICT),
     INGREDIENT_NOT_FOUND("INGREDIENT_1000", "Ingredient not found", HttpStatus.NOT_FOUND),
-    INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.BAD_REQUEST),
+    INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.CONFLICT),
 
     // ==== INVENTORY ERRORS ====
     INVENTORY_NOT_FOUND("INV_1000", "Inventory not found", HttpStatus.NOT_FOUND),
-    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.BAD_REQUEST),
+    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.CONFLICT),
     INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
     INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
     INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
