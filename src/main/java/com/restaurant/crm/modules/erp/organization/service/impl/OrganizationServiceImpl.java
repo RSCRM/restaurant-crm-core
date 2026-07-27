@@ -11,6 +11,8 @@ import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationMapper;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationService;
+import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,15 +29,13 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     OrganizationRepository organizationRepository;
 
+    UserRepository userRepository;
+
     OrganizationMapper organizationMapper;
 
     @Override
     @Transactional
     public OrganizationResponse createOrganization(CreateOrganizationRequest request) {
-
-        if (organizationRepository.existsByOwnerId(request.getOwnerId())) {
-            throw new AppException(ErrorCode.ORGANIZATION_EXISTS);
-        }
 
         if (request.getTaxCode() != null
                 && organizationRepository.existsByTaxCode(request.getTaxCode())) {
@@ -44,6 +44,10 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         Organization organization =
                 organizationMapper.toOrganization(request);
+
+        User owner = userRepository.findById(request.getOwnerId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        organization.setOwner(owner);
 
         organization = organizationRepository.save(organization);
 
@@ -65,7 +69,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Transactional(readOnly = true)
     public OrganizationResponse getOrganizationByOwnerId(String ownerId) {
 
-        Organization organization = organizationRepository.findByOwnerId(ownerId)
+        Organization organization = organizationRepository.findFirstByOwner_Id(ownerId)
                 .orElseThrow(() ->
                         new AppException(ErrorCode.ORGANIZATION_NOT_FOUND));
 
