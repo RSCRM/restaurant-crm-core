@@ -64,7 +64,7 @@ com.restaurant.crm.modules.<module_name>
 └── utils                               # Utility nội bộ module
 ```
 
-> ⚠️ **LƯU Ý VỀ ĐẶT TÊN PACKAGE**: Package Java **TUYỆT ĐỐI KHÔNG** chứa dấu gạch ngang (`-`). Sử dụng snake_case hoặc camelCase nếu cần (Ví dụ: dùng `loyalty_voucher` thay vì `loyalty-voucher`).
+> ⚠️ **LƯU Ý VỀ ĐẶT TÊN PACKAGE**: Package Java **TUYỆT ĐỐI KHÔNG** chứa dấu gạch ngang (`-`). Sử dụng snake_case hoặc camelCase nếu cần (Ví dụ: dùng `loyaltyvoucher` thay vì `loyalty-voucher`).
 
 ---
 

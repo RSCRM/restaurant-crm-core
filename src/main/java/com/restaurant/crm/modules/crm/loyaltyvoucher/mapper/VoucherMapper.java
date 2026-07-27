@@ -1,11 +1,12 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.mapper;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.mapper;
 
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherCreationRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherUpdateRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.VoucherResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.Voucher;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherCreationRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherUpdateRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.VoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
 
 @Mapper(componentModel = "spring")
 public interface VoucherMapper {

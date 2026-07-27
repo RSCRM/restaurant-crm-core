@@ -1,9 +1,10 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.entity;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
-import com.restaurant.crm.modules.crm.loyalty_voucher.constants.CustomerVoucherConstants;
-import com.restaurant.crm.modules.crm.loyalty_voucher.enums.CustomerVoucherStatus;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.constants.CustomerVoucherConstants;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -10,9 +10,10 @@ import com.nimbusds.jwt.SignedJWT;
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerOtpConstants;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpTicketPayload;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpTicketService;
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerOtpConstants;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpTicketPayload;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpTicketService;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

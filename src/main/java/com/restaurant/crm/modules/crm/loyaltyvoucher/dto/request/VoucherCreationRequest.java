@@ -1,6 +1,5 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.dto.request;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request;
 
-import com.restaurant.crm.modules.crm.loyalty_voucher.constants.VoucherConstants;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -14,6 +13,8 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+
+import com.restaurant.crm.modules.crm.loyaltyvoucher.constants.VoucherConstants;
 
 @Getter
 @Setter

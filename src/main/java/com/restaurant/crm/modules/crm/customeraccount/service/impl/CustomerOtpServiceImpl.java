@@ -1,17 +1,18 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerOtpConstants;
-import com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpCodeEntry;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpRequestResult;
-import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
-import com.restaurant.crm.modules.crm.customer_account.repository.OtpRedisRepository;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.CustomerOtpService;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpSender;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpTicketService;
-import com.restaurant.crm.modules.crm.customer_account.utils.PhoneNumberUtils;
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerOtpConstants;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpCodeEntry;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpRequestResult;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.customeraccount.repository.OtpRedisRepository;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.CustomerOtpService;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpSender;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpTicketService;
+import com.restaurant.crm.modules.crm.customeraccount.utils.PhoneNumberUtils;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

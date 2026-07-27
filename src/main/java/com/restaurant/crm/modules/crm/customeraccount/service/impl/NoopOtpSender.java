@@ -1,8 +1,9 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpSender;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpSender;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;

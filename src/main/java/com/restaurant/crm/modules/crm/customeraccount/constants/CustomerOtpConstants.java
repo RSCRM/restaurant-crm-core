@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.constants;
+package com.restaurant.crm.modules.crm.customeraccount.constants;
 
 /**
  * Constants for phone-OTP identification (uc-c-03, BR-CST-ACC-02).

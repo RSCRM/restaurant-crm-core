@@ -1,6 +1,6 @@
-package com.restaurant.crm.modules.crm.customer_account.service.interfaces;
+package com.restaurant.crm.modules.crm.customeraccount.service.interfaces;
 
-import com.restaurant.crm.modules.crm.customer_account.model.OtpRequestResult;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpRequestResult;
 
 /**
  * Phone + OTP customer identification (uc-c-03, BR-CST-ACC-02).

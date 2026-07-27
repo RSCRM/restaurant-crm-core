@@ -2,7 +2,7 @@ package com.restaurant.crm.modules.erp.order.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherApplicableResponse;
 import com.restaurant.crm.modules.erp.invoice.dto.response.InvoiceResponse;
 import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;

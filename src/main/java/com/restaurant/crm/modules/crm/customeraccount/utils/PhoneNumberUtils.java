@@ -1,12 +1,12 @@
-package com.restaurant.crm.modules.crm.customer_account.utils;
-
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerOtpConstants;
+package com.restaurant.crm.modules.crm.customeraccount.utils;
 
 import java.util.regex.Pattern;
 
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerOtpConstants;
+
 /**
  * Phone normalization / validation / masking for OTP identification (uc-c-03).
- * New {@code utils/} layer in {@code customer_account}.
+ * New {@code utils/} layer in {@code customeraccount}.
  * TODO(uc-c-03): consider consolidating with {@code CustomerConstants} phone rules
  * (owned by VuongTH6) once both parties agree on a single source of truth.
  */

@@ -1,11 +1,12 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.repository;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.repository;
 
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher;
-import com.restaurant.crm.modules.crm.loyalty_voucher.enums.CustomerVoucherStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus;
 
 import java.util.List;
 import java.util.Optional;

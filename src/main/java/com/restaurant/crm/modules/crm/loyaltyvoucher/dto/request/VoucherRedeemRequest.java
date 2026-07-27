@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.dto.request;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;

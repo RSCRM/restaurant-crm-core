@@ -1,10 +1,11 @@
-package com.restaurant.crm.modules.crm.point_wallet.repository;
+package com.restaurant.crm.modules.crm.pointwallet.repository;
 
-import com.restaurant.crm.modules.crm.point_wallet.entity.CustomerPointHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPointHistory;
 
 @Repository
 public interface CustomerPointHistoryRepository extends JpaRepository<CustomerPointHistory, String> {

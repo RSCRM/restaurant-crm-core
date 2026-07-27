@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.model;
+package com.restaurant.crm.modules.crm.customeraccount.model;
 
 import java.time.Instant;
 

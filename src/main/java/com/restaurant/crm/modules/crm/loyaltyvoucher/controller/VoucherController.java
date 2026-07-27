@@ -1,11 +1,12 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.controller;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.controller;
 
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherCreationRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherUpdateRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.VoucherResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.VoucherService;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherCreationRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherUpdateRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.VoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.VoucherService;
+
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

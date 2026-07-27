@@ -1,8 +1,8 @@
-package com.restaurant.crm.modules.crm.point_wallet.service.interfaces;
+package com.restaurant.crm.modules.crm.pointwallet.service.interfaces;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
-import com.restaurant.crm.modules.crm.point_wallet.dto.response.CustomerPointHistoryResponse;
-import com.restaurant.crm.modules.crm.point_wallet.dto.response.CustomerPointResponse;
+import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
+import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
 
 public interface PointWalletService {
     CustomerPointResponse getWallet(String customerId, String restaurantId);

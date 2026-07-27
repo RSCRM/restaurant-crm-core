@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.enums;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.enums;
 
 public enum CustomerVoucherStatus {
     AVAILABLE,

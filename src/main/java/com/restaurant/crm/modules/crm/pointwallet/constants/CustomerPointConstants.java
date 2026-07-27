@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.point_wallet.constants;
+package com.restaurant.crm.modules.crm.pointwallet.constants;
 
 public class CustomerPointConstants {
     private CustomerPointConstants() {}

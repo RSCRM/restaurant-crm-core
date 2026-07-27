@@ -1,10 +1,11 @@
-package com.restaurant.crm.modules.crm.point_wallet.controller;
+package com.restaurant.crm.modules.crm.pointwallet.controller;
 
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
-import com.restaurant.crm.modules.crm.point_wallet.dto.response.CustomerPointHistoryResponse;
-import com.restaurant.crm.modules.crm.point_wallet.dto.response.CustomerPointResponse;
-import com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
+import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
+import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.dto.response;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

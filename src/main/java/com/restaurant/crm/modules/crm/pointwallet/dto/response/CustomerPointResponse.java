@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.point_wallet.dto.response;
+package com.restaurant.crm.modules.crm.pointwallet.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

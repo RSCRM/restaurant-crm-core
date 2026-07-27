@@ -1,11 +1,13 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpCodeEntry;
-import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
-import com.restaurant.crm.modules.crm.customer_account.repository.OtpRedisRepository;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpSender;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpTicketService;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpCodeEntry;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.customeraccount.repository.OtpRedisRepository;
+import com.restaurant.crm.modules.crm.customeraccount.service.impl.CustomerOtpServiceImpl;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpSender;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpTicketService;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

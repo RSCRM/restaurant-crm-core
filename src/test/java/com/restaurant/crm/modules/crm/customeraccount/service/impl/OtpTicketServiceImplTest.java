@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -6,8 +6,10 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
-import com.restaurant.crm.modules.crm.customer_account.constants.CustomerOtpConstants;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpTicketPayload;
+import com.restaurant.crm.modules.crm.customeraccount.constants.CustomerOtpConstants;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpTicketPayload;
+import com.restaurant.crm.modules.crm.customeraccount.service.impl.OtpTicketServiceImpl;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;

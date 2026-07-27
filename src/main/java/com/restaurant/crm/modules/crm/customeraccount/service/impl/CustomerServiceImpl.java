@@ -1,16 +1,17 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.dto.request.CustomerIdentifyRequest;
-import com.restaurant.crm.modules.crm.customer_account.dto.response.CustomerResponse;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
-import com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus;
-import com.restaurant.crm.modules.crm.customer_account.mapper.CustomerMapper;
-import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.CustomerService;
-import com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.crm.customeraccount.dto.request.CustomerIdentifyRequest;
+import com.restaurant.crm.modules.crm.customeraccount.dto.response.CustomerResponse;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
+import com.restaurant.crm.modules.crm.customeraccount.mapper.CustomerMapper;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.CustomerService;
+import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

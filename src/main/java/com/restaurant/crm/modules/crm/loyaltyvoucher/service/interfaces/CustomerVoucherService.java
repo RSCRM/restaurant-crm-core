@@ -1,12 +1,11 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherRedeemRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherRedeemRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherApplicableResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherResponse;
 
 import java.math.BigDecimal;
-
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
 import java.util.List;
 
 public interface CustomerVoucherService {

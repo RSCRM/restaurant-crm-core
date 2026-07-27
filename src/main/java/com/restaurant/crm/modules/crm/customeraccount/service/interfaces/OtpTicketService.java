@@ -1,9 +1,9 @@
-package com.restaurant.crm.modules.crm.customer_account.service.interfaces;
-
-import com.restaurant.crm.modules.crm.customer_account.model.OtpTicketPayload;
+package com.restaurant.crm.modules.crm.customeraccount.service.interfaces;
 
 import java.time.Instant;
 import java.util.Optional;
+
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpTicketPayload;
 
 /**
  * Signs and verifies the OTP ticket that proves a customer passed OTP at a specific table (uc-c-03).

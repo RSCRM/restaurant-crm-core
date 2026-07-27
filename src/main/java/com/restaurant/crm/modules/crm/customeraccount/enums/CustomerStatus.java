@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.enums;
+package com.restaurant.crm.modules.crm.customeraccount.enums;
 
 public enum CustomerStatus {
     ACTIVE,

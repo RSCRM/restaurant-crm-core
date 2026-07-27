@@ -1,7 +1,7 @@
 package com.restaurant.crm.modules.erp.order.service.impl;
 
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpTicketService;
-import com.restaurant.crm.modules.crm.customer_account.utils.PhoneNumberUtils;
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpTicketService;
+import com.restaurant.crm.modules.crm.customeraccount.utils.PhoneNumberUtils;
 import com.restaurant.crm.modules.erp.order.service.interfaces.OtpTicketVerifier;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

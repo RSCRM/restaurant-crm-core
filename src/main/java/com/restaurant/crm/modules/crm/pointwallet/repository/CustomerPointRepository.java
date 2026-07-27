@@ -1,8 +1,9 @@
-package com.restaurant.crm.modules.crm.point_wallet.repository;
+package com.restaurant.crm.modules.crm.pointwallet.repository;
 
-import com.restaurant.crm.modules.crm.point_wallet.entity.CustomerPoint;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPoint;
 
 import java.util.Optional;
 

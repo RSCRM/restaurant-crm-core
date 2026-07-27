@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.service.interfaces;
+package com.restaurant.crm.modules.crm.customeraccount.service.interfaces;
 
 /**
  * Delivers an OTP code to the customer (uc-c-03). Real providers (Zalo ZNS / SMS gateway)

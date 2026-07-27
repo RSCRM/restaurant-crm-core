@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.point_wallet.enums;
+package com.restaurant.crm.modules.crm.pointwallet.enums;
 
 public enum PointTransactionType {
     EARN,

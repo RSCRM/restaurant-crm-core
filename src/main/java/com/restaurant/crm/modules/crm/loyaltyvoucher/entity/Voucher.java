@@ -1,7 +1,8 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.entity;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.crm.loyalty_voucher.constants.VoucherConstants;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.constants.VoucherConstants;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

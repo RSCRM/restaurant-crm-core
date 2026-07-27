@@ -1,8 +1,9 @@
-package com.restaurant.crm.modules.crm.customer_account.repository;
+package com.restaurant.crm.modules.crm.customeraccount.repository;
 
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
 
 import java.util.Optional;
 

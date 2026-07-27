@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.customer_account.constants;
+package com.restaurant.crm.modules.crm.customeraccount.constants;
 
 public class CustomerConstants {
     private CustomerConstants() {}

@@ -1,20 +1,22 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.service.impl;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.service.impl;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
-import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherRedeemRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher;
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.Voucher;
-import com.restaurant.crm.modules.crm.loyalty_voucher.enums.CustomerVoucherStatus;
-import com.restaurant.crm.modules.crm.loyalty_voucher.mapper.CustomerVoucherMapper;
-import com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.repository.VoucherRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.CustomerVoucherService;
-import com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherRedeemRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherApplicableResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.mapper.CustomerVoucherMapper;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService;
+import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,7 +31,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.List;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherApplicableResponse;
 
 @Service
 @RequiredArgsConstructor

@@ -1,7 +1,8 @@
-package com.restaurant.crm.modules.crm.customer_account.repository;
+package com.restaurant.crm.modules.crm.customeraccount.repository;
 
 import com.restaurant.crm.common.redis.RedisKeyGenerator;
-import com.restaurant.crm.modules.crm.customer_account.model.OtpCodeEntry;
+import com.restaurant.crm.modules.crm.customeraccount.model.OtpCodeEntry;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

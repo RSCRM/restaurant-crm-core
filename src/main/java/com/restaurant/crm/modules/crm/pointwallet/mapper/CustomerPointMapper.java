@@ -1,11 +1,12 @@
-package com.restaurant.crm.modules.crm.point_wallet.mapper;
+package com.restaurant.crm.modules.crm.pointwallet.mapper;
 
-import com.restaurant.crm.modules.crm.point_wallet.dto.response.CustomerPointHistoryResponse;
-import com.restaurant.crm.modules.crm.point_wallet.dto.response.CustomerPointResponse;
-import com.restaurant.crm.modules.crm.point_wallet.entity.CustomerPoint;
-import com.restaurant.crm.modules.crm.point_wallet.entity.CustomerPointHistory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
+import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
+import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPoint;
+import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPointHistory;
 
 @Mapper(componentModel = "spring")
 public interface CustomerPointMapper {

@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.constants;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.constants;
 
 public class CustomerVoucherConstants {
     private CustomerVoucherConstants() {}

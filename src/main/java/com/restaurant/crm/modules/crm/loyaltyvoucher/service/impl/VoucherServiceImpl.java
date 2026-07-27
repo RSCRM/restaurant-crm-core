@@ -1,15 +1,16 @@
-package com.restaurant.crm.modules.crm.loyalty_voucher.service.impl;
+package com.restaurant.crm.modules.crm.loyaltyvoucher.service.impl;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherCreationRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherUpdateRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.VoucherResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.Voucher;
-import com.restaurant.crm.modules.crm.loyalty_voucher.mapper.VoucherMapper;
-import com.restaurant.crm.modules.crm.loyalty_voucher.repository.VoucherRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.service.interfaces.VoucherService;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherCreationRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherUpdateRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.VoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.mapper.VoucherMapper;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.VoucherService;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

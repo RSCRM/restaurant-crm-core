@@ -1,10 +1,11 @@
-package com.restaurant.crm.modules.crm.customer_account.service.impl;
+package com.restaurant.crm.modules.crm.customeraccount.service.impl;
 
-import com.restaurant.crm.modules.crm.customer_account.service.interfaces.OtpSender;
-import com.restaurant.crm.modules.crm.customer_account.utils.PhoneNumberUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpSender;
+import com.restaurant.crm.modules.crm.customeraccount.utils.PhoneNumberUtils;
 
 /**
  * DEV-ONLY OTP sender (uc-c-03): logs the code so developers can test without a provider.

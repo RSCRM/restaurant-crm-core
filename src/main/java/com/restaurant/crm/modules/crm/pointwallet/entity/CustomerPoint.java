@@ -1,8 +1,9 @@
-package com.restaurant.crm.modules.crm.point_wallet.entity;
+package com.restaurant.crm.modules.crm.pointwallet.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
-import com.restaurant.crm.modules.crm.point_wallet.constants.CustomerPointConstants;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.pointwallet.constants.CustomerPointConstants;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
