@@ -234,6 +234,11 @@ public enum ErrorCode {
     OTP_CUSTOMER_LOCKED("OTP_1007", "Customer account is locked", HttpStatus.FORBIDDEN),
     OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
     OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // ==== CUSTOMER MENU ERRORS ====
+    MENU_BRANCH_CONTEXT_MISSING("MENU_1000", "Branch context is missing from the session", HttpStatus.FORBIDDEN),
+    MENU_PRODUCT_NOT_FOUND("MENU_1001", "Product not found in this branch", HttpStatus.NOT_FOUND),
+    MENU_EMPTY("MENU_1002", "Menu is not configured for this branch", HttpStatus.NOT_FOUND),
     ;
 
     String code;
