@@ -15,7 +15,6 @@ public final class AttendanceConstants {
     public static final long LATE_THRESHOLD_MINUTES = 15;
     public static final long QR_VALIDITY_SECONDS = 60;
     public static final String QR_TOKEN_TYPE = "ATTENDANCE_QR";
-    public static final String QR_DISPLAY_AUTHORITY = "BRANCH_MANAGER";
     public static final String CLAIM_QR_SESSION_ID = "qrSessionId";
     public static final String CLAIM_NONCE = "nonce";
 
