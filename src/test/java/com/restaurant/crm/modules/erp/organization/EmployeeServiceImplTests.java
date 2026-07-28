@@ -298,7 +298,7 @@ public class EmployeeServiceImplTests {
     private OrganizationBranch buildBranch(String branchId, String organizationId, String ownerId, String managerId) {
         Organization organization = Organization.builder()
                 .id(organizationId)
-                .ownerId(ownerId)
+                .owner(User.builder().id(ownerId).build())
                 .build();
 
         return OrganizationBranch.builder()

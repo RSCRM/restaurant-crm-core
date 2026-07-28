@@ -79,6 +79,7 @@ class ProfileServiceImplTest {
             UserProfileResponse response = profileService.getMyInfo();
 
             assertEquals("user-1", response.getId());
+            assertEquals("user-1", response.getUserId());
             assertEquals("System Admin", response.getFullName());
             assertEquals("admin", response.getUsername());
             assertEquals("admin@example.com", response.getEmail());

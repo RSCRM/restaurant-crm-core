@@ -2,10 +2,10 @@ package com.restaurant.crm.modules.erp.menu.service.impl;
 
 import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
 import com.restaurant.crm.modules.erp.menu.constants.CustomerMenuConstants;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.mapper.CustomerMenuMapper;
 import com.restaurant.crm.modules.erp.menu.repository.ModifierGroupRepository;
 import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.entity.Product;
 import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.menu.service.interfaces.CustomerMenuService;
@@ -55,6 +55,8 @@ class CustomerMenuServiceCacheTest {
                             .branch(OrganizationBranch.builder().id(BRANCH).build())
                             .category(Category.builder().id("cat-1").build())
                             .productName("Apple")
+                            .id("p1").branch(OrganizationBranch.builder().id(BRANCH).build())
+                            .category(Category.builder().id("cat-1").build()).productName("Apple")
                             .price(new BigDecimal("10.00")).status("AVAILABLE").requiresPreparation(true).build()));
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
             when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());

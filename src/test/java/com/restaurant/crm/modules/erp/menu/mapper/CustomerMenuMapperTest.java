@@ -1,11 +1,11 @@
 package com.restaurant.crm.modules.erp.menu.mapper;
 
 import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuComboResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierGroupResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierOptionResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuProductResponse;
-import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.entity.ModifierGroup;
 import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
 import com.restaurant.crm.modules.erp.menu.entity.Product;
@@ -78,6 +78,7 @@ class CustomerMenuMapperTest {
                 .id("group-1")
                 .product(Product.builder().branch(OrganizationBranch.builder().id("branch-1").build()).build())
                 .groupName("Toppings")
+                .id("group-1").groupName("Toppings")
                 .minSelection(0).maxSelection(3).build();
         ModifierOption option = ModifierOption.builder()
                 .id("option-1").optionName("Extra cheese")

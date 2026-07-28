@@ -108,7 +108,7 @@ public class ProfileServiceImpl implements ProfileService {
             if (employee.getBranch() == null
                     || employee.getBranch().getOrganization() == null
                     || !AuthUtils.getCurrentUserId().equals(
-                            employee.getBranch().getOrganization().getOwnerId())) {
+                            employee.getBranch().getOrganization().getOwner().getId())) {
                 throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
             }
         } else if (employee.getBranch() == null
