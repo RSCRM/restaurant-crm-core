@@ -1,7 +1,11 @@
 package com.restaurant.crm.modules.profile.service.impl;
 
+import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.identity.entity.User;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
@@ -17,6 +21,9 @@ import com.restaurant.crm.modules.profile.service.interfaces.ProfileService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +46,36 @@ public class ProfileServiceImpl implements ProfileService {
         UserProfile profile = userProfileRepository.findByUser_Id(userId).orElse(null);
 
         return userProfileMapper.toUserProfileResponse(user, profile);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<UserProfileResponse> getAll(PagingRequest request) {
+        Pageable pageable = PageRequest.of(
+                request.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                request.getPageSize(),
+                PagingUtil.createSort(request)
+        );
+
+        Page<UserProfile> profilePage = userProfileRepository.findAll(pageable);
+
+        return PagingResponse.<UserProfileResponse>builder()
+                .currentPage(request.getPage())
+                .pageSize(profilePage.getSize())
+                .totalPages(profilePage.getTotalPages())
+                .totalElement(profilePage.getTotalElements())
+                .data(profilePage.getContent().stream()
+                        .map(profile -> userProfileMapper.toUserProfileResponse(profile.getUser(), profile))
+                        .toList())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserProfileResponse getById(String profileId) {
+        UserProfile profile = userProfileRepository.findById(profileId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userProfileMapper.toUserProfileResponse(profile.getUser(), profile);
     }
 
     @Override

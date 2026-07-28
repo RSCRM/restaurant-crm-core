@@ -214,7 +214,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getEmail())
                 .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(IDENTITY_TOKEN_EXPIRY_MINUTES, ChronoUnit.MINUTES)))
+                .expirationTime(Date.from(Instant.now().plus(IDENTITY_TOKEN_EXPIRY_MINUTES, ChronoUnit.DAYS)))
                 .jwtID(UUID.randomUUID().toString())
                 .claim(JwtClaimSetConstant.CLAIM_USER_ID, user.getId())
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_IDENTITY)

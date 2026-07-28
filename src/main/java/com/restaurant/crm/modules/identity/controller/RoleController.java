@@ -33,7 +33,7 @@ public class RoleController {
     RoleService roleService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PagingResponse<RoleResponse>>> getRoles(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size,
@@ -58,7 +58,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<RoleResponse>> getRoleById(@PathVariable String roleId) {
         ApiResponse<RoleResponse> response = ApiResponse.<RoleResponse>builder()
                 .success(ApiConstant.SUCCESS)
@@ -69,7 +69,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<RoleResponse>> updateRole(
             @PathVariable String roleId,
             @Valid @RequestBody RoleUpdateRequest request
@@ -83,7 +83,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable String roleId) {
         roleService.deleteById(roleId);
 
