@@ -1,10 +1,9 @@
-package com.restaurant.crm.modules.erp.table.initializer;
+package com.restaurant.crm.modules.erp.menu.initializer;
 
 import com.restaurant.crm.common.constant.InitializerOrder;
-import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
+import com.restaurant.crm.modules.erp.menu.constants.permission.MenuPermissionConstants;
 import com.restaurant.crm.modules.erp.organization.entity.OrgPermission;
 import com.restaurant.crm.modules.erp.organization.repository.OrgPermissionRepository;
-import com.restaurant.crm.modules.erp.table.constants.permission.TablePermissionConstants;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,7 +21,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class TablePermissionInitializer implements ApplicationRunner {
+public class MenuPermissionInitializer implements ApplicationRunner {
 
     OrgPermissionRepository orgPermissionRepository;
 
@@ -30,13 +29,9 @@ public class TablePermissionInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         Set<String> names = Set.of(
-                StartDefinedOrgPermission.TABLE_MAP_READ,
-                TablePermissionConstants.TABLE_AREA_ADD,
-                TablePermissionConstants.TABLE_AREA_UPDATE,
-                TablePermissionConstants.TABLE_AREA_DELETE,
-                TablePermissionConstants.RESTAURANT_TABLE_ADD,
-                TablePermissionConstants.RESTAURANT_TABLE_UPDATE,
-                TablePermissionConstants.RESTAURANT_TABLE_DELETE
+                MenuPermissionConstants.CATEGORY_ADD, MenuPermissionConstants.CATEGORY_UPDATE, MenuPermissionConstants.CATEGORY_DELETE,
+                MenuPermissionConstants.PRODUCT_ADD, MenuPermissionConstants.PRODUCT_UPDATE, MenuPermissionConstants.PRODUCT_DELETE,
+                MenuPermissionConstants.COMBO_ADD, MenuPermissionConstants.COMBO_UPDATE, MenuPermissionConstants.COMBO_DELETE
         );
         names.forEach(name -> {
             if (!orgPermissionRepository.existsByPermissionName(name)) {
