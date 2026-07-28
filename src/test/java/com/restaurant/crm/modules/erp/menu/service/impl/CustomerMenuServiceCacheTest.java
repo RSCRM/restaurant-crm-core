@@ -1,13 +1,15 @@
 package com.restaurant.crm.modules.erp.menu.service.impl;
 
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
 import com.restaurant.crm.modules.erp.menu.constants.CustomerMenuConstants;
 import com.restaurant.crm.modules.erp.menu.mapper.CustomerMenuMapper;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierGroupRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierGroupRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.menu.service.interfaces.CustomerMenuService;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -47,19 +49,22 @@ class CustomerMenuServiceCacheTest {
     void secondCallIsServedFromCacheWithoutHittingRepositories() {
         try (MockedStatic<AuthUtils> auth = mockStatic(AuthUtils.class)) {
             auth.when(AuthUtils::getBranchId).thenReturn(BRANCH);
-            when(productRepository.findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH))
+            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH))
                     .thenReturn(List.of(Product.builder()
-                            .id("p1").branchId(BRANCH).categoryId("cat-1").productName("Apple")
+                            .id("p1")
+                            .branch(OrganizationBranch.builder().id(BRANCH).build())
+                            .category(Category.builder().id("cat-1").build())
+                            .productName("Apple")
                             .price(new BigDecimal("10.00")).status("AVAILABLE").requiresPreparation(true).build()));
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
-            when(modifierGroupRepository.findByBranchIdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());
+            when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());
 
             service.getMenu();
             service.getMenu(); // second call → cache hit
 
-            verify(productRepository, times(1)).findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH);
+            verify(productRepository, times(1)).findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH);
             verify(comboRepository, times(1)).findByBranchIdOrderByComboNameAsc(BRANCH);
-            verify(modifierGroupRepository, times(1)).findByBranchIdOrderByGroupNameAsc(BRANCH);
+            verify(modifierGroupRepository, times(1)).findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH);
         }
     }
 

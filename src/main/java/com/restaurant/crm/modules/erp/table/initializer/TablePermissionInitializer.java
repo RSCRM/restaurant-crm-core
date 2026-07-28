@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.table.initializer;
 
 import com.restaurant.crm.common.constant.InitializerOrder;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.modules.erp.organization.entity.OrgPermission;
 import com.restaurant.crm.modules.erp.organization.repository.OrgPermissionRepository;
 import com.restaurant.crm.modules.erp.table.constants.permission.TablePermissionConstants;
@@ -29,6 +30,7 @@ public class TablePermissionInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         Set<String> names = Set.of(
+                StartDefinedOrgPermission.TABLE_MAP_READ,
                 TablePermissionConstants.TABLE_AREA_ADD,
                 TablePermissionConstants.TABLE_AREA_UPDATE,
                 TablePermissionConstants.TABLE_AREA_DELETE,

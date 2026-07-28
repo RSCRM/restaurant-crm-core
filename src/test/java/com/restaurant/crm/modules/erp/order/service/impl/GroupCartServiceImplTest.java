@@ -2,11 +2,13 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.GroupCartAddItemRequest;
 import com.restaurant.crm.modules.erp.order.dto.request.GroupCartUpdateItemRequest;
@@ -120,7 +122,7 @@ class GroupCartServiceImplTest {
             openSessionWithOwner();
             when(productRepository.findByIdAndBranchId("p1", BRANCH))
                     .thenReturn(Optional.of(product("p1", "AVAILABLE", "10.00")));
-            when(modifierOptionRepository.findByIdAndModifierGroupBranchId("m1", BRANCH))
+            when(modifierOptionRepository.findByIdAndModifierGroup_Product_Branch_Id("m1", BRANCH))
                     .thenReturn(Optional.empty());
             GroupCartAddItemRequest request = addProduct("p1", 1);
             request.setModifierOptionIds(List.of("m1"));
@@ -154,7 +156,7 @@ class GroupCartServiceImplTest {
             openSessionWithOwner();
             when(productRepository.findByIdAndBranchId("p1", BRANCH))
                     .thenReturn(Optional.of(product("p1", "AVAILABLE", "10.00")));
-            when(modifierOptionRepository.findByIdAndModifierGroupBranchId("m1", BRANCH))
+            when(modifierOptionRepository.findByIdAndModifierGroup_Product_Branch_Id("m1", BRANCH))
                     .thenReturn(Optional.of(modifier("m1", "1.50")));
             when(groupCartRedisRepository.getItems(SESSION))
                     .thenReturn(List.of(cartItem("ci1", "p1", 2, List.of("m1"))));
@@ -372,7 +374,10 @@ class GroupCartServiceImplTest {
     }
 
     private Product product(String id, String status, String price) {
-        return Product.builder().id(id).branchId(BRANCH).categoryId("c1").productName("Product " + id)
+        return Product.builder().id(id)
+                .branch(OrganizationBranch.builder().id(BRANCH).build())
+                .category(Category.builder().id("c1").build())
+                .productName("Product " + id)
                 .price(new BigDecimal(price)).status(status).requiresPreparation(true).build();
     }
 

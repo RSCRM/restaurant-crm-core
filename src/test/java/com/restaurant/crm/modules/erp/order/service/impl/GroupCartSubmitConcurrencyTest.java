@@ -2,10 +2,12 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.enums.QrSessionStatus;
@@ -71,7 +73,10 @@ class GroupCartSubmitConcurrencyTest {
                 new GroupCartItem("ci1", "p1", null, 1, null, List.of(), OWNER_DEVICE, Instant.now())));
         when(cartRepository.getLockOwner(SESSION, "ci1")).thenReturn(Optional.empty());
         when(productRepository.findByIdAndBranchId("p1", BRANCH)).thenReturn(Optional.of(Product.builder()
-                .id("p1").branchId(BRANCH).categoryId("c").productName("P")
+                .id("p1")
+                .branch(OrganizationBranch.builder().id(BRANCH).build())
+                .category(Category.builder().id("c").build())
+                .productName("P")
                 .price(new BigDecimal("10.00")).status("AVAILABLE").requiresPreparation(true).build()));
 
         // Atomic submit-guard stand-in; stays held for the window (releaseSubmitGuard is a no-op mock).

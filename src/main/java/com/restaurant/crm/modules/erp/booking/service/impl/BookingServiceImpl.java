@@ -19,6 +19,7 @@ import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -39,9 +40,25 @@ public class BookingServiceImpl implements BookingService {
     RestaurantTableRepository tableRepository;
     BookingMapper bookingMapper;
 
+    private void validateBranchAccess(String targetBranchId) {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
+            return;
+        }
+        String actorUserId = AuthUtils.getCurrentUserId();
+        if (AuthUtils.getEmployeeId() == null) {
+            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
+        } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
+
     @Override
     @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
+        validateBranchAccess(request.getBranchId());
+
         Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
                 .orElseGet(() -> customerRepository.save(Customer.builder()
                         .phone(request.getCustomerPhone())
@@ -70,6 +87,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<BookingResponse> getBookingsByBranch(String branchId, int page, int size) {
+        validateBranchAccess(branchId);
+
         Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
         Page<Booking> bookingPage = bookingRepository.findByBranchId(branchId, pageable);
 
@@ -88,7 +107,15 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public PagingResponse<BookingResponse> getBookingsByCustomer(String customerId, int page, int size) {
         Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
-        Page<Booking> bookingPage = bookingRepository.findByCustomerId(customerId, pageable);
+        
+        Page<Booking> bookingPage;
+        if (AuthUtils.getEmployeeId() != null) {
+            bookingPage = bookingRepository.findByCustomerIdAndBranchId(customerId, AuthUtils.getBranchId(), pageable);
+        } else if (AuthUtils.getOrganizationId() != null) {
+            bookingPage = bookingRepository.findByCustomerIdAndBranch_OrganizationId(customerId, AuthUtils.getOrganizationId(), pageable);
+        } else {
+            bookingPage = bookingRepository.findByCustomerId(customerId, pageable);
+        }
 
         return PagingResponse.<BookingResponse>builder()
                 .currentPage(page)
@@ -105,7 +132,15 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public PagingResponse<BookingResponse> getBookingsByCustomerPhone(String phone, int page, int size) {
         Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
-        Page<Booking> bookingPage = bookingRepository.findByCustomerPhone(phone, pageable);
+        
+        Page<Booking> bookingPage;
+        if (AuthUtils.getEmployeeId() != null) {
+            bookingPage = bookingRepository.findByCustomerPhoneAndBranchId(phone, AuthUtils.getBranchId(), pageable);
+        } else if (AuthUtils.getOrganizationId() != null) {
+            bookingPage = bookingRepository.findByCustomerPhoneAndBranch_OrganizationId(phone, AuthUtils.getOrganizationId(), pageable);
+        } else {
+            bookingPage = bookingRepository.findByCustomerPhone(phone, pageable);
+        }
 
         return PagingResponse.<BookingResponse>builder()
                 .currentPage(page)
@@ -124,6 +159,8 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
 
+        validateBranchAccess(booking.getBranch().getId());
+
         return bookingMapper.toBookingResponse(booking);
     }
 
@@ -132,6 +169,8 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse updateBookingStatus(String bookingId, UpdateBookingStatusRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        validateBranchAccess(booking.getBranch().getId());
 
         booking.setStatus(request.getStatus());
         Booking updatedBooking = bookingRepository.save(booking);

@@ -2,12 +2,12 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.constants.GroupCartConstants;
 import com.restaurant.crm.modules.erp.order.constants.QrSessionConstants;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemModifierRequestDto;
@@ -425,7 +425,7 @@ public class GroupCartServiceImpl implements GroupCartService {
         }
         for (String optionId : modifierOptionIds) {
             ModifierOption option = modifierOptionRepository
-                    .findByIdAndModifierGroupBranchId(optionId, branchId)
+                    .findByIdAndModifierGroup_Product_Branch_Id(optionId, branchId)
                     .orElseThrow(() -> new AppException(ErrorCode.CART_MODIFIER_INVALID));
             if (!GroupCartConstants.STATUS_AVAILABLE.equals(option.getStatus())) {
                 throw new AppException(ErrorCode.CART_MODIFIER_INVALID);
@@ -478,7 +478,8 @@ public class GroupCartServiceImpl implements GroupCartService {
         if (item.modifierOptionIds() != null) {
             for (String optionId : item.modifierOptionIds()) {
                 ModifierOption option = modifierOptionRepository
-                        .findByIdAndModifierGroupBranchId(optionId, branchId).orElse(null);
+                        .findByIdAndModifierGroup_Product_Branch_Id(optionId, branchId)
+                        .orElse(null);
                 if (option == null) {
                     continue;
                 }
