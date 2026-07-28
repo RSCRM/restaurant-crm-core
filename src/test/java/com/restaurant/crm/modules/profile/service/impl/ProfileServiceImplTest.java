@@ -12,6 +12,9 @@ import com.restaurant.crm.modules.profile.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.profile.entity.UserProfile;
 import com.restaurant.crm.modules.profile.mapper.UserProfileMapper;
 import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
+import com.restaurant.crm.modules.profile.dto.request.ProfileUpdateRequest;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
@@ -39,6 +42,8 @@ class ProfileServiceImplTest {
     UserRepository userRepository;
     @Mock
     UserProfileRepository userProfileRepository;
+    @Mock
+    EmployeeRepository employeeRepository;
     @Spy
     UserProfileMapper userProfileMapper = Mappers.getMapper(UserProfileMapper.class);
     @InjectMocks
@@ -120,6 +125,31 @@ class ProfileServiceImplTest {
 
             AppException exception = assertThrows(AppException.class, profileService::getMyInfo);
             assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void updateMyInfoRequiresEmployeeAccessToBeEnabled() {
+        User user = User.builder().id("user-1").build();
+        Employee employee = Employee.builder()
+                .id("employee-1")
+                .user(user)
+                .profileUpdateEnabled(false)
+                .build();
+        ProfileUpdateRequest request = new ProfileUpdateRequest();
+        request.setFullName("New Name");
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getCurrentUserId).thenReturn("user-1");
+            authUtils.when(AuthUtils::getEmployeeId).thenReturn("employee-1");
+            when(employeeRepository.findByIdAndUserId("employee-1", "user-1"))
+                    .thenReturn(Optional.of(employee));
+
+            AppException exception = assertThrows(
+                    AppException.class,
+                    () -> profileService.updateMyInfo(request));
+
+            assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
         }
     }
 }
