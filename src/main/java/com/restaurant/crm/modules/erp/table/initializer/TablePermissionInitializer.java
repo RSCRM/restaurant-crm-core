@@ -29,6 +29,11 @@ public class TablePermissionInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        if (!orgPermissionRepository.existsByPermissionName(StartDefinedOrgPermission.TABLE_SEARCH_READ)) {
+            orgPermissionRepository.save(OrgPermission.builder()
+                    .permissionName(StartDefinedOrgPermission.TABLE_SEARCH_READ)
+                    .build());
+        }
         Set<String> names = Set.of(
                 StartDefinedOrgPermission.TABLE_MAP_READ,
                 TablePermissionConstants.TABLE_AREA_ADD,
