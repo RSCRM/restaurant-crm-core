@@ -3,12 +3,12 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.notification.dto.response.NotificationResponse;
 import com.restaurant.crm.modules.erp.notification.entity.Notification;
 import com.restaurant.crm.modules.erp.notification.enums.NotificationType;
@@ -78,7 +78,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     NotificationService notificationService;
     SseEmitterService sseEmitterService;
     CustomerSseService customerSseService;
-    com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository customerVoucherRepository;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository customerVoucherRepository;
     OrderItemMapper orderItemMapper;
     NotificationMapper notificationMapper;
 
@@ -506,7 +506,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     }
 
     private void recalculateOrderFinancials(Order order) {
-        com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher appliedVoucher =
+        com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher appliedVoucher =
                 customerVoucherRepository.findByOrderId(order.getId()).orElse(null);
 
         if (appliedVoucher != null) {

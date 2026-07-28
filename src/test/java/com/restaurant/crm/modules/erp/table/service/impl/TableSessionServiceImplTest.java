@@ -5,6 +5,7 @@ import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.table.dto.request.TableSessionCreationRequest;
 import com.restaurant.crm.modules.erp.table.dto.response.TableSessionResponse;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
@@ -15,6 +16,7 @@ import com.restaurant.crm.modules.erp.table.enums.TableSessionStatus;
 import com.restaurant.crm.modules.erp.table.mapper.TableSessionMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
+import com.restaurant.crm.modules.erp.table.repository.TableTransferHistoryRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,10 @@ class TableSessionServiceImplTest {
     @Mock
     TableSessionRepository tableSessionRepository;
     @Mock
+    TableTransferHistoryRepository tableTransferHistoryRepository;
+    @Mock
+    OrderRepository orderRepository;
+    @Mock
     TableSessionMapper tableSessionMapper;
 
     TableSessionServiceImpl tableSessionService;
@@ -53,6 +59,8 @@ class TableSessionServiceImplTest {
                 organizationBranchRepository,
                 restaurantTableRepository,
                 tableSessionRepository,
+                tableTransferHistoryRepository,
+                orderRepository,
                 tableSessionMapper
         );
     }

@@ -58,6 +58,14 @@ public enum ErrorCode {
     EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ORG_ROLE_NOT_FOUND("EMP_1004", "Org role not found", HttpStatus.NOT_FOUND),
+    EMPLOYEE_SALARY_INVALID("EMP_1005", "Salary must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_USERNAME_REQUIRED("EMP_1006", "Username is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_EMAIL_REQUIRED("EMP_1007", "Email is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_PHONE_REQUIRED("EMP_1008", "Phone is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_BRANCH_REQUIRED("EMP_1009", "Branch id is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_START_DATE_REQUIRED("EMP_1010", "Start date is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ORG_ROLE_REQUIRED("EMP_1011", "Org role id is required", HttpStatus.BAD_REQUEST),
 
     // ==== ATTENDANCE ERRORS ====
     ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),
@@ -109,6 +117,39 @@ public enum ErrorCode {
     TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
     TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
 
+    // ==== MENU ERRORS ====
+    CATEGORY_NOT_FOUND("MENU_1000", "Category not found", HttpStatus.NOT_FOUND),
+    CATEGORY_NAME_EXISTS("MENU_1001", "Category name already exists in this branch", HttpStatus.BAD_REQUEST),
+    CATEGORY_NAME_REQUIRED("MENU_1002", "Category name is required", HttpStatus.BAD_REQUEST),
+    PRODUCT_NOT_FOUND("MENU_1010", "Product not found", HttpStatus.NOT_FOUND),
+    PRODUCT_NAME_EXISTS("MENU_1011", "Product name already exists in this branch", HttpStatus.BAD_REQUEST),
+    PRODUCT_NAME_REQUIRED("MENU_1012", "Product name is required", HttpStatus.BAD_REQUEST),
+    PRODUCT_BRANCH_REQUIRED("MENU_1013", "Branch id is required", HttpStatus.BAD_REQUEST),
+    MENU_CATEGORY_BRANCH_MISMATCH("MENU_1014", "Category does not belong to this branch", HttpStatus.BAD_REQUEST),
+    MODIFIER_GROUP_NOT_FOUND("MENU_1020", "Modifier group not found", HttpStatus.NOT_FOUND),
+    MODIFIER_GROUP_NAME_EXISTS("MENU_1021", "Group name already exists for this product", HttpStatus.BAD_REQUEST),
+    MODIFIER_GROUP_NAME_REQUIRED("MENU_1022", "Group name is required", HttpStatus.BAD_REQUEST),
+    MODIFIER_OPTION_NOT_FOUND("MENU_1023", "Modifier option not found", HttpStatus.NOT_FOUND),
+    MODIFIER_OPTION_NAME_REQUIRED("MENU_1024", "Option name is required", HttpStatus.BAD_REQUEST),
+    COMBO_NOT_FOUND("MENU_1030", "Combo not found", HttpStatus.NOT_FOUND),
+    COMBO_NAME_EXISTS("MENU_1031", "Combo name already exists in this branch", HttpStatus.BAD_REQUEST),
+    COMBO_NAME_REQUIRED("MENU_1032", "Combo name is required", HttpStatus.BAD_REQUEST),
+    COMBO_BRANCH_REQUIRED("MENU_1033", "Branch id is required", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_NOT_FOUND("MENU_1040", "Combo item not found", HttpStatus.NOT_FOUND),
+    COMBO_ITEM_PRODUCT_EXISTS("MENU_1041", "Product already in this combo", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_PRODUCT_BRANCH_MISMATCH("MENU_1042", "Product does not belong to the combo branch", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_OPTIONS_MISMATCH("MENU_1043", "Must pick exactly one option per modifier group of the product", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_PRODUCT_REQUIRED("MENU_1044", "Product id is required", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_NAME_EXISTS("TABLE_1002", "Area name already exists in this branch", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_BRANCH_REQUIRED("TABLE_1003", "Branch id is required", HttpStatus.BAD_REQUEST),
+    TABLE_AREA_NAME_REQUIRED("TABLE_1004", "Area name is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_NOT_FOUND("TABLE_1005", "Restaurant table not found", HttpStatus.NOT_FOUND),
+    RESTAURANT_TABLE_NUMBER_EXISTS("TABLE_1006", "Table number already exists in this area", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_AREA_REQUIRED("TABLE_1007", "Area id is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_NUMBER_REQUIRED("TABLE_1008", "Table number is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_CAPACITY_REQUIRED("TABLE_1009", "Capacity is required", HttpStatus.BAD_REQUEST),
+    RESTAURANT_TABLE_CAPACITY_INVALID("TABLE_1010", "Capacity must be at least 1", HttpStatus.BAD_REQUEST),
+
     // ==== CUSTOMER ERRORS ====
     CUSTOMER_NOT_FOUND("CUST_1000", "Customer not found", HttpStatus.NOT_FOUND),
     CUSTOMER_PHONE_REQUIRED("CUST_1001", "Phone number is required", HttpStatus.BAD_REQUEST),
@@ -143,16 +184,24 @@ public enum ErrorCode {
             "Party size exceeds table capacity",
             HttpStatus.BAD_REQUEST
     ),
+    TABLE_SESSION_NOT_FOUND("TABLE_SESSION_1004", "Table session not found", HttpStatus.NOT_FOUND),
+    TABLE_SESSION_NOT_ACTIVE("TABLE_SESSION_1005", "Table session is not active", HttpStatus.CONFLICT),
+    TABLE_TRANSFER_SAME_TABLE(
+            "TABLE_SESSION_1006",
+            "Source and target table must be different",
+            HttpStatus.BAD_REQUEST
+    ),
+    TABLE_SESSION_UNPAID_ORDER("TABLE_SESSION_1007", "Table session has an unpaid order", HttpStatus.CONFLICT),
 
     // ==== INGREDIENT ERRORS ====
     INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
-    INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.BAD_REQUEST),
+    INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.CONFLICT),
     INGREDIENT_NOT_FOUND("INGREDIENT_1000", "Ingredient not found", HttpStatus.NOT_FOUND),
-    INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.BAD_REQUEST),
+    INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.CONFLICT),
 
     // ==== INVENTORY ERRORS ====
     INVENTORY_NOT_FOUND("INV_1000", "Inventory not found", HttpStatus.NOT_FOUND),
-    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.BAD_REQUEST),
+    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.CONFLICT),
     INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
     INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
     INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
@@ -174,7 +223,6 @@ public enum ErrorCode {
     CUSTOMER_VOUCHER_NOT_FOUND("LOY_1004", "Customer voucher not found", HttpStatus.NOT_FOUND),
     CUSTOMER_VOUCHER_ALREADY_USED("LOY_1005", "Voucher has already been used", HttpStatus.BAD_REQUEST),
     CUSTOMER_VOUCHER_MIN_BILL_NOT_MET("LOY_1006", "Minimum bill amount not met", HttpStatus.BAD_REQUEST),
-    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
     VOUCHER_TITLE_REQUIRED("LOY_1007", "Voucher title is required", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_REQUIRED("LOY_1008", "Voucher discount percent is required", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_INVALID("LOY_1009", "Voucher discount percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
@@ -183,6 +231,7 @@ public enum ErrorCode {
     VOUCHER_POINTS_REQUIRED("LOY_1012", "Voucher points required is required", HttpStatus.BAD_REQUEST),
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
+    CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),
@@ -236,6 +285,11 @@ public enum ErrorCode {
     OTP_CUSTOMER_LOCKED("OTP_1007", "Customer account is locked", HttpStatus.FORBIDDEN),
     OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
     OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // ==== CUSTOMER MENU ERRORS ====
+    MENU_BRANCH_CONTEXT_MISSING("MENU_1000", "Branch context is missing from the session", HttpStatus.FORBIDDEN),
+    MENU_PRODUCT_NOT_FOUND("MENU_1001", "Product not found in this branch", HttpStatus.NOT_FOUND),
+    MENU_EMPTY("MENU_1002", "Menu is not configured for this branch", HttpStatus.NOT_FOUND),
     ;
 
     String code;

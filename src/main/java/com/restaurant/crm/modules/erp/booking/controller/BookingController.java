@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,12 +30,14 @@ public class BookingController {
     BookingService bookingService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('BOOKING_CREATE')")
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(@Valid @RequestBody CreateBookingRequest request) {
         BookingResponse response = bookingService.createBooking(request);
         return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
     }
 
     @GetMapping("/branch/{branchId}")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<BookingResponse>>> getBookingsByBranch(
             @PathVariable String branchId,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -45,6 +48,7 @@ public class BookingController {
     }
 
     @GetMapping("/customer/{customerId}")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<BookingResponse>>> getBookingsByCustomer(
             @PathVariable String customerId,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -55,6 +59,7 @@ public class BookingController {
     }
 
     @GetMapping("/phone/{phone}")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<BookingResponse>>> getBookingsByCustomerPhone(
             @PathVariable String phone,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -65,12 +70,14 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(@PathVariable String id) {
         BookingResponse response = bookingService.getBookingById(id);
         return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     public ResponseEntity<ApiResponse<BookingResponse>> updateBookingStatus(
             @PathVariable String id,
             @Valid @RequestBody UpdateBookingStatusRequest request
