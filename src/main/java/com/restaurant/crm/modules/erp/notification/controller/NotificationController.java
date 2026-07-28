@@ -3,10 +3,12 @@ package com.restaurant.crm.modules.erp.notification.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.common.notification.dto.response.NotificationResponse;
+import com.restaurant.crm.common.notification.dto.response.UnreadCountResponse;
+import com.restaurant.crm.common.notification.security.RecipientContext;
+import com.restaurant.crm.common.notification.service.interfaces.NotificationQueryService;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
-import com.restaurant.crm.modules.erp.notification.dto.response.NotificationResponse;
-import com.restaurant.crm.modules.erp.notification.service.interfaces.NotificationService;
-import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.erp.notification.constants.NotificationControllerConstants;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -14,74 +16,111 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
- * Controller exposing SSE and REST endpoints for receiving and querying notifications.
+ * Staff-facing notification endpoints.
+ * <p>
+ * No endpoint here accepts an organization or branch identifier: the tenant is derived from the
+ * access token via {@link RecipientContext}. Accepting it from the query string let any
+ * authenticated employee stream and read another organization's notifications.
+ * <p>
+ * None of them carries a business permission either. Every employee needs a notification channel;
+ * filtering happens per notification through {@code requiredPermission}, not per endpoint.
  */
 @RestController
-@RequestMapping("/api/v1/notifications")
+@RequestMapping(NotificationControllerConstants.BASE_PATH)
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class NotificationController {
 
-    NotificationService notificationService;
+    NotificationQueryService notificationQueryService;
     SseEmitterService sseEmitterService;
 
     /**
-     * Subscribes to receive real-time server-sent events for a specific branch.
-     * Produces a text/event-stream response.
-     * Accessible by employees with ORDER_READ permission.
+     * Opens the real-time stream for the caller's own branch.
      *
-     * @param branchId the ID of the branch to subscribe to
-     * @return the SseEmitter representing the event stream connection
+     * @return the SSE connection
      */
-    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
-    public SseEmitter subscribe(@RequestParam String branchId) {
-        return sseEmitterService.createEmitter(branchId);
+    @GetMapping(value = NotificationControllerConstants.PATH_SUBSCRIBE,
+                produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public SseEmitter subscribe() {
+        RecipientContext context = RecipientContext.fromSecurityContext();
+        return sseEmitterService.createEmitter(context.requireBranchId());
     }
 
     /**
-     * Retrieves the notification history for a branch.
-     * Filters notifications directed to the current logged-in employee or broadcasted to the branch.
-     * Accessible by employees with ORDER_READ permission.
+     * Returns the caller's notification feed: system-wide, branch, matching group and personal
+     * notifications, newest first.
      *
-     * @param branchId the branch ID
-     * @param page the page number (default 1)
-     * @param size the page size (default 10)
-     * @return the paginated list of notifications
+     * @param page 1-indexed page number
+     * @param size page size
      */
     @GetMapping
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
-    public ResponseEntity<ApiResponse<PagingResponse<NotificationResponse>>> getHistory(
-            @RequestParam String branchId,
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<PagingResponse<NotificationResponse>>> getFeed(
+            @RequestParam(value = NotificationControllerConstants.PARAM_PAGE,
+                          required = false,
+                          defaultValue = NotificationControllerConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = NotificationControllerConstants.PARAM_SIZE,
+                          required = false,
+                          defaultValue = NotificationControllerConstants.DEFAULT_SIZE) int size
     ) {
-        // Resolve current employee ID from authentication context
-        String employeeId = null;
-        try {
-            employeeId = AuthUtils.getEmployeeId();
-        } catch (Exception e) {
-            // Ignore if called from an unauthenticated test environment
-        }
+        PagingResponse<NotificationResponse> feed = notificationQueryService.getFeed(
+                RecipientContext.fromSecurityContext(), page, size);
 
-        PagingResponse<NotificationResponse> history = notificationService.getNotifications(
-                branchId,
-                employeeId,
-                page,
-                size
-        );
-
-        ApiResponse<PagingResponse<NotificationResponse>> apiResponse = ApiResponse.<PagingResponse<NotificationResponse>>builder()
+        return ResponseEntity.ok(ApiResponse.<PagingResponse<NotificationResponse>>builder()
                 .success(ApiConstant.SUCCESS)
-                .data(history)
-                .build();
+                .data(feed)
+                .build());
+    }
 
-        return ResponseEntity.ok(apiResponse);
+    /**
+     * Returns how many visible notifications the caller has not acknowledged yet.
+     */
+    @GetMapping(NotificationControllerConstants.PATH_UNREAD_COUNT)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<UnreadCountResponse>> getUnreadCount() {
+        long unread = notificationQueryService.countUnread(RecipientContext.fromSecurityContext());
+
+        return ResponseEntity.ok(ApiResponse.<UnreadCountResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(UnreadCountResponse.builder().unreadCount(unread).build())
+                .build());
+    }
+
+    /**
+     * Acknowledges one notification for the calling employee only.
+     */
+    @PutMapping(NotificationControllerConstants.PATH_MARK_READ)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> markRead(@PathVariable String notificationId) {
+        notificationQueryService.markRead(RecipientContext.fromSecurityContext(), notificationId);
+
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(ApiConstant.SUCCESS)
+                .build());
+    }
+
+    /**
+     * Acknowledges the caller's visible unread notifications.
+     *
+     * @return how many were acknowledged
+     */
+    @PutMapping(NotificationControllerConstants.PATH_MARK_ALL_READ)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Integer>> markAllRead() {
+        int acknowledged = notificationQueryService.markAllRead(RecipientContext.fromSecurityContext());
+
+        return ResponseEntity.ok(ApiResponse.<Integer>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(acknowledged)
+                .build());
     }
 }

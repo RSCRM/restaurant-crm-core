@@ -1,8 +1,8 @@
 package com.restaurant.crm.modules.erp.notification;
 
 import com.restaurant.crm.common.sse.service.impl.SseEmitterServiceImpl;
-import com.restaurant.crm.modules.erp.notification.dto.response.NotificationResponse;
-import com.restaurant.crm.modules.erp.notification.enums.NotificationType;
+import com.restaurant.crm.common.notification.dto.response.NotificationResponse;
+import com.restaurant.crm.common.notification.enums.NotificationType;
 import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

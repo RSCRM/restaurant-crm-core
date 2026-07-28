@@ -266,6 +266,11 @@ public enum ErrorCode {
     MENU_BRANCH_CONTEXT_MISSING("MENU_1000", "Branch context is missing from the session", HttpStatus.FORBIDDEN),
     MENU_PRODUCT_NOT_FOUND("MENU_1001", "Product not found in this branch", HttpStatus.NOT_FOUND),
     MENU_EMPTY("MENU_1002", "Menu is not configured for this branch", HttpStatus.NOT_FOUND),
+
+    // ==== NOTIFICATION ERRORS ====
+    NOTIFICATION_TENANT_CONTEXT_MISSING("NOTIF_1000", "Notification tenant context is missing from the token", HttpStatus.FORBIDDEN),
+    NOTIFICATION_NOT_FOUND("NOTIF_1001", "Notification not found", HttpStatus.NOT_FOUND),
+    NOTIFICATION_INVALID_TARGET("NOTIF_1002", "Notification target does not match its scope", HttpStatus.BAD_REQUEST),
     ;
 
     String code;

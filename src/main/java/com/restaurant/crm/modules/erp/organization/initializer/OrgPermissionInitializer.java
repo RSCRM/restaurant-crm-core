@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.organization.initializer;
 
 import com.restaurant.crm.common.constant.InitializerOrder;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.modules.erp.organization.entity.OrgPermission;
 import com.restaurant.crm.modules.erp.organization.repository.OrgPermissionRepository;
 import lombok.AccessLevel;
@@ -33,7 +34,9 @@ public class OrgPermissionInitializer implements ApplicationRunner {
                 EmployeeConstants.EMPLOYEE_UPDATE,
                 EmployeeConstants.EMPLOYEE_DELETE,
                 EmployeeConstants.EMPLOYEE_ROLE_ASSIGN,
-                EmployeeConstants.EMPLOYEE_ROLE_REVOKE
+                EmployeeConstants.EMPLOYEE_ROLE_REVOKE,
+                StartDefinedOrgPermission.NOTIFICATION_SEND,
+                StartDefinedOrgPermission.NOTIFICATION_BROADCAST
         );
         names.forEach(name -> {
             if (!orgPermissionRepository.existsByPermissionName(name)) {

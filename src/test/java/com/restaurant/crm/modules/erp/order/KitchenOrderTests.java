@@ -5,11 +5,15 @@ import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository;
 import com.restaurant.crm.modules.erp.menu.product.entity.Product;
 import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
-import com.restaurant.crm.modules.erp.notification.dto.response.NotificationResponse;
-import com.restaurant.crm.modules.erp.notification.entity.Notification;
-import com.restaurant.crm.modules.erp.notification.enums.NotificationType;
-import com.restaurant.crm.modules.erp.notification.mapper.NotificationMapper;
-import com.restaurant.crm.modules.erp.notification.service.interfaces.NotificationService;
+import com.restaurant.crm.common.notification.dto.NotificationCommand;
+import com.restaurant.crm.common.notification.dto.response.NotificationResponse;
+import com.restaurant.crm.common.notification.entity.Notification;
+import com.restaurant.crm.common.notification.enums.NotificationGroupType;
+import com.restaurant.crm.common.notification.enums.NotificationScope;
+import com.restaurant.crm.common.notification.enums.NotificationType;
+import com.restaurant.crm.common.notification.mapper.NotificationMapper;
+import com.restaurant.crm.common.notification.service.interfaces.NotificationPublisher;
+import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemStatusRequest;
@@ -27,6 +31,7 @@ import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -64,7 +69,7 @@ public class KitchenOrderTests {
     RestaurantTableRepository restaurantTableRepository;
 
     @Mock
-    NotificationService notificationService;
+    NotificationPublisher notificationPublisher;
 
     @Mock
     SseEmitterService sseEmitterService;
@@ -131,7 +136,7 @@ public class KitchenOrderTests {
             // Verify Customer SSE update is broadcasted
             verify(customerSseService, times(1)).broadcastOrderUpdate(eq("order-1"), any());
             // Verify no ready-to-serve notifications are triggered
-            verify(notificationService, never()).create(any(), any(), any(), any(), any(), any());
+            verify(notificationPublisher, never()).publish(any());
         }
     }
 
@@ -198,14 +203,7 @@ public class KitchenOrderTests {
         when(restaurantTableRepository.findById(tableId)).thenReturn(Optional.of(table));
         when(orderItemRepository.findByOrderId(any())).thenReturn(Collections.singletonList(orderItem));
 
-        when(notificationService.create(
-                eq(branchId),
-                eq(null), // broadcast to all waiters
-                any(),    // chef employee ID
-                eq("Dish Ready to Serve"),
-                eq("Khu A - Bàn 01: Phở Bò x2 is ready to serve!"),
-                eq(NotificationType.READY_TO_SERVE)
-        )).thenReturn(notification);
+        when(notificationPublisher.publish(any(NotificationCommand.class))).thenReturn(notification);
 
         when(notificationMapper.toNotificationResponse(notification)).thenReturn(responseDto);
         when(orderItemMapper.toOrderItemResponse(any(OrderItem.class))).thenReturn(expectedResponse);
@@ -220,7 +218,20 @@ public class KitchenOrderTests {
             assertEquals(OrderItemStatus.READY_TO_SERVE, response.getStatus());
             verify(orderItemRepository, times(1)).save(orderItem);
             // Verify notification is created in DB and pushed to SSE
-            verify(notificationService, times(1)).create(any(), any(), any(), any(), any(), any());
+            ArgumentCaptor<NotificationCommand> commandCaptor = ArgumentCaptor.forClass(NotificationCommand.class);
+            verify(notificationPublisher, times(1)).publish(commandCaptor.capture());
+
+            // The audience must come from the type catalogue, not from this call site: a dish
+            // ready to serve is addressed to whoever may read orders, in that branch only.
+            NotificationCommand command = commandCaptor.getValue();
+            assertEquals(NotificationScope.GROUP, command.getScope());
+            assertEquals(NotificationGroupType.BY_PERMISSION, command.getGroupType());
+            assertEquals(StartDefinedOrgPermission.ORDER_READ, command.getTargetKey());
+            assertEquals(StartDefinedOrgPermission.ORDER_READ, command.getRequiredPermission());
+            assertEquals(branchId, command.getBranchId());
+            assertEquals(NotificationType.READY_TO_SERVE, command.getType());
+            assertNull(command.getRecipientId());
+
             verify(sseEmitterService, times(1)).broadcastToBranch(eq(branchId), eq("READY_TO_SERVE"), eq(responseDto), any());
             // Verify customer SSE update is broadcasted
             verify(customerSseService, times(1)).broadcastOrderUpdate(any(), any());

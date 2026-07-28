@@ -9,11 +9,12 @@ import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
 import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
 import com.restaurant.crm.modules.erp.menu.product.entity.Product;
 import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
-import com.restaurant.crm.modules.erp.notification.dto.response.NotificationResponse;
-import com.restaurant.crm.modules.erp.notification.entity.Notification;
-import com.restaurant.crm.modules.erp.notification.enums.NotificationType;
-import com.restaurant.crm.modules.erp.notification.mapper.NotificationMapper;
-import com.restaurant.crm.modules.erp.notification.service.interfaces.NotificationService;
+import com.restaurant.crm.common.notification.dto.NotificationCommand;
+import com.restaurant.crm.common.notification.dto.response.NotificationResponse;
+import com.restaurant.crm.common.notification.entity.Notification;
+import com.restaurant.crm.common.notification.enums.NotificationType;
+import com.restaurant.crm.common.notification.mapper.NotificationMapper;
+import com.restaurant.crm.common.notification.service.interfaces.NotificationPublisher;
 import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemModifierRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
@@ -75,7 +76,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     ComboRepository comboRepository;
     ModifierOptionRepository modifierOptionRepository;
     RestaurantTableRepository restaurantTableRepository;
-    NotificationService notificationService;
+    NotificationPublisher notificationPublisher;
     SseEmitterService sseEmitterService;
     CustomerSseService customerSseService;
     com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository customerVoucherRepository;
@@ -328,17 +329,30 @@ public class OrderItemServiceImpl implements OrderItemService {
             // Use default fallback ID during testing/unauthenticated scenarios
         }
 
-        Notification notification = notificationService.create(
-                branchId,
-                null,
-                chefEmployeeId,
-                title,
-                content,
-                NotificationType.READY_TO_SERVE
+        // Audience policy (group, required permission, priority) comes from the type catalogue.
+        // Organization is passed when the token carries it; otherwise the publisher resolves it
+        // from the branch.
+        Notification notification = notificationPublisher.publish(
+                NotificationCommand.from(NotificationType.READY_TO_SERVE)
+                        .organizationId(resolveCurrentOrganizationId())
+                        .branchId(branchId)
+                        .senderId(chefEmployeeId)
+                        .title(title)
+                        .content(content)
+                        .build()
         );
 
         NotificationResponse responseDto = notificationMapper.toNotificationResponse(notification);
         sseEmitterService.broadcastToBranch(branchId, "READY_TO_SERVE", responseDto, StartDefinedOrgPermission.ORDER_READ);
+    }
+
+    /** Null when the caller has no organization claim; the publisher falls back to the branch. */
+    private String resolveCurrentOrganizationId() {
+        try {
+            return AuthUtils.getOrganizationId();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void broadcastOrderCookingStatus(Order order) {

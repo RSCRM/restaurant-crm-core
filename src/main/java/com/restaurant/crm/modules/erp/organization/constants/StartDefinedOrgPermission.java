@@ -21,6 +21,10 @@ public class StartDefinedOrgPermission {
     public static final String TABLE_MANAGE = "TABLE_MANAGE";
     public static final String REPORT_VIEW = "REPORT_VIEW";
 
+    // Notification Permissions
+    public static final String NOTIFICATION_SEND = "NOTIFICATION_SEND";
+    public static final String NOTIFICATION_BROADCAST = "NOTIFICATION_BROADCAST";
+
     // Management & Administration Permissions
     public static final String STAFF_MANAGE = "STAFF_MANAGE";
     public static final String BRANCH_MANAGE = "BRANCH_MANAGE";
