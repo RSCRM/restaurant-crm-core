@@ -2,8 +2,8 @@ package com.restaurant.crm.modules.erp.menu.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
 import com.restaurant.crm.modules.erp.menu.dto.response.CustomerMenuResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuCategoryResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuComboResponse;
@@ -11,12 +11,12 @@ import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierGroupRespons
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierOptionResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuProductResponse;
 import com.restaurant.crm.modules.erp.menu.mapper.CustomerMenuMapper;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierGroup;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierGroupRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierGroup;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierGroupRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.menu.constants.CustomerMenuConstants;
 import com.restaurant.crm.modules.erp.menu.service.interfaces.CustomerMenuService;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
@@ -55,13 +55,13 @@ public class CustomerMenuServiceImpl implements CustomerMenuService {
         String branchId = requireBranchId();
 
         List<Product> products = productRepository
-                .findByBranchIdOrderByCategoryIdAscProductNameAsc(branchId);
+                .findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(branchId);
         List<Combo> combos = comboRepository.findByBranchIdOrderByComboNameAsc(branchId);
         if (products.isEmpty() && combos.isEmpty()) {
             throw new AppException(ErrorCode.MENU_EMPTY);
         }
 
-        List<ModifierGroup> groups = modifierGroupRepository.findByBranchIdOrderByGroupNameAsc(branchId);
+        List<ModifierGroup> groups = modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(branchId);
         List<String> groupIds = groups.stream().map(ModifierGroup::getId).toList();
         // One query for all options of all groups (no N+1); skip entirely when there are no groups.
         List<ModifierOption> options = groupIds.isEmpty()
@@ -89,6 +89,7 @@ public class CustomerMenuServiceImpl implements CustomerMenuService {
     public MenuProductResponse getProduct(String productId) {
         String branchId = requireBranchId();
         Product product = productRepository.findByIdAndBranchId(productId, branchId)
+                .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new AppException(ErrorCode.MENU_PRODUCT_NOT_FOUND));
         return customerMenuMapper.toProductResponse(product);
     }
@@ -107,7 +108,9 @@ public class CustomerMenuServiceImpl implements CustomerMenuService {
      */
     private List<MenuCategoryResponse> toCategories(List<Product> products) {
         Map<String, List<Product>> byCategory = products.stream()
-                .collect(Collectors.groupingBy(Product::getCategoryId, LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(
+                        p -> p.getCategory() != null ? p.getCategory().getId() : "",
+                        LinkedHashMap::new, Collectors.toList()));
         return byCategory.entrySet().stream()
                 .map(entry -> MenuCategoryResponse.builder()
                         .categoryId(entry.getKey())
