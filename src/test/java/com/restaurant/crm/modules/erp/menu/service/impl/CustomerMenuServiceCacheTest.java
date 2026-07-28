@@ -51,6 +51,10 @@ class CustomerMenuServiceCacheTest {
             auth.when(AuthUtils::getBranchId).thenReturn(BRANCH);
             when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH))
                     .thenReturn(List.of(Product.builder()
+                            .id("p1")
+                            .branch(OrganizationBranch.builder().id(BRANCH).build())
+                            .category(Category.builder().id("cat-1").build())
+                            .productName("Apple")
                             .id("p1").branch(OrganizationBranch.builder().id(BRANCH).build())
                             .category(Category.builder().id("cat-1").build()).productName("Apple")
                             .price(new BigDecimal("10.00")).status("AVAILABLE").requiresPreparation(true).build()));
@@ -60,11 +64,9 @@ class CustomerMenuServiceCacheTest {
             service.getMenu();
             service.getMenu(); // second call → cache hit
 
-            verify(productRepository, times(1))
-                    .findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH);
+            verify(productRepository, times(1)).findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH);
             verify(comboRepository, times(1)).findByBranchIdOrderByComboNameAsc(BRANCH);
-            verify(modifierGroupRepository, times(1))
-                    .findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH);
+            verify(modifierGroupRepository, times(1)).findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH);
         }
     }
 

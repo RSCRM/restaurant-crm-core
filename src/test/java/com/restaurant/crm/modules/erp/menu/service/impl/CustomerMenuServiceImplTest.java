@@ -3,8 +3,8 @@ package com.restaurant.crm.modules.erp.menu.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.menu.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.dto.response.CustomerMenuResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuCategoryResponse;
 import com.restaurant.crm.modules.erp.menu.mapper.CustomerMenuMapper;
@@ -62,11 +62,9 @@ class CustomerMenuServiceImplTest {
                 product("p2", "cat-a", "Banana", "AVAILABLE"),
                 product("p3", "cat-b", "Cherry", "OUT_OF_STOCK"));
         try (var auth = branchContext()) {
-            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH))
-                    .thenReturn(products);
+            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH)).thenReturn(products);
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
-            when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH))
-                    .thenReturn(List.of());
+            when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());
 
             CustomerMenuResponse menu = service.getMenu();
 

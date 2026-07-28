@@ -10,10 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
-/**
- * Result of a successful OTP verification (uc-c-03): the {@code otpTicket} to hand to
- * {@code POST /public/customer/qr/session} (uc-c-02), plus its expiry.
- */
+
 @Getter
 @Setter
 @NoArgsConstructor

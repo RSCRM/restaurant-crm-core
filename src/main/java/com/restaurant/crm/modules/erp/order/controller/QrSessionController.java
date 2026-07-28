@@ -22,11 +22,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * QR table ordering endpoints (uc-c-02). Public routes (scan / open / join) require no token;
- * session routes require a CUSTOMER_SESSION token (authority {@code ROLE_CUSTOMER_SESSION}).
- */
-@Tag(name = "QR Table Ordering", description = "uc-c-02 — scan QR, open/join a group ordering session")
+
+@Tag(name = "QR Table Ordering", description = "scan QR, open/join a group ordering session")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

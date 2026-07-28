@@ -4,6 +4,7 @@ import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,4 +20,6 @@ public interface ModifierOptionRepository extends JpaRepository<ModifierOption, 
     boolean existsByModifierGroup_IdAndOptionNameAndIdNot(String groupId, String optionName, String id);
 
     void deleteByModifierGroup_Id(String groupId);
+
+    Optional<ModifierOption> findByIdAndModifierGroup_Product_Branch_Id(String id, String branchId);
 }

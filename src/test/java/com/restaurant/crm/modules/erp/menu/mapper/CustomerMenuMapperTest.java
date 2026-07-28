@@ -50,7 +50,8 @@ class CustomerMenuMapperTest {
     @Test
     void toProductResponseMarksNonAvailableStatusUnavailable() {
         Product product = Product.builder()
-                .id("product-2").branch(OrganizationBranch.builder().id("branch-1").build())
+                .id("product-2")
+                .branch(OrganizationBranch.builder().id("branch-1").build())
                 .category(Category.builder().id("cat-1").build())
                 .productName("Sold out dish").price(new BigDecimal("9.00"))
                 .status("OUT_OF_STOCK").requiresPreparation(false).build();
@@ -74,6 +75,9 @@ class CustomerMenuMapperTest {
     @Test
     void toModifierGroupResponseAttachesOptions() {
         ModifierGroup group = ModifierGroup.builder()
+                .id("group-1")
+                .product(Product.builder().branch(OrganizationBranch.builder().id("branch-1").build()).build())
+                .groupName("Toppings")
                 .id("group-1").groupName("Toppings")
                 .minSelection(0).maxSelection(3).build();
         ModifierOption option = ModifierOption.builder()

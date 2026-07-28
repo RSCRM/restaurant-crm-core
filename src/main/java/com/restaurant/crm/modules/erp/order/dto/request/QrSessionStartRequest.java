@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-/**
- * Body of {@code POST /public/customer/qr/session} — OWNER opens a session (uc-c-02).
- * Called after uc-c-03's OTP passes; {@code otpTicket} is the proof of that.
- */
+
 @Getter
 @Setter
 @NoArgsConstructor

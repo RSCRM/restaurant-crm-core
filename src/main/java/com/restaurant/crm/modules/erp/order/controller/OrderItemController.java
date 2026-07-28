@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Controller class exposing REST endpoints for managing order items.
- */
 @RestController
 @RequestMapping("/api/v1/order-items")
 @RequiredArgsConstructor
@@ -28,14 +25,7 @@ public class OrderItemController {
 
     OrderItemService orderItemService;
 
-    /**
-     * Updates the status of an order item.
-     * Accessible by employees with ORDER_UPDATE permission.
-     *
-     * @param id the ID of the order item to update
-     * @param request the request body containing the new status
-     * @return the ApiResponse containing the updated order item details
-     */
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyAuthority(T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_UPDATE, T(com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission).ORDER_READ)")
     public ResponseEntity<ApiResponse<OrderItemResponse>> updateStatus(
