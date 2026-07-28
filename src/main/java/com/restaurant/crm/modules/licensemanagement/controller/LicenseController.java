@@ -39,7 +39,7 @@ public class LicenseController {
     LicenseService licenseService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> createLicense(
             @Valid @RequestBody CreateLicenseRequest request
     ) {
@@ -54,6 +54,7 @@ public class LicenseController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PagingResponse<LicenseResponse>>> getLicenses(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size,
@@ -78,7 +79,7 @@ public class LicenseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> updateLicense(
             @PathVariable String id,
             @Valid @RequestBody UpdateLicenseRequest request
@@ -94,7 +95,7 @@ public class LicenseController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<DeleteLicenseResponse>> deleteLicense(
             @PathVariable String id
     ) {
@@ -109,7 +110,7 @@ public class LicenseController {
     }
 
     @PatchMapping("/{id}/lock")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> lockLicense(
             @PathVariable String id
     ) {
@@ -124,7 +125,7 @@ public class LicenseController {
     }
 
     @PatchMapping("/{id}/reactivate")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> reactivateLicense(
             @PathVariable String id
     ) {
@@ -139,7 +140,7 @@ public class LicenseController {
     }
 
     @GetMapping("/{id}/detail")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseDetailResponse>> getLicenseDetail(
             @PathVariable String id,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,

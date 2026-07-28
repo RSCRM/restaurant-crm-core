@@ -27,7 +27,7 @@ public class LicenseSubscriptionController {
     LicenseSubscriptionService licenseSubscriptionService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> grantSubscription(
             @Valid @RequestBody GrantSubscriptionRequest request
     ) {
@@ -42,7 +42,7 @@ public class LicenseSubscriptionController {
     }
 
     @PostMapping("/{id}/renew")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> renewSubscription(
             @PathVariable String id
     ) {
@@ -57,7 +57,7 @@ public class LicenseSubscriptionController {
     }
 
     @PostMapping("/{id}/revoke")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> revokeSubscription(
             @PathVariable String id
     ) {
