@@ -243,7 +243,6 @@ testing) and `NoopOtpSender` (`@Profile("!dev") @Primary`, throws `OTP_SEND_FAIL
 
 ---
 
-<<<<<<< HEAD
 # Shared group cart & order submission (uc-c-05)
 
 The whole table shares one Redis-backed cart; only the OWNER submits; every item funnels into one
@@ -328,7 +327,6 @@ through `ErrorCode.valueOf`).
 - **SSE latency** for item locking; WebSocket would be better but `pom.xml` has none.
 - `customerName` submitted as `null` (Customer has only phone + status); order `note` is null (notes
   are per line).
-=======
 # Browse digital menu (uc-c-04)
 
 Once a session exists, a seated customer browses the digital menu of **their own branch**.
@@ -381,4 +379,3 @@ The menu uses an in-memory `ConcurrentMapCacheManager` (explicit, so Redis auto-
 running server). It does **not** enforce `CACHE_TTL_SECONDS` — entries persist until app restart. Once
 uc-m-* ships menu-edit endpoints they must `@CacheEvict`, or the cache should move to a TTL-capable
 manager (Caffeine/Redis, needs a dependency + NFR-03 multi-instance decision).
->>>>>>> origin/dev
