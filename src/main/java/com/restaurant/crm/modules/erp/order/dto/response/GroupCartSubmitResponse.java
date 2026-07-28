@@ -1,6 +1,5 @@
-package com.restaurant.crm.modules.erp.order.dto.request;
+package com.restaurant.crm.modules.erp.order.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -16,8 +16,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class QrResolveRequest {
+public class GroupCartSubmitResponse {
 
-    @NotBlank(message = "TQR_TOKEN_INVALID")
-    String qrToken;
+    String orderId;
+    Integer itemCount;
+    BigDecimal subtotal;
 }

@@ -1,6 +1,5 @@
 package com.restaurant.crm.modules.erp.order.dto.response;
 
-import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,18 +8,33 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrderItemResponse {
-    String orderItemId;
-    String orderId;
+public class GroupCartItemResponse {
+
+    String cartItemId;
     String productId;
     String comboId;
+    String name;
+    BigDecimal unitPrice;
     Integer quantity;
-    OrderItemStatus status;
+    BigDecimal lineTotal;
+    String note;
+
+    @Builder.Default
+    List<GroupCartItemModifierResponse> modifiers = new ArrayList<>();
+
+    String addedByDeviceId;
+
+
+    String lockedByDeviceId;
 }
