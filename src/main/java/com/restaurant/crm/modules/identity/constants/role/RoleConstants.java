@@ -8,6 +8,7 @@ public class RoleConstants {
 
     //======= Role column name ========
     public static final String COL_ROLE_NAME = "role_name";
+    public static final String COL_DATA_SCOPE = "data_scope";
 
     //======= Role column definition ========
     public static final String ROLE_NAME_DEFINITION = "VARCHAR(50)";

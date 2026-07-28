@@ -64,7 +64,7 @@ public class ProfileController {
     }
 
     @GetMapping("/{profileId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PROFILE_VIEW')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfileById(
             @PathVariable String profileId) {
         return ResponseEntity.ok(ApiResponse.<UserProfileResponse>builder()
@@ -84,7 +84,7 @@ public class ProfileController {
     }
 
     @PutMapping("/staff/{employeeId}")
-    @PreAuthorize("hasAuthority('PROFILE_UPDATE')")
+    @PreAuthorize("hasAuthority('PROFILE_UPDATE') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateStaffInfo(
             @PathVariable String employeeId,
             @Valid @RequestBody StaffProfileUpdateRequest request) {
