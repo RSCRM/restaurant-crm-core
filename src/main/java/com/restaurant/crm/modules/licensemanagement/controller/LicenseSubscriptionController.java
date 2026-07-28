@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,7 @@ public class LicenseSubscriptionController {
     LicenseSubscriptionService licenseSubscriptionService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> grantSubscription(
             @Valid @RequestBody GrantSubscriptionRequest request
     ) {
@@ -40,6 +42,7 @@ public class LicenseSubscriptionController {
     }
 
     @PostMapping("/{id}/renew")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> renewSubscription(
             @PathVariable String id
     ) {
@@ -54,6 +57,7 @@ public class LicenseSubscriptionController {
     }
 
     @PostMapping("/{id}/revoke")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> revokeSubscription(
             @PathVariable String id
     ) {

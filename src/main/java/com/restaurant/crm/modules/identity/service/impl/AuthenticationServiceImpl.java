@@ -24,9 +24,11 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.identity.dto.request.ContextSelectionRequest;
 import com.restaurant.crm.modules.identity.dto.response.ContextResponse;
 import com.restaurant.crm.modules.identity.dto.response.ContextSelectionResponse;
@@ -62,6 +64,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
     EmployeeRepository employeeRepository;
+    OrganizationRepository organizationRepository;
     RoleRepository roleRepository;
     RedisBlacklistRepository redisBlacklistRepository;
 
@@ -84,9 +87,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         List<Employee> employees = employeeRepository.findByUserIdAndStatus(
                 user.getId(), EmployeeStatus.ACTIVE);
 
-        List<ContextResponse> contexts = employees.stream()
+        List<ContextResponse> contexts = new java.util.ArrayList<>(employees.stream()
                 .map(this::buildContextResponse)
-                .toList();
+                .toList());
+
+        // Load owner context (user is owner of an organization)
+        organizationRepository.findByOwnerId(user.getId())
+                .ifPresent(organization -> contexts.add(buildOwnerContextResponse(organization)));
 
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
@@ -211,6 +218,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .jwtID(UUID.randomUUID().toString())
                 .claim(JwtClaimSetConstant.CLAIM_USER_ID, user.getId())
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_IDENTITY)
+                .claim(JwtClaimSetConstant.CLAIM_SCOPE, buildSystemRoles(user))
                 .build();
 
         return signToken(jwsHeader, jwtClaimsSet);
@@ -320,6 +328,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .branchId(branchId)
                 .branchName(branchName)
                 .role(roleName)
+                .build();
+    }
+
+    private ContextResponse buildOwnerContextResponse(Organization organization) {
+        return ContextResponse.builder()
+                .employeeId(null)
+                .organizationId(organization.getId())
+                .organizationName(organization.getOrganizationName())
+                .branchId(null)
+                .branchName(null)
+                .role("OWNER")
                 .build();
     }
 
