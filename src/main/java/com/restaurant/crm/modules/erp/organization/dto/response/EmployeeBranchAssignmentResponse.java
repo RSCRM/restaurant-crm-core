@@ -19,8 +19,11 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EmployeeBranchAssignmentResponse {
     String employeeId;
+    String managerId;
     String userId;
+    String managerUserId;
     String username;
+    String managerName;
     String email;
     boolean enabled;
     String phone;
@@ -31,4 +34,5 @@ public class EmployeeBranchAssignmentResponse {
     String branchName;
     String orgRoleId;
     String orgRoleName;
+    String role;
 }

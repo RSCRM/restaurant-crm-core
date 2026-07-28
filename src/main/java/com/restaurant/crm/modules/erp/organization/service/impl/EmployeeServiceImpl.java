@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.organization.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 @Service
@@ -100,7 +102,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private void validateBranchAccess(String targetBranchId) {
         String actorUserId = AuthUtils.getCurrentUserId();
         if (AuthUtils.getEmployeeId() == null) {
-            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+            branchRepository.findByIdAndOrganization_Owner_Id(targetBranchId, actorUserId)
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
         } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
@@ -155,59 +157,72 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeBranchAssignmentResponse assignToBranch(String branchId, EmployeeBranchAssignmentRequest request) {
         String ownerId = getCurrentOwnerId();
         OrganizationBranch targetBranch = findBranch(branchId, ownerId);
-        Employee branchManager = findEmployeeByManagerId(
-                request.getManagerId(),
-                targetBranch.getOrganization().getId(),
-                ownerId
-        );
+        Employee branchManager = findManagerEmployee(request.getManagerId());
+
+        validateManagerForBranch(branchManager, targetBranch);
+
         String managerEmployeeId = branchManager.getId();
-
-        if (!EmployeeStatus.ACTIVE.equals(branchManager.getStatus()) || !branchManager.getUser().isEnabled()) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
-        }
-
         if (targetBranch.getManager() != null && managerEmployeeId.equals(targetBranch.getManager().getId())) {
-            return employeeMapper.toEmployeeBranchAssignmentResponse(branchManager);
+            return employeeMapper.toEmployeeBranchAssignmentResponse(targetBranch);
         }
 
-        ensureBranchHasNoOtherManager(targetBranch, managerEmployeeId);
-        clearCurrentBranchAssignment(branchManager);
+        clearManagerFromOtherBranch(managerEmployeeId, targetBranch.getId());
 
-        branchManager.setBranch(targetBranch);
         targetBranch.setManager(branchManager);
-        branchRepository.save(targetBranch);
 
-        Employee assigned = employeeRepository.save(branchManager);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(assigned);
+        OrganizationBranch savedBranch = branchRepository.saveAndFlush(targetBranch);
+        return employeeMapper.toEmployeeBranchAssignmentResponse(savedBranch);
     }
 
-    private Employee findEmployeeByManagerId(String managerId, String organizationId, String ownerId) {
-        return employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_Owner_Id(
-                        managerId,
-                        organizationId,
-                        ownerId)
+    private Employee findManagerEmployee(String managerId) {
+        if (!StringUtils.hasText(managerId)) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_REQUEST);
+        }
+        return employeeRepository.findByIdWithUserRoleAndBranch(managerId)
                 .orElseThrow(() -> new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND));
     }
 
     private OrganizationBranch findBranch(String branchId, String ownerId) {
-        return branchRepository.findByIdAndOrganization_Owner_Id(branchId, ownerId)
+        return branchRepository.findByIdAndOwnerIdWithManager(branchId, ownerId)
                 .orElseThrow(() -> new AppException(ErrorCode.BRANCH_NOT_FOUND));
     }
 
-    private void ensureBranchHasNoOtherManager(OrganizationBranch targetBranch, String managerId) {
-        if (targetBranch.getManager() != null && !managerId.equals(targetBranch.getManager().getId())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_ALREADY_ASSIGNED);
+    private void validateManagerForBranch(Employee employee, OrganizationBranch targetBranch) {
+        if (employee.getBranch() == null || employee.getBranch().getOrganization() == null) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_BRANCH);
+        }
+        if (!targetBranch.getId().equals(employee.getBranch().getId())) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_BRANCH);
+        }
+        if (!targetBranch.getOrganization().getId().equals(employee.getBranch().getOrganization().getId())) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_BRANCH);
+        }
+        if (!isManagerRole(employee)) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_ROLE);
+        }
+        if (!EmployeeStatus.ACTIVE.equals(employee.getStatus())
+                || employee.getUser() == null
+                || !employee.getUser().isEnabled()
+                || !UserStatus.ACTIVE.equals(employee.getUser().getStatus())) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
+        }
+        if (employee.getEndDate() != null && employee.getEndDate().isBefore(LocalDate.now())) {
+            throw new AppException(ErrorCode.BRANCH_MANAGER_EXPIRED);
         }
     }
 
-    private void clearCurrentBranchAssignment(Employee employee) {
-        OrganizationBranch currentBranch = employee.getBranch();
-        if (currentBranch != null
-                && currentBranch.getManager() != null
-                && employee.getId().equals(currentBranch.getManager().getId())) {
-            currentBranch.setManager(null);
-            branchRepository.saveAndFlush(currentBranch);
-        }
+    private boolean isManagerRole(Employee employee) {
+        return employee.getOrgRole() != null
+                && EmployeeConstants.MANAGER_ROLE_NAME.equals(employee.getOrgRole().getRoleName());
+    }
+
+    private void clearManagerFromOtherBranch(String employeeId, String targetBranchId) {
+        branchRepository.findByManager_Id(employeeId).ifPresent(currentBranch -> {
+            if (!targetBranchId.equals(currentBranch.getId())) {
+                currentBranch.setManager(null);
+                branchRepository.saveAndFlush(currentBranch);
+            }
+        });
     }
 
     private String getCurrentOwnerId() {

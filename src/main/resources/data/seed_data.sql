@@ -276,11 +276,11 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Manager user as employee at 3 branches:
 --   f001: MANAGER @ Phở Việt Q1       (Owner A)
---   f002: CASHIER @ Sushi Tokyo Huệ   (Owner B, org1)
+--   f002: MANAGER @ Sushi Tokyo Huệ   (Owner B, org1)
 --   f003: MANAGER @ BBQ Garden Q3     (Owner B, org2)
 INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
 ('f0000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-01-15', NULL, NOW(), NOW()),
-('f0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-03-01', NULL, NOW(), NOW()),
+('f0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-03-01', NULL, NOW(), NOW()),
 ('f0000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000005', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-06-01', NULL, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
@@ -362,7 +362,7 @@ ON CONFLICT (category_id) DO NOTHING;
 
 INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
 ('p0000000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Phở Bò chín', 'Phở bò tái nạm chín', 55000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
-('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', true, NOW(), NOW())
+('p0000000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Bún Chả', 'Bún chả Hà Nội', 60000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
 ('p0000000-0000-0000-0000-000000000103', 0, 'e0000000-0000-0000-0000-000000000001', 'ac000000-0000-0000-0000-000000000001', 'Coca Cola', 'Lon nước ngọt Coca Cola', 15000.00, NULL, 'AVAILABLE', false, NOW(), NOW())
 ON CONFLICT (product_id) DO NOTHING;
 
@@ -430,7 +430,7 @@ ON CONFLICT (id) DO NOTHING;
 -- │   email: manager@restaurant.com (same user, 3 employee records)             │
 -- │   → contexts:                                                               │
 -- │     { employeeId:"f0...01", org:"Phở Việt",    branch:"Q1",     MANAGER }  │
--- │     { employeeId:"f0...02", org:"Sushi Tokyo", branch:"Ng.Huệ", CASHIER }  │
+-- │     { employeeId:"f0...02", org:"Sushi Tokyo", branch:"Ng.Huệ", MANAGER }  │
 --     { employeeId:"f0...03", org:"Sushi Tokyo", branch:"Q7",     WAITER }   │
 -- └──────────────────────────────────────────────────────────────────────────────┘
 

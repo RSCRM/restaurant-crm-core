@@ -4,6 +4,7 @@ public class EmployeeConstants {
     private EmployeeConstants() {}
 
     public static final String BRANCH_MANAGER_ASSIGN = StartDefinedOrgPermission.BRANCH_MANAGER_ASSIGN;
+    public static final String MANAGER_ROLE_NAME = "MANAGER";
 
     //======= Employee management permissions ========
     public static final String EMPLOYEE_ADD = "EMPLOYEE_ADD";
