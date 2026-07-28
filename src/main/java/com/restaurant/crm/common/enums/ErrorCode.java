@@ -84,6 +84,9 @@ public enum ErrorCode {
             "Schedule date range cannot exceed 31 days",
             HttpStatus.BAD_REQUEST
     ),
+    SCHEDULE_NOT_FOUND("SCHEDULE_1002", "Schedule not found", HttpStatus.NOT_FOUND),
+    SCHEDULE_TIME_RANGE_INVALID("SCHEDULE_1003", "Schedule start time must be before end time", HttpStatus.BAD_REQUEST),
+    SCHEDULE_CONFLICT("SCHEDULE_1004", "Employee already has a schedule at this start time", HttpStatus.CONFLICT),
 
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
