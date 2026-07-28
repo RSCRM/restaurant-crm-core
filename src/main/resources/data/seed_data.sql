@@ -73,9 +73,9 @@ ON CONFLICT (permission_name) DO NOTHING;
 -- 2. IDENTITY MODULE: ROLES
 -- =============================================================================
 
-INSERT INTO roles (id, version, role_name, created_at, updated_at) VALUES
-('b0000000-0000-0000-0000-000000000001', 0, 'ADMIN',  NOW(), NOW()),
-('b0000000-0000-0000-0000-000000000002', 0, 'USER',   NOW(), NOW())
+INSERT INTO roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
+('b0000000-0000-0000-0000-000000000001', 0, 'ADMIN',  'SYSTEM', NOW(), NOW()),
+('b0000000-0000-0000-0000-000000000002', 0, 'USER',   'TENANT', NOW(), NOW())
 ON CONFLICT (role_name) DO NOTHING;
 
 -- =============================================================================
@@ -181,12 +181,12 @@ ON CONFLICT (permission_name) DO NOTHING;
 -- 7. ERP MODULE: ORG_ROLES
 -- =============================================================================
 
-INSERT INTO org_roles (id, version, role_name, created_at, updated_at) VALUES
-('r0000000-0000-0000-0000-000000000001', 0, 'OWNER',   NOW(), NOW()),
-('r0000000-0000-0000-0000-000000000002', 0, 'MANAGER', NOW(), NOW()),
-('r0000000-0000-0000-0000-000000000003', 0, 'CASHIER', NOW(), NOW()),
-('r0000000-0000-0000-0000-000000000004', 0, 'WAITER',  NOW(), NOW()),
-('r0000000-0000-0000-0000-000000000005', 0, 'CHEF',    NOW(), NOW())
+INSERT INTO org_roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
+('r0000000-0000-0000-0000-000000000001', 0, 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+('r0000000-0000-0000-0000-000000000002', 0, 'MANAGER', 'BRANCH',       NOW(), NOW()),
+('r0000000-0000-0000-0000-000000000003', 0, 'CASHIER', 'BRANCH',       NOW(), NOW()),
+('r0000000-0000-0000-0000-000000000004', 0, 'WAITER',  'SELF',         NOW(), NOW()),
+('r0000000-0000-0000-0000-000000000005', 0, 'CHEF',    'SELF',         NOW(), NOW())
 ON CONFLICT (role_name) DO NOTHING;
 
 -- =============================================================================
@@ -329,8 +329,8 @@ UPDATE organization_branches SET manager_id = 'f0000000-0000-0000-0000-000000000
 -- =============================================================================
 
 -- Add CHEF role
-INSERT INTO org_roles (id, version, role_name, created_at, updated_at) VALUES
-('r0000000-0000-0000-0000-000000000005', 0, 'CHEF', NOW(), NOW())
+INSERT INTO org_roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
+('r0000000-0000-0000-0000-000000000005', 0, 'CHEF', 'SELF', NOW(), NOW())
 ON CONFLICT (role_name) DO NOTHING;
 
 -- Chef user: username = chef_q1, email = chef_q1@restaurant.com
