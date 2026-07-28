@@ -8,5 +8,4 @@ public class StartDefinedOrgRole {
     public static final String CASHIER = "CASHIER";
     public static final String WAITER = "WAITER";
     public static final String CHEF = "CHEF";
-    public static final String BRANCH_MANAGER = "BRANCH_MANAGER";
 }

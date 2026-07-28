@@ -5,6 +5,8 @@ import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatu
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -46,5 +48,23 @@ public interface OrganizationBranchRepository extends JpaRepository<Organization
     Optional<OrganizationBranch> findByIdAndOrganization_Owner_Id(
             String id,
             String ownerId
+    );
+
+    Optional<OrganizationBranch> findByManager_Id(String employeeId);
+
+    @Query("""
+            SELECT b
+            FROM OrganizationBranch b
+            JOIN FETCH b.organization o
+            JOIN FETCH o.owner owner
+            LEFT JOIN FETCH b.manager m
+            LEFT JOIN FETCH m.user managerUser
+            LEFT JOIN FETCH m.orgRole managerRole
+            WHERE b.id = :branchId
+              AND owner.id = :ownerId
+            """)
+    Optional<OrganizationBranch> findByIdAndOwnerIdWithManager(
+            @Param("branchId") String branchId,
+            @Param("ownerId") String ownerId
     );
 }

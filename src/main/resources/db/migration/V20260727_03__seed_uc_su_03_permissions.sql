@@ -14,10 +14,9 @@ BEGIN
         EXECUTE $sql$
             INSERT INTO org_permissions (id, version, permission_code, permission_name, description, created_at, updated_at)
             VALUES
-                ('d0000000-0000-0000-0000-000000000301', 0, 'BRANCH_MANAGER_VIEW', 'View branch managers', 'View branch manager list and detail', NOW(), NOW()),
-                ('d0000000-0000-0000-0000-000000000302', 0, 'BRANCH_MANAGER_CREATE', 'Create branch manager', 'Create branch manager accounts', NOW(), NOW()),
-                ('d0000000-0000-0000-0000-000000000303', 0, 'BRANCH_MANAGER_UPDATE', 'Update branch manager', 'Update branch manager accounts', NOW(), NOW()),
-                ('d0000000-0000-0000-0000-000000000304', 0, 'BRANCH_MANAGER_DELETE', 'Delete branch manager', 'Disable branch manager accounts', NOW(), NOW())
+                ('d0000000-0000-0000-0000-000000000301', 0, 'BRANCH_MANAGER_VIEW', 'View branch manager', 'View branch manager assignment', NOW(), NOW()),
+                ('d0000000-0000-0000-0000-000000000303', 0, 'BRANCH_MANAGER_UPDATE', 'Update branch manager', 'Update branch manager assignment', NOW(), NOW()),
+                ('d0000000-0000-0000-0000-000000000304', 0, 'BRANCH_MANAGER_DELETE', 'Delete branch manager', 'Clear branch manager assignment', NOW(), NOW())
             ON CONFLICT (permission_code) DO NOTHING
         $sql$;
         permission_match := 'p.permission_code';
@@ -26,7 +25,6 @@ BEGIN
             INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at)
             VALUES
                 ('d0000000-0000-0000-0000-000000000301', 0, 'BRANCH_MANAGER_VIEW', NOW(), NOW()),
-                ('d0000000-0000-0000-0000-000000000302', 0, 'BRANCH_MANAGER_CREATE', NOW(), NOW()),
                 ('d0000000-0000-0000-0000-000000000303', 0, 'BRANCH_MANAGER_UPDATE', NOW(), NOW()),
                 ('d0000000-0000-0000-0000-000000000304', 0, 'BRANCH_MANAGER_DELETE', NOW(), NOW())
             ON CONFLICT (permission_name) DO NOTHING
@@ -42,7 +40,6 @@ BEGIN
             JOIN org_permissions p
                 ON %s IN (
                     'BRANCH_MANAGER_VIEW',
-                    'BRANCH_MANAGER_CREATE',
                     'BRANCH_MANAGER_UPDATE',
                     'BRANCH_MANAGER_DELETE'
                 )
@@ -59,7 +56,6 @@ BEGIN
             JOIN org_permissions p
                 ON %s IN (
                     'BRANCH_MANAGER_VIEW',
-                    'BRANCH_MANAGER_CREATE',
                     'BRANCH_MANAGER_UPDATE',
                     'BRANCH_MANAGER_DELETE'
                 )

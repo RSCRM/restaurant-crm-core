@@ -26,8 +26,8 @@ public class OrganizationBranch extends BaseEntity {
     @JoinColumn(name = OrganizationBranchConstants.COL_ORGANIZATION_ID, nullable = false)
     Organization organization;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = OrganizationBranchConstants.COL_MANAGER_ID, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = OrganizationBranchConstants.COL_MANAGER_ID)
     Employee manager;
 
     @NotBlank

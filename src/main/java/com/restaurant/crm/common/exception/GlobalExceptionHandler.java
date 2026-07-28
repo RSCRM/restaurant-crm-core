@@ -5,11 +5,12 @@ import com.restaurant.crm.common.dto.ErrorMessage;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.nio.file.AccessDeniedException;
 import java.util.Objects;
 
 @RestControllerAdvice
@@ -41,16 +42,20 @@ public class GlobalExceptionHandler extends RuntimeException{
     }
 
     //handling Denied Access
-    @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<ApiResponse<Object>> handlingAccessDeniedException(AccessDeniedException exception) {
+    @ExceptionHandler(value = {
+            AccessDeniedException.class,
+            AuthorizationDeniedException.class
+    })
+    ResponseEntity<ApiResponse<Object>> handlingAccessDeniedException(RuntimeException exception) {
+        ErrorCode errorCode = ErrorCode.AUTHZ_UNAUTHORIZED;
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(ApiConstant.FAILURE)
                 .errorMessage(ErrorMessage.builder()
-                        .errorCode(ErrorCode.AUTHZ_UNAUTHORIZED.getCode())
-                        .message(ErrorCode.AUTHZ_UNAUTHORIZED.getMessage())
+                        .errorCode(errorCode.getCode())
+                        .message(errorCode.getMessage())
                         .build())
                 .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
     }
 
     //handling MethodArgumentNotValidException

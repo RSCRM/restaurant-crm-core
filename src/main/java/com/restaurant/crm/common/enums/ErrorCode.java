@@ -73,6 +73,9 @@ public enum ErrorCode {
     BRANCH_MANAGER_ALREADY_ASSIGNED("BRANCH_MANAGER_1001", "Branch manager is already assigned to another branch", HttpStatus.BAD_REQUEST),
     BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1002", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
     BRANCH_MANAGER_INVALID_REQUEST("BRANCH_MANAGER_1003", "Branch manager request is invalid", HttpStatus.BAD_REQUEST),
+    BRANCH_MANAGER_INVALID_BRANCH("BRANCH_MANAGER_1004", "Branch manager does not belong to this branch", HttpStatus.BAD_REQUEST),
+    BRANCH_MANAGER_INVALID_ROLE("BRANCH_MANAGER_1005", "Employee is not a manager", HttpStatus.BAD_REQUEST),
+    BRANCH_MANAGER_EXPIRED("BRANCH_MANAGER_1006", "Branch manager employment has expired", HttpStatus.BAD_REQUEST),
 
     // ==== PROJECT ERRORS ====
     PROJECT_NOT_FOUND("PROJ_1000", "Project not found", HttpStatus.NOT_FOUND),
