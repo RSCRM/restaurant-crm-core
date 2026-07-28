@@ -5,6 +5,13 @@ public class EmployeeConstants {
 
     public static final String BRANCH_MANAGER_ASSIGN = "BRANCH_MANAGER_ASSIGN";
 
+    //======= Employee management permissions ========
+    public static final String EMPLOYEE_ADD = "EMPLOYEE_ADD";
+    public static final String EMPLOYEE_UPDATE = "EMPLOYEE_UPDATE";
+    public static final String EMPLOYEE_DELETE = "EMPLOYEE_DELETE";
+    public static final String EMPLOYEE_ROLE_ASSIGN = "EMPLOYEE_ROLE_ASSIGN";
+    public static final String EMPLOYEE_ROLE_REVOKE = "EMPLOYEE_ROLE_REVOKE";
+
     //======= Employee table name ========
     public static final String TABLE_EMPLOYEE = "employees";
 
@@ -17,6 +24,7 @@ public class EmployeeConstants {
     public static final String COL_PHONE = "phone";
     public static final String COL_START_DATE = "start_date";
     public static final String COL_END_DATE = "end_date";
+    public static final String COL_SALARY = "salary";
 
     //======= Employee column definition ========
     public static final String EMAIL_DEFINITION = "VARCHAR(100)";

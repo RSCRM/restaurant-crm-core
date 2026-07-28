@@ -1,0 +1,297 @@
+# QR Session & Group Ordering (uc-c-02)
+
+Contract shared by uc-c-03…06 and the Manager QR module. Covers the **two QR token
+types**, the **Redis session schema**, the **CUSTOMER_SESSION token**, and the
+**`bindOrder` contract** used by uc-c-05.
+
+> Design pivot: **a session is NOT an order.** The session lives in Redis and is created
+> as soon as OTP passes; the DB `Order` is created later (uc-c-05) via the existing
+> `OrderService.create()` when the first item is sent to the kitchen. This lets members
+> join immediately and keeps the `erp/order` module untouched.
+
+---
+
+## 1. Two QR token types
+
+Both are `SignedJWT` + `HS512` + HMAC (same precedent as `AttendanceServiceImpl`), signed
+with `security.qr.signer-key` (falls back to `security.jwt.signer-key`).
+
+### 1a. TABLE QR — static, printed on the table
+
+| Property | Value |
+| :-- | :-- |
+| `type` | `TABLE_QR` |
+| Secret | `HMAC(qrSignerKey, "TABLE_QR:" + organizationId + ":" + branchId)` — stable, never rotated |
+| `exp` | none (printed on paper) |
+| Claims | `type`, `organizationId`, `branchId`, `tableId`, `qrVersion`, `iat` |
+| Revocation | bump `qrVersion` (Manager re-generates → old prints invalid, FR-04) |
+
+- Uses `tableId` (UUID), **never** `tableNumber` (only unique within an area).
+- Generation belongs to the Manager module (uc-m-*); this module only exposes
+  `TableQrTokenService.generate(...)`.
+- `qrVersion` needs column `qr_version INT NOT NULL DEFAULT 1` on `restaurant_tables`
+  (owned by the table module). Until it exists, verify **accepts any version** and logs
+  a debug line — see the `TODO(uc-c-02)` in `TableQrTokenServiceImpl.verify`.
+
+`TableQrPayload = (organizationId, branchId, tableId, qrVersion)`.
+
+### 1b. GROUP QR — dynamic, session-bound, short-lived
+
+| Property | Value |
+| :-- | :-- |
+| `type` | `GROUP_QR` |
+| Secret | `HMAC(qrSignerKey, "GROUP_QR:" + sessionId)` |
+| `exp` | **required**, default 30 min (`GROUP_QR_TTL_SECONDS`) |
+| Claims | `type`, `organizationId`, `branchId`, `tableId`, `sessionId`, `iat`, `exp` |
+| Revocation | session closed / order `PAID` → Redis keys gone → verify + liveness fail |
+
+> ⚠️ **Bearer capability.** A GROUP QR can be screenshotted and forwarded off-premise.
+> Mitigations: short `exp` (owner can `refresh`), liveness re-check against Redis on every
+> join, member cap (`MAX_MEMBERS = 12` → `TQR_1009`), and an **anti-splice** check that the
+> token's `branchId`/`tableId`/`organizationId` match the session hash (`TQR_1004`).
+
+`GroupQrPayload = (organizationId, branchId, tableId, sessionId)`.
+
+---
+
+## 2. Redis schema (all keys TTL = `SESSION_TTL_SECONDS` = 4h)
+
+| Key | Type | Value |
+| :-- | :-- | :-- |
+| `qr:table:{branchId}:{tableId}` | String | `sessionId` (owner-election pointer, set via **SETNX**) |
+| `qr:session:{sessionId}` | Hash | `organizationId, branchId, tableId, ownerDeviceId, ownerCustomerId, ownerCustomerPhone, orderId, status, createdAt` |
+| `qr:session:{sessionId}:members` | Hash | `deviceId` → JSON(`QrSessionMember`) |
+| `qr:order:{orderId}` | String | `sessionId` (reverse pointer, written by uc-c-05) |
+
+- Prefixes live in `RedisConstants`; keys are built by `RedisKeyGenerator`.
+- Only `QrSessionRedisRepository` talks to Redis — services never touch `StringRedisTemplate`.
+- `heartbeat` extends the TTL of **all four** keys.
+- `status` ∈ `OPEN | LOCKED_FOR_PAYMENT | CLOSED` (`QrSessionStatus`).
+- `orderId` starts null; filled by `bindOrder` (see §4).
+
+`QrSessionMember = (deviceId, role, customerId, customerPhone, joinedAt, lastSeenAt)`,
+`role` ∈ `OWNER | MEMBER` (`SessionMemberRole`). Owner is the SETNX winner; everyone joining
+via GROUP QR is a member. Only the OWNER may finalize the order (BR-CST-GRP-02, uc-c-05).
+
+---
+
+## 3. CUSTOMER_SESSION token (the third token type)
+
+- `type = CUSTOMER_SESSION`, signed with `security.jwt.signer-key` so the existing
+  `jwtDecoder` validates it.
+- Claims: `type`, `organizationId`, `branchId`, `tableId`, `sessionId`, `deviceId`, `sessionRole`.
+- `SecurityConfig` maps it to a single authority `ROLE_CUSTOMER_SESSION`; customer endpoints
+  guard with `@PreAuthorize("hasRole('CUSTOMER_SESSION')")`.
+- Two-way isolation: a `CUSTOMER_SESSION` token cannot call staff endpoints (no staff
+  authorities), and `IDENTITY`/`CONTEXT` tokens cannot call `/customer/qr/**` (no
+  `ROLE_CUSTOMER_SESSION`).
+
+---
+
+## 4. `bindOrder` contract (for uc-c-05)
+
+```java
+qrSessionService.bindOrder(String sessionId, String orderId);
+```
+
+Call **right after** `OrderService.create()` returns. It:
+
+1. writes `orderId` into `qr:session:{sessionId}` hash, and
+2. writes `qr:order:{orderId}` → `sessionId` (reverse lookup),
+
+with TTL refreshed on both. **Idempotent**: re-binding the same `orderId` is a no-op;
+binding a *different* `orderId` to a session that already has one throws `TQR_1004`.
+
+---
+
+## 5. Endpoints
+
+| Method & path | Auth | Purpose |
+| :-- | :-- | :-- |
+| `POST /api/v1/public/customer/qr/resolve` | public | verify TABLE QR, show table info (no Redis write) |
+| `POST /api/v1/public/customer/qr/session` | public | OWNER opens a session (after OTP) |
+| `POST /api/v1/public/customer/qr/session/join` | public | MEMBER joins via GROUP QR |
+| `GET  /api/v1/customer/qr/session` | CUSTOMER_SESSION | read current session |
+| `POST /api/v1/customer/qr/session/group-qr/refresh` | CUSTOMER_SESSION (OWNER) | issue a fresh GROUP QR |
+| `POST /api/v1/customer/qr/session/heartbeat` | CUSTOMER_SESSION | keep alive + extend TTL |
+
+`deviceId` is always generated **server-side** (`UUID`), never accepted from the client.
+`organizationId`/`branchId`/`tableId`/`sessionId` always come from a verified token, never
+from request params (NFR-07).
+
+---
+
+## 6. Error codes (`TQR_*`)
+
+| Code | HTTP | Meaning |
+| :-- | :-- | :-- |
+| `TQR_1000` | 400 | token malformed |
+| `TQR_1001` | 401 | signature mismatch |
+| `TQR_1002` | 400 | required claim missing |
+| `TQR_1003` | 409 | qrVersion outdated (reserved; not yet enforced) |
+| `TQR_1004` | 403 | context mismatch / token splice |
+| `TQR_1005` | 404 | table not in branch |
+| `TQR_1006` | 404 | session not found / closed |
+| `TQR_1007` | 401 | session expired |
+| `TQR_1008` | 409 | session locked for payment |
+| `TQR_1009` | 409 | member limit reached |
+| `TQR_1010` | 500 | token generation failed |
+| `TQR_1011` | 409 | table already has a session (not the owner) |
+| `TQR_1012` | 401 | group QR expired |
+| `TQR_1013` | 403 | not the session owner |
+| `TQR_1014` | 401 | OTP ticket invalid |
+
+> The project's `GlobalExceptionHandler` returns HTTP **200** with the failure encoded in
+> the `ApiResponse.errorMessage`; the HTTP column above is the semantic status carried by
+> each `ErrorCode`.
+
+---
+
+## 7. Open questions for the team (not decided here)
+
+1. `Order` has no `customerId` FK (only `customerPhone`). Is the phone-string ref enough, or
+   is a `customer_id` column needed (affects uc-c-08 voucher lookup)?
+2. Do MEMBERs identify themselves (own phone/OTP) or do points always go to the OWNER?
+3. Who sets `LOCKED_FOR_PAYMENT`, and is an `OrderStatus.PENDING_PAYMENT` needed (BR-CST-PAY-01)?
+4. Loyalty wallet scope: per-chain or per-branch? `OrderServiceImpl.create()` currently
+   initializes the wallet per **branch**.
+5. Who adds `qr_version` to `restaurant_tables`, and when?
+6. Is a 30-min GROUP QR TTL right for long sittings, and who may refresh it?
+7. Who closes the session when the invoice is `PAID` (BR-CST-GRP-04) — uc-c-05, invoice, or an
+   `OrderStatus` listener?
+
+---
+
+# OTP identification (uc-c-03)
+
+Phone + OTP is the gate before opening a session: it produces the `otpTicket` that
+`POST /public/customer/qr/session` (uc-c-02) consumes.
+
+```
+Scan TABLE QR
+  → POST /public/customer/otp/request  { qrToken, customerPhone }            → sends a 6-digit OTP
+  → POST /public/customer/otp/verify   { qrToken, customerPhone, otpCode }   → returns otpTicket
+  → POST /public/customer/qr/session   { qrToken, customerPhone, otpTicket } → opens the session (uc-c-02)
+```
+
+## Module layout (no cross-module cycle)
+
+- `crm/customeraccount` owns the OTP domain and is **QR-agnostic** — it imports nothing from erp.
+  `CustomerOtpService` takes `branchId`/`tableId` as already-trusted parameters:
+  ```java
+  OtpRequestResult request(String customerPhone, String branchId, String tableId);
+  String           verify (String customerPhone, String branchId, String tableId, String otpCode);
+  ```
+- `erp/order` is the composition layer: `CustomerOtpController` verifies the TABLE QR (erp), then
+  delegates to `CustomerOtpService` (crm). The uc-c-02 plug point `OtpTicketVerifierImpl`
+  (`@Profile("!dev")`) also lives here and calls back into `OtpTicketService` (crm).
+
+## Redis schema (uc-c-03)
+
+| Key | Type | Value | TTL |
+| :-- | :-- | :-- | :-- |
+| `otp:code:{phone}` | Hash | `codeHmac, attempts, issuedAt, branchId, tableId` | 180s |
+| `otp:lock:{phone}` | String | `1` | 900s |
+| `otp:resend:{phone}` | String | `1` | 60s |
+| `otp:table:{branchId}:{tableId}` | String | counter (`INCR`) | 3600s |
+
+- The OTP code is **never** stored raw: `codeHmac = HMAC-SHA256(otpSignerKey, phone + ":" + code)`
+  — the phone is mixed in so each code has its own hash space (a Redis dump can't be table-attacked).
+- Wrong attempts are counted with `HINCRBY`, the per-table rate limit with `INCR` — atomic, never
+  read-modify-write. Verify compares with `MessageDigest.isEqual` (constant-time).
+- BR-CST-ACC-02: 180s validity, 3 wrong attempts → invalidate + lock the phone 900s, resend
+  cooldown 60s, ≤ 20 requests/hour/table. The code is never returned or logged (except the dev sender).
+
+## OTP ticket payload
+
+Signed with `security.otp.signer-key` (falls back to `security.jwt.signer-key`).
+
+| Property | Value |
+| :-- | :-- |
+| `type` | `OTP_TICKET` |
+| Secret | `HMAC(otpSignerKey, "OTP_TICKET:" + branchId)` |
+| `exp` | 5 min |
+| Claims | `type`, `customerPhone` (normalized), `branchId`, `tableId`, `jti`, `iat`, `exp` |
+
+`OtpTicketPayload = (customerPhone, branchId, tableId)` — no `organizationId` (branch implies it;
+the uc-c-02 verifier only matches phone/branch/table).
+
+> 🔒 The uc-c-02 `OtpTicketVerifier` takes `isValid(customerPhone, branchId, tableId, otpTicket)`:
+> the ticket is bound to branch **and** table, so a ticket earned at table A cannot open table B or
+> another branch (NFR-07). The verifier normalizes the incoming phone before comparing.
+
+## Error codes (`OTP_*`)
+
+| Code | HTTP | Meaning |
+| :-- | :-- | :-- |
+| `OTP_1000` | 400 | wrong code |
+| `OTP_1001` | 410 | code expired / not found |
+| `OTP_1002` | 429 | too many wrong attempts (phone locked) |
+| `OTP_1003` | 429 | phone temporarily locked |
+| `OTP_1004` | 429 | resend requested too soon |
+| `OTP_1005` | 429 | per-table rate limit |
+| `OTP_1006` | 502 | send failed (no provider wired) |
+| `OTP_1007` | 403 | customer account locked |
+| `OTP_1008` | 403 | OTP requested for a different table |
+| `OTP_1009` | 500 | ticket generation failed |
+
+## Sender (not wired yet)
+
+`OtpSender` has two profile-scoped beans: `LogOtpSender` (`@Profile("dev")`, logs the code for local
+testing) and `NoopOtpSender` (`@Profile("!dev") @Primary`, throws `OTP_SEND_FAILED`). A real provider
+(Zalo ZNS / SMS gateway via RabbitMQ, SRS §IV) is a TODO and not in `pom.xml` yet.
+
+---
+
+# Browse digital menu (uc-c-04)
+
+Once a session exists, a seated customer browses the digital menu of **their own branch**.
+
+## Endpoint
+
+```
+GET /api/v1/customer/menu                       → CUSTOMER_SESSION token required
+GET /api/v1/customer/menu/products/{productId}  → CUSTOMER_SESSION token required
+```
+
+`GET /customer/menu` returns the whole tree in one shot (no pagination, NFR-09):
+
+```
+ApiResponse<CustomerMenuResponse>
+{
+  "branchId": "...",
+  "categories": [ { "categoryId", "categoryName": null,
+                    "products": [ { "productId","productName","description","price","imageUrl",
+                                    "available", "requiresPreparation" } ] } ],
+  "combos":     [ { "comboId","comboName","description","price","imageUrl","available","items": [] } ],
+  "modifierGroups": [ { "modifierGroupId","groupName","description","minSelection","maxSelection",
+                        "options": [ { "modifierOptionId","optionName","additionalPrice","available" } ] } ]
+}
+```
+
+## Rules
+
+- **Branch isolation (NFR-07):** `branchId` always comes from `AuthUtils.getBranchId()` — never from
+  a param/path/body. Product objects deliberately do **not** expose `branchId`.
+- **Availability (BR-CST-QR-02):** `available = "AVAILABLE".equals(status)`. Non-available items are
+  still returned with `available = false` (the FE greys out "add to cart") rather than vanishing.
+- **Stable order:** categories by `categoryId` asc, products by `productName` asc — identical across calls.
+- **Fixed query count:** exactly 4 queries (products, combos, groups, options) regardless of how many
+  groups exist — options are fetched with one `findByModifierGroupIdIn` (no N+1).
+- **Cache:** `@Cacheable` keyed by `branchId`, cache `customerMenu`.
+
+## Known gaps (out of uc-c-04 scope — belong to menu/inventory modules)
+
+| # | Missing | Effect | Current behavior |
+| :-- | :-- | :-- | :-- |
+| 1 | No `Category` entity (`Product.categoryId` is a bare String) | FR-03.1 wants named categories | group by `categoryId`, return `categoryName = null` (TODO) |
+| 2 | No `Product ↔ ModifierGroup` join | can't attach option groups per dish | modifier groups returned at **menu level**, not per product (TODO) |
+| 3 | No `Combo ↔ Product` join | combo has only name + price | combos returned flat, `items = []` (TODO) |
+| 4 | No `Recipe/BOM` (`Product ↔ Ingredient`) | **BR-CST-QR-02 auto-hide on out-of-stock not possible** | filter by `Product.status` only (TODO) |
+
+## Cache caveat
+
+The menu uses an in-memory `ConcurrentMapCacheManager` (explicit, so Redis auto-config doesn't demand a
+running server). It does **not** enforce `CACHE_TTL_SECONDS` — entries persist until app restart. Once
+uc-m-* ships menu-edit endpoints they must `@CacheEvict`, or the cache should move to a TTL-capable
+manager (Caffeine/Redis, needs a dependency + NFR-03 multi-instance decision).

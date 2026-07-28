@@ -32,3 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 .env
+
+### Claude Code / AI tooling ###
+.claude/
+.superpowers/
+.understand-anything/
+docs/superpowers/
+documents/

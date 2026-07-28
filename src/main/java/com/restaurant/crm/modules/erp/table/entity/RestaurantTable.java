@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.table.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
+import com.restaurant.crm.modules.erp.table.constants.TableMapConstants;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
@@ -67,4 +68,10 @@ public class RestaurantTable extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     RestaurantTableStatus status = RestaurantTableStatus.AVAILABLE;
+
+    @Column(name = TableMapConstants.COL_POSITION_X)
+    Integer positionX;
+
+    @Column(name = TableMapConstants.COL_POSITION_Y)
+    Integer positionY;
 }

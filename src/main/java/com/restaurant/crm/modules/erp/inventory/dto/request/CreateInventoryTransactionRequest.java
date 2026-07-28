@@ -35,6 +35,4 @@ public class CreateInventoryTransactionRequest {
     BigDecimal quantity;
 
     String note;
-
-    String referenceId;
 }

@@ -36,4 +36,10 @@ public interface IngredientService {
     void deleteIngredient(
             String id
     );
+
+    PagingResponse<IngredientResponse> getIngredientsByCategory(
+        String categoryId,
+        int page,
+        int size
+    );
 }

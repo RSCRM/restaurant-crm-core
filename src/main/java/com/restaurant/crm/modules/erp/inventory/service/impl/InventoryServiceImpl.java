@@ -188,4 +188,37 @@ public class InventoryServiceImpl implements InventoryService {
 
         return InventoryStatus.GOOD;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<InventoryResponse> getInventoriesByStatus(
+        String branchId,
+        InventoryStatus status,
+        int page,
+        int size
+    ) {
+
+        Pageable pageable =
+            PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
+
+        Page<Inventory> inventoryPage =
+            inventoryRepository.findByIngredientBranchIdAndStatus(
+                branchId,
+                status,
+                pageable
+            );
+
+        return PagingResponse.<InventoryResponse>builder()
+            .currentPage(page)
+            .pageSize(inventoryPage.getSize())
+            .totalPages(inventoryPage.getTotalPages())
+            .totalElement(inventoryPage.getTotalElements())
+            .data(
+                inventoryPage.getContent()
+                    .stream()
+                    .map(inventoryMapper::toInventoryResponse)
+                    .toList()
+            )
+            .build();
+    }
 }
