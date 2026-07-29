@@ -119,7 +119,7 @@ public class OrderVoucherTests {
         testCustomerVoucher = CustomerVoucher.builder()
                 .id("cv000000-0000-0000-0000-000000000001")
                 .customer(testCustomer)
-                .restaurantId("e0000000-0000-0000-0000-000000000001")
+                .branchId("e0000000-0000-0000-0000-000000000001")
                 .voucher(voucher)
                 .voucherSn("VSN-TEST001")
                 .build();

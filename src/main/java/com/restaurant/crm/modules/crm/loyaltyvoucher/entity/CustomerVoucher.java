@@ -42,8 +42,8 @@ public class CustomerVoucher extends BaseEntity {
     Customer customer;
 
     @NotNull
-    @Column(name = CustomerVoucherConstants.COL_RESTAURANT_ID, nullable = false)
-    String restaurantId;
+    @Column(name = CustomerVoucherConstants.COL_BRANCH_ID, nullable = false)
+    String branchId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

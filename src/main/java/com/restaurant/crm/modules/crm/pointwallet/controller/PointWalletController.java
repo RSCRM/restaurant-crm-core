@@ -27,9 +27,9 @@ public class PointWalletController {
     @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<CustomerPointResponse>> getBalance(
             @RequestParam String customerId,
-            @RequestParam String restaurantId
+            @RequestParam String organizationId
     ) {
-        CustomerPointResponse response = pointWalletService.getWallet(customerId, restaurantId);
+        CustomerPointResponse response = pointWalletService.getWallet(customerId, organizationId);
         return ResponseEntity.ok(ApiResponse.<CustomerPointResponse>builder()
                 .success(true)
                 .data(response)
@@ -40,11 +40,11 @@ public class PointWalletController {
     @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerPointHistoryResponse>>> getHistory(
             @RequestParam String customerId,
-            @RequestParam String restaurantId,
+            @RequestParam String organizationId,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ) {
-        PagingResponse<CustomerPointHistoryResponse> response = pointWalletService.getHistory(customerId, restaurantId, page, size);
+        PagingResponse<CustomerPointHistoryResponse> response = pointWalletService.getHistory(customerId, organizationId, page, size);
         return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerPointHistoryResponse>>builder()
                 .success(true)
                 .data(response)

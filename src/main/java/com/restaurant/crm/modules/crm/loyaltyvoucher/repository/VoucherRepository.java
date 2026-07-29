@@ -11,6 +11,6 @@ import java.util.List;
 
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, String> {
-    List<Voucher> findByRestaurantIdAndIsActive(String restaurantId, Short isActive);
-    Page<Voucher> findByRestaurantIdAndIsActive(String restaurantId, Short isActive, Pageable pageable);
+    List<Voucher> findByBranchIdAndIsActive(String branchId, Short isActive);
+    Page<Voucher> findByBranchIdAndIsActive(String branchId, Short isActive, Pageable pageable);
 }
