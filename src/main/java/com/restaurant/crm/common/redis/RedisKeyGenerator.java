@@ -53,6 +53,21 @@ public class RedisKeyGenerator {
         return RedisConstants.OTP_TABLE_PREFIX + branchId + ":" + tableId;
     }
 
+    /** Shared cart hash: {@code qr:session:{sessionId}:cart} → cartItemId → JSON (uc-c-05). */
+    public static String generateCartKey(String sessionId) {
+        return RedisConstants.QR_SESSION_PREFIX + sessionId + RedisConstants.CART_SUFFIX;
+    }
+
+    /** Item edit lock: {@code qr:session:{sessionId}:cart:lock:{cartItemId}} → deviceId (uc-c-05). */
+    public static String generateCartLockKey(String sessionId, String cartItemId) {
+        return RedisConstants.QR_SESSION_PREFIX + sessionId + RedisConstants.CART_LOCK_INFIX + cartItemId;
+    }
+
+    /** Submit guard: {@code qr:session:{sessionId}:cart:submitting} → deviceId (uc-c-05). */
+    public static String generateCartSubmitGuardKey(String sessionId) {
+        return RedisConstants.QR_SESSION_PREFIX + sessionId + RedisConstants.CART_SUBMIT_SUFFIX;
+    }
+
     private static String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface UserProfileMapper {
 
     @Mapping(target = "id", source = "user.id")
+    @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "fullName", source = "profile.fullName")
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "email", source = "user.email")

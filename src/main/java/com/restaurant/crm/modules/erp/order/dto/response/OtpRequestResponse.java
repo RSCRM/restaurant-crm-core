@@ -10,10 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
-/**
- * Result of requesting an OTP (uc-c-03). Never contains the OTP code itself,
- * in any profile. {@code maskedPhone} hides the middle digits.
- */
+
 @Getter
 @Setter
 @NoArgsConstructor

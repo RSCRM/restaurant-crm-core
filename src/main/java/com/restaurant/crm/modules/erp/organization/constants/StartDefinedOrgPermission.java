@@ -21,10 +21,31 @@ public class StartDefinedOrgPermission {
     public static final String TABLE_MANAGE = "TABLE_MANAGE";
     public static final String TABLE_SESSION_CREATE = "TABLE_SESSION_CREATE";
     public static final String TABLE_MAP_READ = "TABLE_MAP_READ";
+    public static final String TABLE_SEARCH_READ = "TABLE_SEARCH_READ";
     public static final String REPORT_VIEW = "REPORT_VIEW";
 
     // Management & Administration Permissions
     public static final String STAFF_MANAGE = "STAFF_MANAGE";
     public static final String BRANCH_MANAGE = "BRANCH_MANAGE";
     public static final String ORG_MANAGE = "ORG_MANAGE";
+
+    // ===== ORGANIZATION =====
+    public static final String ORGANIZATION_VIEW = "ORGANIZATION_VIEW";
+    public static final String ORGANIZATION_MANAGE = "ORGANIZATION_MANAGE";
+
+    // ===== ORGANIZATION BRANCH =====
+    public static final String ORGANIZATION_BRANCH_VIEW = "ORGANIZATION_BRANCH_VIEW";
+    public static final String ORGANIZATION_BRANCH_MANAGE = "ORGANIZATION_BRANCH_MANAGE";
+
+    // ===== INGREDIENT CATEGORY =====
+    public static final String INGREDIENT_CATEGORY_VIEW = "INGREDIENT_CATEGORY_VIEW";
+    public static final String INGREDIENT_CATEGORY_MANAGE = "INGREDIENT_CATEGORY_MANAGE";
+    public static final String INGREDIENT_VIEW = "INGREDIENT_VIEW";
+    public static final String INGREDIENT_MANAGE = "INGREDIENT_MANAGE";
+
+    // ===== INVENTORY =====
+    public static final String INVENTORY_VIEW = "INVENTORY_VIEW";
+    public static final String INVENTORY_MANAGE = "INVENTORY_MANAGE";
+    public static final String INVENTORY_TRANSACTION_VIEW = "INVENTORY_TRANSACTION_VIEW";
+    public static final String INVENTORY_TRANSACTION_MANAGE = "INVENTORY_TRANSACTION_MANAGE";
 }

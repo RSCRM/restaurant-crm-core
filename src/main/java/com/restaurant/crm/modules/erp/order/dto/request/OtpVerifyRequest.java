@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-/** Body of {@code POST /public/customer/otp/verify} — TABLE QR + phone + entered code (uc-c-03). */
+
 @Getter
 @Setter
 @NoArgsConstructor
