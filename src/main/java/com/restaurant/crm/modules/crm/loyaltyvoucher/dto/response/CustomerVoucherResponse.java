@@ -21,7 +21,7 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus
 public class CustomerVoucherResponse {
     String id;
     String customerId;
-    String restaurantId;
+    String branchId;
     VoucherResponse voucher;
     String voucherSn;
     CustomerVoucherStatus status;

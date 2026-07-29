@@ -19,7 +19,7 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VoucherResponse {
     String id;
-    String restaurantId;
+    String branchId;
     String title;
     Integer discountPercent;
     BigDecimal minBillAmount;

@@ -5,9 +5,9 @@ import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHist
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
 
 public interface PointWalletService {
-    CustomerPointResponse getWallet(String customerId, String restaurantId);
-    CustomerPointResponse initializeWallet(String customerId, String restaurantId);
-    PagingResponse<CustomerPointHistoryResponse> getHistory(String customerId, String restaurantId, int page, int size);
-    CustomerPointResponse earnPoints(String customerId, String restaurantId, int points, String orderId);
-    CustomerPointResponse deductPoints(String customerId, String restaurantId, int points, String referenceId);
+    CustomerPointResponse getWallet(String customerId, String organizationId);
+    CustomerPointResponse initializeWallet(String customerId, String organizationId);
+    PagingResponse<CustomerPointHistoryResponse> getHistory(String customerId, String organizationId, int page, int size);
+    CustomerPointResponse earnPoints(String customerId, String organizationId, int points, String orderId);
+    CustomerPointResponse deductPoints(String customerId, String organizationId, int points, String referenceId);
 }

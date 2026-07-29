@@ -10,9 +10,9 @@ import java.util.List;
 
 public interface CustomerVoucherService {
     CustomerVoucherResponse redeemVoucher(VoucherRedeemRequest request);
-    CustomerVoucherResponse giveVoucherDirectly(String customerId, String restaurantId, String voucherId);
+    CustomerVoucherResponse giveVoucherDirectly(String customerId, String branchId, String voucherId);
     CustomerVoucherResponse useVoucher(String customerVoucherId, String orderId, BigDecimal billAmount);
-    PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String restaurantId, String status, int page, int size);
-    List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String restaurantId, BigDecimal subtotal);
+    PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String branchId, String status, int page, int size);
+    List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String branchId, BigDecimal subtotal);
     void releaseVoucher(String orderId);
 }

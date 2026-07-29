@@ -24,8 +24,8 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.constants.VoucherConstants;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VoucherCreationRequest {
 
-    @NotBlank(message = "RESTAURANT_ID_REQUIRED")
-    String restaurantId;
+    @NotBlank(message = "BRANCH_ID_REQUIRED")
+    String branchId;
 
     @NotBlank(message = "VOUCHER_TITLE_REQUIRED")
     String title;
