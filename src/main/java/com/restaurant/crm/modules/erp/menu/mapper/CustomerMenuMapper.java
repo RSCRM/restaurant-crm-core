@@ -15,10 +15,7 @@ import org.mapstruct.Named;
 
 import java.util.List;
 
-/**
- * Maps menu entities to customer-facing DTOs (uc-c-04).
- * {@code available} is derived from the String {@code status}; {@code branchId} is never mapped out.
- */
+
 @Mapper(componentModel = "spring")
 public interface CustomerMenuMapper {
 

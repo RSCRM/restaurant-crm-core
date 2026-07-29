@@ -12,11 +12,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
-/**
- * One order line as the customer tracks it (uc-c-06). Carries both the raw kitchen {@code status}
- * and the customer-facing {@code customerStage}/{@code stageOrder}. Never exposes the kitchen's
- * internal cancel reason.
- */
+
 @Getter
 @Setter
 @NoArgsConstructor

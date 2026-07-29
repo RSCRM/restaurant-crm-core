@@ -32,10 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Read-only per-branch menu assembly (uc-c-04). Runs a fixed set of queries (products, combos,
- * groups, options) — no N+1 — and groups the result into the customer menu tree.
- */
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -102,10 +99,7 @@ public class CustomerMenuServiceImpl implements CustomerMenuService {
         return branchId;
     }
 
-    /**
-     * Groups pre-sorted products (categoryId asc, productName asc) into categories, preserving
-     * that stable order. {@code categoryName} stays null — no Category entity yet (TODO uc-c-04).
-     */
+
     private List<MenuCategoryResponse> toCategories(List<Product> products) {
         Map<String, List<Product>> byCategory = products.stream()
                 .collect(Collectors.groupingBy(

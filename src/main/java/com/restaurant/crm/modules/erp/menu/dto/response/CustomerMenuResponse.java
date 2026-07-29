@@ -11,10 +11,7 @@ import lombok.experimental.FieldDefaults;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The full digital menu of a branch returned in one shot (uc-c-04) — no pagination, no N+1,
- * so the client can render everything in a single request (NFR-09).
- */
+
 @Getter
 @Setter
 @NoArgsConstructor
