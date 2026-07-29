@@ -63,6 +63,30 @@ public class OrgPermissionInitializer implements ApplicationRunner {
                 StartDefinedOrgPermission.BRANCH_MANAGE,
                 StartDefinedOrgPermission.ORG_MANAGE,
 
+                // ===== ORGANIZATION =====
+                StartDefinedOrgPermission.ORGANIZATION_VIEW,
+                StartDefinedOrgPermission.ORGANIZATION_MANAGE,
+
+                // ===== ORGANIZATION BRANCH =====
+                StartDefinedOrgPermission.ORGANIZATION_BRANCH_VIEW,
+                StartDefinedOrgPermission.ORGANIZATION_BRANCH_MANAGE,
+
+                // ===== INGREDIENT CATEGORY =====
+                StartDefinedOrgPermission.INGREDIENT_CATEGORY_VIEW,
+                StartDefinedOrgPermission.INGREDIENT_CATEGORY_MANAGE,
+
+                // ===== INGREDIENT =====
+                StartDefinedOrgPermission.INGREDIENT_VIEW,
+                StartDefinedOrgPermission.INGREDIENT_MANAGE,
+
+                // ===== INVENTORY =====
+                StartDefinedOrgPermission.INVENTORY_VIEW,
+                StartDefinedOrgPermission.INVENTORY_MANAGE,
+
+                // ===== INVENTORY TRANSACTION =====
+                StartDefinedOrgPermission.INVENTORY_TRANSACTION_VIEW,
+                StartDefinedOrgPermission.INVENTORY_TRANSACTION_MANAGE,
+
                 // ── Employee ──
                 EmployeeConstants.EMPLOYEE_ADD,
                 EmployeeConstants.EMPLOYEE_UPDATE,
