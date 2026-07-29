@@ -1,7 +1,5 @@
 package com.restaurant.crm.modules.erp.order.dto.request;
 
-import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,18 +9,16 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 /**
- * Request DTO representing the new status for an order item.
+ * Request body for cancelling an order item. The reason is mandatory and validated
+ * in the service layer (ORDER_ITEM_CANCEL_REASON_REQUIRED).
  */
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UpdateOrderItemStatusRequest {
-
-    @NotNull(message = "Status cannot be null")
-    OrderItemStatus status;
+public class OrderItemCancelRequest {
 
     String reason;
 }

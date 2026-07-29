@@ -19,7 +19,6 @@ import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemModifierRequ
 import com.restaurant.crm.modules.erp.order.dto.request.AddOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemModifiersRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemQuantityRequestDto;
-import com.restaurant.crm.modules.erp.order.dto.request.UpdateOrderItemStatusRequest;
 import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderCookingStatusResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemCookingStatusResponse;
@@ -172,116 +171,138 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     @Transactional
-    public OrderItemResponse updateStatus(String orderItemId, UpdateOrderItemStatusRequest request) {
-        OrderItemStatus status = request.getStatus();
-        OrderItem orderItem = orderItemRepository.findById(orderItemId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
-
-        OrderItemStatus currentStatus = orderItem.getStatus();
-
-        // 1. Terminal states check (SERVED, CANCELLED cannot transition to anything)
-        if (currentStatus == OrderItemStatus.SERVED || currentStatus == OrderItemStatus.CANCELLED) {
+    public OrderItemResponse accept(String orderItemId) {
+        OrderItem orderItem = loadOrderItem(orderItemId);
+        if (orderItem.getStatus() == OrderItemStatus.IN_PROGRESS) {
+            throw new AppException(ErrorCode.ORDER_ITEM_ALREADY_ACCEPTED);
+        }
+        if (orderItem.getStatus() != OrderItemStatus.PENDING) {
             throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
         }
+        orderItem.setStatus(OrderItemStatus.IN_PROGRESS);
+        String employeeId = currentEmployeeIdOrNull();
+        if (employeeId != null) {
+            orderItem.setPreparedBy(employeeId);
+        }
+        return saveAndBroadcast(orderItem);
+    }
 
-        // Retrieve product requires_preparation property
-        boolean requiresPrep = true;
-        if (orderItem.getProductId() != null) {
-            Product product = productRepository.findById(orderItem.getProductId()).orElse(null);
-            if (product != null && product.getRequiresPreparation() != null) {
-                requiresPrep = product.getRequiresPreparation();
-            }
+    @Override
+    @Transactional
+    public OrderItemResponse complete(String orderItemId) {
+        OrderItem orderItem = loadOrderItem(orderItemId);
+        if (orderItem.getStatus() != OrderItemStatus.IN_PROGRESS) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+        String employeeId = currentEmployeeIdOrNull();
+        if (employeeId != null && orderItem.getPreparedBy() != null
+                && !employeeId.equals(orderItem.getPreparedBy())) {
+            throw new AppException(ErrorCode.ORDER_ITEM_NOT_PREPARED_BY_YOU);
+        }
+        orderItem.setStatus(OrderItemStatus.READY_TO_SERVE);
+        return saveAndBroadcast(orderItem);
+    }
+
+    @Override
+    @Transactional
+    public OrderItemResponse release(String orderItemId) {
+        OrderItem orderItem = loadOrderItem(orderItemId);
+        if (orderItem.getStatus() != OrderItemStatus.IN_PROGRESS) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+        orderItem.setStatus(OrderItemStatus.PENDING);
+        orderItem.setPreparedBy(null);
+        return saveAndBroadcast(orderItem);
+    }
+
+    @Override
+    @Transactional
+    public OrderItemResponse cancel(String orderItemId, String reason) {
+        OrderItem orderItem = loadOrderItem(orderItemId);
+        OrderItemStatus currentStatus = orderItem.getStatus();
+        if (currentStatus != OrderItemStatus.PENDING && currentStatus != OrderItemStatus.IN_PROGRESS) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+        if (!StringUtils.hasText(reason)) {
+            throw new AppException(ErrorCode.ORDER_ITEM_CANCEL_REASON_REQUIRED);
+        }
+        orderItem.setStatus(OrderItemStatus.CANCELLED);
+        orderItem.setPreparedBy(null);
+        orderItem.setCancelReason(reason);
+        String employeeId = currentEmployeeIdOrNull();
+        if (employeeId != null) {
+            orderItem.setCancelledBy(employeeId);
         }
 
-        orderItem.setStatus(status);
+        // Recalculate financials (Phương án A: Đầu bếp hủy món)
+        Order order = orderItem.getOrder();
+        BigDecimal updatedSubtotal = order.getSubtotal().subtract(orderItem.getSubtotal());
+        order.setSubtotal(updatedSubtotal.max(BigDecimal.ZERO));
+        recalculateOrderFinancials(order);
+        orderRepository.save(order);
 
-        if (status == OrderItemStatus.IN_PROGRESS) {
-            try {
-                String chefId = AuthUtils.getEmployeeId();
-                if (chefId != null) {
-                    orderItem.setPreparedBy(chefId);
-                }
-            } catch (Exception e) {
-                // Fallback for tests/unauthenticated
-            }
+        return saveAndBroadcast(orderItem);
+    }
+
+    @Override
+    @Transactional
+    public OrderItemResponse markReady(String orderItemId) {
+        OrderItem orderItem = loadOrderItem(orderItemId);
+        if (orderItem.getStatus() != OrderItemStatus.PENDING) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
         }
+        if (requiresPreparation(orderItem)) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+        orderItem.setStatus(OrderItemStatus.READY_TO_SERVE);
+        String employeeId = currentEmployeeIdOrNull();
+        if (employeeId != null) {
+            orderItem.setPreparedBy(employeeId);
+        }
+        return saveAndBroadcast(orderItem);
+    }
 
-        // Get current employee ID
-        String currentEmployeeId = null;
+    @Override
+    @Transactional
+    public OrderItemResponse serve(String orderItemId) {
+        OrderItem orderItem = loadOrderItem(orderItemId);
+        if (orderItem.getStatus() != OrderItemStatus.READY_TO_SERVE) {
+            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+        }
+        orderItem.setStatus(OrderItemStatus.SERVED);
+        return saveAndBroadcast(orderItem);
+    }
+
+    private OrderItem loadOrderItem(String orderItemId) {
+        return orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
+    }
+
+    private String currentEmployeeIdOrNull() {
         try {
-            currentEmployeeId = AuthUtils.getEmployeeId();
+            return AuthUtils.getEmployeeId();
         } catch (Exception e) {
             // Fallback for tests/unauthenticated
+            return null;
         }
+    }
 
-        // 2. Validate transitions
-        if (status == OrderItemStatus.IN_PROGRESS) {
-            if (currentStatus == OrderItemStatus.IN_PROGRESS) {
-                throw new AppException(ErrorCode.ORDER_ITEM_ALREADY_ACCEPTED);
-            }
-            if (currentStatus != OrderItemStatus.PENDING) {
-                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
-            }
-            if (currentEmployeeId != null) {
-                orderItem.setPreparedBy(currentEmployeeId);
-            }
-        } else if (status == OrderItemStatus.READY_TO_SERVE) {
-            if (currentStatus == OrderItemStatus.IN_PROGRESS) {
-                if (currentEmployeeId != null && orderItem.getPreparedBy() != null && !currentEmployeeId.equals(orderItem.getPreparedBy())) {
-                    throw new AppException(ErrorCode.ORDER_ITEM_NOT_PREPARED_BY_YOU);
-                }
-            } else if (currentStatus == OrderItemStatus.PENDING) {
-                if (requiresPrep) {
-                    throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
-                }
-                if (currentEmployeeId != null) {
-                    orderItem.setPreparedBy(currentEmployeeId);
-                }
-            } else {
-                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
-            }
-        } else if (status == OrderItemStatus.PENDING) {
-            if (currentStatus != OrderItemStatus.IN_PROGRESS) {
-                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
-            }
-            orderItem.setPreparedBy(null);
-        } else if (status == OrderItemStatus.CANCELLED) {
-            if (currentStatus != OrderItemStatus.PENDING && currentStatus != OrderItemStatus.IN_PROGRESS) {
-                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
-            }
-            if (!StringUtils.hasText(request.getReason())) {
-                throw new AppException(ErrorCode.ORDER_ITEM_CANCEL_REASON_REQUIRED);
-            }
-            orderItem.setPreparedBy(null);
-            orderItem.setCancelReason(request.getReason());
-            if (currentEmployeeId != null) {
-                orderItem.setCancelledBy(currentEmployeeId);
-            }
-
-            // Recalculate financials (Phương án A: Đầu bếp hủy món)
-            Order order = orderItem.getOrder();
-            BigDecimal updatedSubtotal = order.getSubtotal().subtract(orderItem.getSubtotal());
-            order.setSubtotal(updatedSubtotal.max(BigDecimal.ZERO));
-            recalculateOrderFinancials(order);
-            orderRepository.save(order);
-        } else if (status == OrderItemStatus.SERVED) {
-            if (currentStatus != OrderItemStatus.READY_TO_SERVE) {
-                throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
-            }
-        } else {
-            throw new AppException(ErrorCode.ORDER_ITEM_INVALID_STATUS_TRANSITION);
+    private boolean requiresPreparation(OrderItem orderItem) {
+        if (orderItem.getProductId() == null) {
+            return true;
         }
+        Product product = productRepository.findById(orderItem.getProductId()).orElse(null);
+        return product == null || product.getRequiresPreparation() == null || product.getRequiresPreparation();
+    }
 
-        // Update the item status
-        orderItem.setStatus(status);
-
+    private OrderItemResponse saveAndBroadcast(OrderItem orderItem) {
         OrderItem savedItem = orderItemRepository.save(orderItem);
 
-        if (status == OrderItemStatus.READY_TO_SERVE) {
+        if (savedItem.getStatus() == OrderItemStatus.READY_TO_SERVE) {
             triggerReadyToServeNotification(savedItem);
         }
 
-        // Broadcast cooking status update to customer SSE subscribers
+        // Broadcast cooking status update to KDS and customer SSE subscribers
         broadcastKdsItemEvent(savedItem.getOrder().getBranchId(), "KDS_ITEM_UPDATED", savedItem.getId());
         broadcastOrderCookingStatus(savedItem.getOrder());
 
