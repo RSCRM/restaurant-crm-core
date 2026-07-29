@@ -379,3 +379,64 @@ The menu uses an in-memory `ConcurrentMapCacheManager` (explicit, so Redis auto-
 running server). It does **not** enforce `CACHE_TTL_SECONDS` — entries persist until app restart. Once
 uc-m-* ships menu-edit endpoints they must `@CacheEvict`, or the cache should move to a TTL-capable
 manager (Caffeine/Redis, needs a dependency + NFR-03 multi-instance decision).
+
+---
+
+# Track cooking progress (uc-c-06)
+
+After the OWNER submits, any member watches their order cook in real time — via a REST snapshot and
+an SSE stream. The order id always comes from the session (`QrSessionData.orderId`), never the client.
+
+## Customer stage mapping
+
+| `OrderItemStatus` | `customerStage` | `stageOrder` |
+| :-- | :-- | --: |
+| `PENDING` | `RECEIVED` | 1 |
+| `IN_PROGRESS` | `COOKING` | 2 |
+| `READY_TO_SERVE` | `READY_TO_SERVE` | 3 |
+| `SERVED` | `SERVED` | 4 |
+| `CANCELLED` | `CANCELLED` | 0 |
+
+`CustomerOrderStage.from(OrderItemStatus)` is the single source of truth (exhaustive switch — adding
+a status fails compilation until the mapping is updated). Cancelled lines stay in `items` with
+`stageOrder = 0`; the FE draws the progress bar from `stageOrder` without hardcoding the order.
+
+## Endpoints (require a CUSTOMER_SESSION token)
+
+| Method | Path | Purpose |
+| :-- | :-- | :-- |
+| GET | `/api/v1/customer/orders/current/cooking-status` | snapshot of the session's order |
+| GET | `/api/v1/customer/orders/current/cooking-status/subscribe` | SSE stream (`text/event-stream`) |
+
+Snapshot payload `CustomerOrderTrackingResponse`: `hasActiveOrder`, `orderId`, `orderCode`, `tableId`,
+`orderStatus`, `subtotal`, `discountAmount`, `totalAmount`, `summary` (per-stage counts), `items[]`
+(`orderItemId, itemName, quantity, note, status, customerStage, stageOrder, updatedAt`), `updatedAt`.
+
+- No `customerPhone` (the owner's phone) and no kitchen `cancelReason` are ever returned.
+- No order yet → `hasActiveOrder = false`, `items = []` (not an error).
+- Order's `tableId` must match the session's table, else `TQR_CONTEXT_MISMATCH` (branch isolation;
+  the cooking-status DTO exposes `tableId`, not `branchId`, and a table maps to one branch).
+- The service reuses `OrderService.getOrderCookingStatus()` — it does not query orders directly.
+
+## SSE reuses the order-keyed channel
+
+`subscribe` resolves `orderId` from the session (else `TRACK_NO_ACTIVE_ORDER`) and returns
+`customerSseService.createEmitter(orderId)`. This is deliberate: `OrderServiceImpl` /
+`OrderItemServiceImpl` broadcast on `CustomerSseService` **by orderId** when the kitchen changes a
+status. A session-keyed emitter would stay open but silent.
+
+## Error codes (`TRACK_*`)
+
+`TRACK_1000` no active order yet (409) · `TRACK_1001` linked order no longer exists (404).
+Reuses `TQR_SESSION_NOT_FOUND`, `TQR_SESSION_EXPIRED`, `TQR_CONTEXT_MISMATCH`.
+
+## Known gaps (out of uc-c-06 scope)
+
+1. **The SSE stream still broadcasts the full `OrderCookingStatusResponse` (which contains
+   `customerPhone`)** because `OrderServiceImpl` calls `broadcastOrderUpdate` with that object. The
+   uc-c-06 REST endpoint strips the phone, but the stream does not — the order-module owner must
+   filter the broadcast payload. (uc-c-06 must not modify `OrderServiceImpl`/`CustomerSseServiceImpl`.)
+2. **`/api/v1/orders/*/cooking-status` and `/api/v1/orders/*/bill` remain public** — anyone who knows
+   an `orderId` can read them without a token.
+3. **`CustomerSseServiceImpl` holds emitters in an in-memory map** → multiple instances lose events
+   (violates NFR-03); needs a shared broker (Redis pub/sub / WebSocket) to scale out.
