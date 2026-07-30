@@ -23,7 +23,7 @@ public interface EmployeeMapper {
     @Mapping(target = "status", source = "manager.status")
     @Mapping(target = "startDate", source = "manager.startDate")
     @Mapping(target = "endDate", source = "manager.endDate")
-    @Mapping(target = "orgRoleId", source = "manager.orgRole.id")
+    @Mapping(target = "orgRoleId", expression = "java(branch.getManager() != null && branch.getManager().getOrgRole() != null ? branch.getManager().getOrgRole().getId() : null)")
     @Mapping(target = "orgRoleName", source = "manager.orgRole.roleName")
     @Mapping(target = "role", source = "manager.orgRole.roleName")
     EmployeeBranchAssignmentResponse toEmployeeBranchAssignmentResponse(OrganizationBranch branch);
