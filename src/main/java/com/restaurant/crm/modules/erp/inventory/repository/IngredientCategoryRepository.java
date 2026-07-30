@@ -7,9 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface IngredientCategoryRepository extends JpaRepository<IngredientCategory, String> {
+
+    Optional<IngredientCategory> findByIdAndBranchId(
+        String id,
+        String branchId
+    );
 
     List<IngredientCategory> findByBranchId(String branchId);
 
