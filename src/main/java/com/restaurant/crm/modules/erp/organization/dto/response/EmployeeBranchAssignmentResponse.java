@@ -1,13 +1,10 @@
 package com.restaurant.crm.modules.erp.organization.dto.response;
 
-import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -19,19 +16,7 @@ public class EmployeeBranchAssignmentResponse {
     String branchAddress;
     String branchPhone;
     String branchStatus;
-    String employeeId;
     String managerId;
-    String userId;
-    String managerUserId;
-    String username;
     String managerName;
-    String email;
-    boolean enabled;
-    String phone;
-    EmployeeStatus status;
-    LocalDate startDate;
-    LocalDate endDate;
-    String orgRoleId;
-    String orgRoleName;
-    String role;
+    EmployeeResponse manager;
 }

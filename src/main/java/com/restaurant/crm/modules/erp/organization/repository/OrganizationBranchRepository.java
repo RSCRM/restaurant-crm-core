@@ -67,4 +67,19 @@ public interface OrganizationBranchRepository extends JpaRepository<Organization
             @Param("branchId") String branchId,
             @Param("ownerId") String ownerId
     );
+
+    @Query("""
+            SELECT b
+            FROM OrganizationBranch b
+            JOIN FETCH b.organization o
+            LEFT JOIN FETCH b.manager m
+            LEFT JOIN FETCH m.user managerUser
+            LEFT JOIN FETCH m.orgRole managerRole
+            WHERE b.id = :branchId
+              AND o.id = :organizationId
+            """)
+    Optional<OrganizationBranch> findByIdAndOrganizationIdWithManager(
+            @Param("branchId") String branchId,
+            @Param("organizationId") String organizationId
+    );
 }

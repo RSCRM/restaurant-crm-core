@@ -49,6 +49,16 @@ public class Employee extends BaseEntity {
     @JoinColumn(name = EmployeeConstants.COL_BRANCH_ID)
     OrganizationBranch branch;
 
+    @Column(name = EmployeeConstants.COL_FIRST_NAME,
+            columnDefinition = EmployeeConstants.NAME_DEFINITION)
+    @Size(max = EmployeeConstants.MAX_CHARS_NAME)
+    String firstName;
+
+    @Column(name = EmployeeConstants.COL_LAST_NAME,
+            columnDefinition = EmployeeConstants.NAME_DEFINITION)
+    @Size(max = EmployeeConstants.MAX_CHARS_NAME)
+    String lastName;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = EmployeeConstants.COL_STATUS, nullable = false)

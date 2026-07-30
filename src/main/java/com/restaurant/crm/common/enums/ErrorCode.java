@@ -56,6 +56,17 @@ public enum ErrorCode {
     EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
     EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
     EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_STATUS_INVALID("EMP_1004", "Employee status is invalid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_FIRST_NAME_REQUIRED("EMP_1005", "Employee first name is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_FIRST_NAME_INVALID("EMP_1006", "Employee first name is invalid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_LAST_NAME_REQUIRED("EMP_1007", "Employee last name is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_LAST_NAME_INVALID("EMP_1008", "Employee last name is invalid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_EMAIL_REQUIRED("EMP_1009", "Employee email is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_PHONE_INVALID("EMP_1010", "Employee phone is invalid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_BRANCH_REQUIRED("EMP_1011", "Employee branch is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ROLE_REQUIRED("EMP_1012", "Employee role is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_STATUS_REQUIRED("EMP_1013", "Employee status is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_START_DATE_REQUIRED("EMP_1014", "Employee start date is required", HttpStatus.BAD_REQUEST),
 
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
