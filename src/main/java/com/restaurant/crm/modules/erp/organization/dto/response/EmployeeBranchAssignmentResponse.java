@@ -32,6 +32,9 @@ public class EmployeeBranchAssignmentResponse {
     LocalDate endDate;
     String branchId;
     String branchName;
+    String branchAddress;
+    String branchPhone;
+    String branchStatus;
     String orgRoleId;
     String orgRoleName;
     String role;
