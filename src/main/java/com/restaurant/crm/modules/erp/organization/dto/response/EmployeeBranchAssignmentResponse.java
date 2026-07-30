@@ -16,6 +16,9 @@ import java.time.LocalDate;
 public class EmployeeBranchAssignmentResponse {
     String branchId;
     String branchName;
+    String branchAddress;
+    String branchPhone;
+    String branchStatus;
     String employeeId;
     String managerId;
     String userId;

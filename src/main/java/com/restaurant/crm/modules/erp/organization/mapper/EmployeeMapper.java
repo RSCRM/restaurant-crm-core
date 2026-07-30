@@ -11,6 +11,9 @@ public interface EmployeeMapper {
 
     @Mapping(target = "branchId", source = "id")
     @Mapping(target = "branchName", source = "branchName")
+    @Mapping(target = "branchAddress", source = "address")
+    @Mapping(target = "branchPhone", source = "phone")
+    @Mapping(target = "branchStatus", source = "status")
     @Mapping(target = "employeeId", source = "manager.id")
     @Mapping(target = "managerId", source = "manager.id")
     @Mapping(target = "userId", source = "manager.user.id")
