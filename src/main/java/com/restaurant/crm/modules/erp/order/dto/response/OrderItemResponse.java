@@ -9,9 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-/**
- * Data Transfer Object representing an order item response.
- */
+
 @Getter
 @Setter
 @Builder

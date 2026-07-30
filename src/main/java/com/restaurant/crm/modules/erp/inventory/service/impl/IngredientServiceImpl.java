@@ -237,4 +237,32 @@ public class IngredientServiceImpl implements IngredientService {
 
         ingredientRepository.delete(ingredient);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<IngredientResponse> getIngredientsByCategory(
+        String categoryId,
+        int page,
+        int size
+    ) {
+
+        Pageable pageable =
+            PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
+
+        Page<Ingredient> ingredientPage =
+            ingredientRepository.findByIngredientCategoryId(categoryId, pageable);
+
+        return PagingResponse.<IngredientResponse>builder()
+            .currentPage(page)
+            .pageSize(ingredientPage.getSize())
+            .totalPages(ingredientPage.getTotalPages())
+            .totalElement(ingredientPage.getTotalElements())
+            .data(
+                ingredientPage.getContent()
+                    .stream()
+                    .map(ingredientMapper::toIngredientResponse)
+                    .toList()
+            )
+            .build();
+    }
 }

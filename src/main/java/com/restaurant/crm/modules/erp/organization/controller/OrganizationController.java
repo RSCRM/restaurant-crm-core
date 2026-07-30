@@ -23,7 +23,7 @@ public class OrganizationController {
     OrganizationService organizationService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ORGANIZATION_MANAGE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_MANAGE')")
     public ResponseEntity<ApiResponse<OrganizationResponse>> createOrganization(
             @Valid @RequestBody CreateOrganizationRequest request
     ) {
@@ -39,7 +39,7 @@ public class OrganizationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ORGANIZATION_VIEW')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<OrganizationResponse>>> getOrganizations(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
@@ -56,7 +56,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ORGANIZATION_VIEW')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
     public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationById(
             @PathVariable String id
     ) {
@@ -72,7 +72,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/owner/{ownerId}")
-    @PreAuthorize("hasAuthority('ORGANIZATION_VIEW')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
     public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationByOwnerId(
             @PathVariable String ownerId
     ) {
@@ -88,7 +88,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAuthority('ORGANIZATION_MANAGE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_MANAGE')")
     public ResponseEntity<ApiResponse<OrganizationResponse>> updateOrganization(
             @PathVariable String id,
             @Valid @RequestBody UpdateOrganizationRequest request

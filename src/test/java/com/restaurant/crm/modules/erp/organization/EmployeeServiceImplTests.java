@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.organization;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+
 import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgRole;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
@@ -10,12 +11,20 @@ import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
+
+import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
+import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.mapper.EmployeeMapper;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.service.impl.EmployeeServiceImpl;
 import com.restaurant.crm.modules.identity.entity.User;
+
 import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.Test;
@@ -24,6 +33,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -34,10 +44,18 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +72,7 @@ public class EmployeeServiceImplTests {
     EmployeeRepository employeeRepository;
     @Mock
     OrganizationBranchRepository branchRepository;
+
     @Mock
     EmployeeMapper employeeMapper;
 

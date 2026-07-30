@@ -12,10 +12,10 @@ public interface UserService {
 
     PagingResponse<UserResponse> getUsers(PagingRequest request);
 
+    UserResponse getById(String userId);
+
     UserResponse updateRoles(String userId, UserRolesUpdateRequest request);
 
-    UserResponse getMyInfo();
-
-    void deleteById(String userId);
+    void softDeleteById(String userId);
 
 }

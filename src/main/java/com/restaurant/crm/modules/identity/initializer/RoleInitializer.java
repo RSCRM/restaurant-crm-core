@@ -7,6 +7,7 @@ import com.restaurant.crm.modules.identity.constants.permission.StartDefinedPerm
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Permission;
 import com.restaurant.crm.modules.identity.entity.Role;
+import com.restaurant.crm.modules.identity.enums.SystemDataScope;
 import com.restaurant.crm.modules.identity.repository.PermissionRepository;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import lombok.AccessLevel;
@@ -37,6 +38,7 @@ public class RoleInitializer implements ApplicationRunner {
         if (!roleRepository.existsByRoleName(PredefinedRole.ADMIN_ROLE)) {
             Role adminRole = Role.builder()
                     .roleName(PredefinedRole.ADMIN_ROLE)
+                    .dataScope(SystemDataScope.SYSTEM)
                     .permissions(getAdminPermissions())
                     .build();
             roleRepository.save(adminRole);
@@ -45,6 +47,7 @@ public class RoleInitializer implements ApplicationRunner {
         if (!roleRepository.existsByRoleName(PredefinedRole.USER_ROLE)) {
             Role staffRole = Role.builder()
                     .roleName(PredefinedRole.USER_ROLE)
+                    .dataScope(SystemDataScope.TENANT)
                     .permissions(null)
                     .build();
             roleRepository.save(staffRole);

@@ -11,38 +11,37 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface OrganizationMapper {
 
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
     @Mapping(target = "status", ignore = true)
 
+    // Set manually in service
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "version", ignore = true)
     Organization toOrganization(
-            CreateOrganizationRequest request
+        CreateOrganizationRequest request
     );
 
     @Mapping(target = "ownerId", source = "owner.id")
     OrganizationResponse toOrganizationResponse(
-            Organization organization
+        Organization organization
     );
-
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
     @Mapping(target = "status", ignore = true)
-
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "version", ignore = true)
-
     void updateOrganization(
-            UpdateOrganizationRequest request,
-            @MappingTarget Organization organization
+        UpdateOrganizationRequest request,
+        @MappingTarget Organization organization
     );
 }

@@ -24,6 +24,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -83,4 +84,13 @@ public class Employee extends BaseEntity {
 
     @Column(name = EmployeeConstants.COL_END_DATE)
     LocalDate endDate;
+
+    @Column(name = EmployeeConstants.COL_SALARY, precision = 15, scale = 2)
+    BigDecimal salary;
+
+    @Builder.Default
+    @Column(name = EmployeeConstants.COL_PROFILE_UPDATE_ENABLED,
+            nullable = false,
+            columnDefinition = "BOOLEAN DEFAULT FALSE")
+    boolean profileUpdateEnabled = false;
 }

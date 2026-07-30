@@ -25,7 +25,7 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .message(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getMessage())
                         .build())
                 .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getHttpStatusCode()).body(response);
     }
 
     @ExceptionHandler(value = AppException.class)
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .message(errorCode.getMessage())
                         .build())
                 .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
     }
 
     //handling Denied Access
@@ -71,6 +71,6 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .build())
                 .build();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
     }
 }

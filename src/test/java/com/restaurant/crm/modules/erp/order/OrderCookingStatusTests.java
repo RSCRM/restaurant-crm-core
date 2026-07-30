@@ -1,8 +1,8 @@
 package com.restaurant.crm.modules.erp.order;
 
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
@@ -18,9 +18,14 @@ import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.order.service.impl.OrderServiceImpl;
 import com.restaurant.crm.modules.erp.order.service.interfaces.CustomerSseService;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService;
+import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -57,6 +62,16 @@ public class OrderCookingStatusTests {
     RestaurantTableRepository restaurantTableRepository;
     @Mock
     CustomerSseService customerSseService;
+    @Mock
+    CustomerRepository customerRepository;
+    @Mock
+    PointWalletService pointWalletService;
+    @Mock
+    CustomerVoucherService customerVoucherService;
+    @Mock
+    CustomerVoucherRepository customerVoucherRepository;
+    @Mock
+    SseEmitterService sseEmitterService;
 
     @InjectMocks
     OrderServiceImpl orderService;
@@ -104,6 +119,8 @@ public class OrderCookingStatusTests {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(productRepository.findByIdAndBranchId("prod-1", branchId)).thenReturn(Optional.of(product));
         when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId("order-1")).thenReturn(Collections.emptyList());
 
         CreateOrderResponse response = orderService.create(request);
 
@@ -259,6 +276,8 @@ public class OrderCookingStatusTests {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(productRepository.findByIdAndBranchId("prod-1", branchId)).thenReturn(Optional.of(product));
         when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId("order-1")).thenReturn(Collections.emptyList());
 
         CreateOrderResponse response = orderService.create(request);
 
