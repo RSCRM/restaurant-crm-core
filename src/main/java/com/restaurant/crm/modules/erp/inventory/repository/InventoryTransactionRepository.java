@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Repository
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, String> {
@@ -42,6 +43,17 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
         String branchId,
         Instant from,
         Instant to,
+        Pageable pageable
+    );
+
+    Optional<InventoryTransaction> findByIdAndInventoryIngredientBranchId(
+        String id,
+        String branchId
+    );
+
+    Page<InventoryTransaction> findByInventoryIdAndInventoryIngredientBranchId(
+        String inventoryId,
+        String branchId,
         Pageable pageable
     );
 }
