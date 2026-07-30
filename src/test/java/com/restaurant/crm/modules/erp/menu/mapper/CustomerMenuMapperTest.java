@@ -1,13 +1,15 @@
 package com.restaurant.crm.modules.erp.menu.mapper;
 
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuComboResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierGroupResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierOptionResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuProductResponse;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierGroup;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierGroup;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -26,8 +28,8 @@ class CustomerMenuMapperTest {
     void toProductResponseMapsIdPriceAndAvailability() {
         Product product = Product.builder()
                 .id("product-1")
-                .branchId("branch-1")
-                .categoryId("cat-1")
+                .branch(OrganizationBranch.builder().id("branch-1").build())
+                .category(Category.builder().id("cat-1").build())
                 .productName("Phở bò")
                 .description("Beef noodle")
                 .price(new BigDecimal("12.34"))
@@ -48,7 +50,9 @@ class CustomerMenuMapperTest {
     @Test
     void toProductResponseMarksNonAvailableStatusUnavailable() {
         Product product = Product.builder()
-                .id("product-2").branchId("branch-1").categoryId("cat-1")
+                .id("product-2")
+                .branch(OrganizationBranch.builder().id("branch-1").build())
+                .category(Category.builder().id("cat-1").build())
                 .productName("Sold out dish").price(new BigDecimal("9.00"))
                 .status("OUT_OF_STOCK").requiresPreparation(false).build();
 
@@ -58,7 +62,7 @@ class CustomerMenuMapperTest {
     @Test
     void toComboResponseHasEmptyItems() {
         Combo combo = Combo.builder()
-                .id("combo-1").branchId("branch-1").comboName("Family set")
+                .id("combo-1").branch(OrganizationBranch.builder().id("branch-1").build()).comboName("Family set")
                 .price(new BigDecimal("50.00")).status("AVAILABLE").build();
 
         MenuComboResponse response = mapper.toComboResponse(combo);
@@ -71,7 +75,10 @@ class CustomerMenuMapperTest {
     @Test
     void toModifierGroupResponseAttachesOptions() {
         ModifierGroup group = ModifierGroup.builder()
-                .id("group-1").branchId("branch-1").groupName("Toppings")
+                .id("group-1")
+                .product(Product.builder().branch(OrganizationBranch.builder().id("branch-1").build()).build())
+                .groupName("Toppings")
+                .id("group-1").groupName("Toppings")
                 .minSelection(0).maxSelection(3).build();
         ModifierOption option = ModifierOption.builder()
                 .id("option-1").optionName("Extra cheese")

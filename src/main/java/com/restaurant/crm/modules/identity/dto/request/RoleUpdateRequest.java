@@ -24,5 +24,7 @@ public class RoleUpdateRequest {
             max = RoleConstants.MAX_CHARS_ROLE_NAME)
     String roleName;
 
+    String dataScope;
+
     List<String> permissionIds;
 }

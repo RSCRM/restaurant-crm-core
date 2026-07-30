@@ -22,10 +22,13 @@ public class StartDefinedOrgPermission {
     public static final String REPORT_VIEW = "REPORT_VIEW";
 
     // Management & Administration Permissions
+    public static final String STAFF_VIEW = "STAFF_VIEW";
     public static final String STAFF_MANAGE = "STAFF_MANAGE";
     public static final String BRANCH_MANAGE = "BRANCH_MANAGE";
     public static final String ORG_MANAGE = "ORG_MANAGE";
 
-    // Branch Manager Assignment Permissions
-    public static final String BRANCH_MANAGER_ASSIGN = "BRANCH_MANAGER_ASSIGN";
+    // Branch Manager Permissions
+    public static final String BRANCH_MANAGER_VIEW = "BRANCH_MANAGER_VIEW";
+    public static final String BRANCH_MANAGER_UPDATE = "BRANCH_MANAGER_UPDATE";
+    public static final String BRANCH_MANAGER_DELETE = "BRANCH_MANAGER_DELETE";
 }

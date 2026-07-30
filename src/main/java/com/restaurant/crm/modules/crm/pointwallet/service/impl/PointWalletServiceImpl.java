@@ -37,42 +37,38 @@ public class PointWalletServiceImpl implements PointWalletService {
     OrganizationBranchRepository branchRepository;
     CustomerPointMapper customerPointMapper;
 
-    private void validateBranchAccess(String targetBranchId) {
+    private void validateOrganizationAccess(String targetOrgId) {
         org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
             return;
         }
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
-                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-        } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
+        if (!targetOrgId.equals(AuthUtils.getOrganizationId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
     }
 
     @Override
-    public CustomerPointResponse getWallet(String customerId, String restaurantId) {
-        validateBranchAccess(restaurantId);
+    public CustomerPointResponse getWallet(String customerId, String organizationId) {
+        validateOrganizationAccess(organizationId);
 
-        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId)
+        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndOrganizationId(customerId, organizationId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_POINT_NOT_FOUND));
         return customerPointMapper.toCustomerPointResponse(wallet);
     }
 
     @Override
     @Transactional
-    public CustomerPointResponse initializeWallet(String customerId, String restaurantId) {
-        validateBranchAccess(restaurantId);
+    public CustomerPointResponse initializeWallet(String customerId, String organizationId) {
+        validateOrganizationAccess(organizationId);
 
-        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId)
+        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndOrganizationId(customerId, organizationId)
                 .orElseGet(() -> {
                     Customer customer = customerRepository.findById(customerId)
                             .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
 
                     CustomerPoint newWallet = CustomerPoint.builder()
                             .customer(customer)
-                            .restaurantId(restaurantId)
+                            .organizationId(organizationId)
                             .currentPoints(0)
                             .lifetimePoints(0)
                             .build();
@@ -82,12 +78,12 @@ public class PointWalletServiceImpl implements PointWalletService {
     }
 
     @Override
-    public PagingResponse<CustomerPointHistoryResponse> getHistory(String customerId, String restaurantId, int page, int size) {
-        validateBranchAccess(restaurantId);
+    public PagingResponse<CustomerPointHistoryResponse> getHistory(String customerId, String organizationId, int page, int size) {
+        validateOrganizationAccess(organizationId);
 
         int adjustedPage = Math.max(0, page - 1);
         Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<CustomerPointHistory> historyPage = customerPointHistoryRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId, pageable);
+        Page<CustomerPointHistory> historyPage = customerPointHistoryRepository.findByCustomerIdAndOrganizationId(customerId, organizationId, pageable);
 
         return PagingResponse.<CustomerPointHistoryResponse>builder()
                 .currentPage(page)
@@ -102,17 +98,17 @@ public class PointWalletServiceImpl implements PointWalletService {
 // + point history
     @Override
     @Transactional
-    public CustomerPointResponse earnPoints(String customerId, String restaurantId, int points, String orderId) {
-        validateBranchAccess(restaurantId);
+    public CustomerPointResponse earnPoints(String customerId, String organizationId, int points, String orderId) {
+        validateOrganizationAccess(organizationId);
 
-        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId)
+        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndOrganizationId(customerId, organizationId)
                 .orElseGet(() -> {
                     Customer customer = customerRepository.findById(customerId)
                             .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
 
                     CustomerPoint newWallet = CustomerPoint.builder()
                             .customer(customer)
-                            .restaurantId(restaurantId)
+                            .organizationId(organizationId)
                             .currentPoints(0)
                             .lifetimePoints(0)
                             .build();
@@ -125,7 +121,7 @@ public class PointWalletServiceImpl implements PointWalletService {
 
         CustomerPointHistory history = CustomerPointHistory.builder()
                 .customer(wallet.getCustomer())
-                .restaurantId(restaurantId)
+                .organizationId(organizationId)
                 .transactionType(PointTransactionType.EARN)
                 .pointsChanged(points)
                 .referenceId(orderId)
@@ -138,10 +134,10 @@ public class PointWalletServiceImpl implements PointWalletService {
 // - point history
     @Override
     @Transactional
-    public CustomerPointResponse deductPoints(String customerId, String restaurantId, int points, String referenceId) {
-        validateBranchAccess(restaurantId);
+    public CustomerPointResponse deductPoints(String customerId, String organizationId, int points, String referenceId) {
+        validateOrganizationAccess(organizationId);
 
-        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId)
+        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndOrganizationId(customerId, organizationId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_POINT_NOT_FOUND));
 
         if (wallet.getCurrentPoints() < points) {
@@ -153,7 +149,7 @@ public class PointWalletServiceImpl implements PointWalletService {
 
         CustomerPointHistory history = CustomerPointHistory.builder()
                 .customer(wallet.getCustomer())
-                .restaurantId(restaurantId)
+                .organizationId(organizationId)
                 .transactionType(PointTransactionType.REDEEM)
                 .pointsChanged(-points)
                 .referenceId(referenceId)

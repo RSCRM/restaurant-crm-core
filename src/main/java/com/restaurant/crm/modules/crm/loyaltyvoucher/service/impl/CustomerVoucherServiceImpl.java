@@ -62,7 +62,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     @Override
     @Transactional
     public CustomerVoucherResponse redeemVoucher(VoucherRedeemRequest request) {
-        validateBranchAccess(request.getRestaurantId());
+        validateBranchAccess(request.getBranchId());
 
         // 1. Load Voucher
         Voucher voucher = voucherRepository.findById(request.getVoucherId())
@@ -79,13 +79,18 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         // 3. unique seri for Voucher
         String voucherSn = generateUniqueVoucherSn();
 
-        // 4. - point in customer wallet
-        pointWalletService.deductPoints(customer.getId(), request.getRestaurantId(), voucher.getPointsRequired(), voucherSn);
+        // 4. Get organization ID from Branch
+        com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch branch = branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        String organizationId = branch.getOrganization() != null ? branch.getOrganization().getId() : null;
 
-        // 5. save vocher to customer wallet
+        // 5. - point in customer wallet (Chain-wide using organizationId)
+        pointWalletService.deductPoints(customer.getId(), organizationId, voucher.getPointsRequired(), voucherSn);
+
+        // 6. save voucher to customer wallet
         CustomerVoucher customerVoucher = CustomerVoucher.builder()
                 .customer(customer)
-                .restaurantId(request.getRestaurantId())
+                .branchId(request.getBranchId())
                 .voucher(voucher)
                 .voucherSn(voucherSn)
                 .status(CustomerVoucherStatus.AVAILABLE)
@@ -98,8 +103,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
     @Override
     @Transactional
-    public CustomerVoucherResponse giveVoucherDirectly(String customerId, String restaurantId, String voucherId) {
-        validateBranchAccess(restaurantId);
+    public CustomerVoucherResponse giveVoucherDirectly(String customerId, String branchId, String voucherId) {
+        validateBranchAccess(branchId);
 
         // 1. Load Voucher
         Voucher voucher = voucherRepository.findById(voucherId)
@@ -116,10 +121,10 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         // 3. unique seri for Voucher
         String voucherSn = generateUniqueVoucherSn();
 
-        // 4. save vocher to customer wallet (FREE)
+        // 4. save voucher to customer wallet (FREE)
         CustomerVoucher customerVoucher = CustomerVoucher.builder()
                 .customer(customer)
-                .restaurantId(restaurantId)
+                .branchId(branchId)
                 .voucher(voucher)
                 .voucherSn(voucherSn)
                 .status(CustomerVoucherStatus.AVAILABLE)
@@ -137,7 +142,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         CustomerVoucher customerVoucher = customerVoucherRepository.findById(customerVoucherId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_VOUCHER_NOT_FOUND));
 
-        validateBranchAccess(customerVoucher.getRestaurantId());
+        validateBranchAccess(customerVoucher.getBranchId());
 
         if (customerVoucher.getStatus() != CustomerVoucherStatus.AVAILABLE) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_ALREADY_USED);
@@ -165,10 +170,10 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     }
 
     @Override
-    public List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String restaurantId, BigDecimal subtotal) {
-        validateBranchAccess(restaurantId);
+    public List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String branchId, BigDecimal subtotal) {
+        validateBranchAccess(branchId);
 
-        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId);
+        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndBranchId(customerId, branchId);
         return customerVouchers.stream().map(cv -> {
             Voucher voucher = cv.getVoucher();
             boolean isExpired = voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt());
@@ -219,8 +224,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     }
 
     @Override
-    public PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String restaurantId, String status, int page, int size) {
-        validateBranchAccess(restaurantId);
+    public PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String branchId, String status, int page, int size) {
+        validateBranchAccess(branchId);
 
         int adjustedPage = Math.max(0, page - 1);
         Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -228,9 +233,9 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         Page<CustomerVoucher> voucherPage;
         if (status != null && !status.trim().isEmpty()) {
             CustomerVoucherStatus voucherStatus = CustomerVoucherStatus.valueOf(status.toUpperCase());
-            voucherPage = customerVoucherRepository.findByCustomerIdAndRestaurantIdAndStatus(customerId, restaurantId, voucherStatus, pageable);
+            voucherPage = customerVoucherRepository.findByCustomerIdAndBranchIdAndStatus(customerId, branchId, voucherStatus, pageable);
         } else {
-            voucherPage = customerVoucherRepository.findByCustomerIdAndRestaurantId(customerId, restaurantId, pageable);
+            voucherPage = customerVoucherRepository.findByCustomerIdAndBranchId(customerId, branchId, pageable);
         }
 
         return PagingResponse.<CustomerVoucherResponse>builder()

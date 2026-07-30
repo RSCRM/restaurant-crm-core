@@ -15,12 +15,12 @@ import com.restaurant.crm.modules.erp.invoice.enums.InvoiceStatus;
 import com.restaurant.crm.modules.erp.invoice.mapper.InvoiceMapper;
 import com.restaurant.crm.modules.erp.invoice.repository.InvoiceRepository;
 import com.restaurant.crm.modules.erp.invoice.service.interfaces.InvoiceService;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.entity.Order;
 import com.restaurant.crm.modules.erp.order.entity.OrderItem;
 import com.restaurant.crm.modules.erp.order.entity.OrderItemModifier;
@@ -101,7 +101,10 @@ public class InvoiceServiceImpl implements InvoiceService {
             if (customer != null) {
                 int points = order.getTotalAmount().divide(BigDecimal.valueOf(10000)).intValue();
                 if (points > 0) {
-                    pointWalletService.earnPoints(customer.getId(), order.getBranchId(), points, order.getId());
+                    OrganizationBranch branch = organizationBranchRepository.findById(order.getBranchId())
+                            .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+                    String organizationId = branch.getOrganization() != null ? branch.getOrganization().getId() : null;
+                    pointWalletService.earnPoints(customer.getId(), organizationId, points, order.getId());
                 }
             }
         }

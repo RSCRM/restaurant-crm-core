@@ -33,7 +33,7 @@ public class AttendanceController {
     AttendanceService attendanceService;
 
     @GetMapping("/qr")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.AttendanceConstants).QR_DISPLAY_AUTHORITY)")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).QR_DISPLAY)")
     public ResponseEntity<ApiResponse<AttendanceQrResponse>> getCurrentQr() {
         return ResponseEntity.ok(ApiResponse.<AttendanceQrResponse>builder()
                 .success(ApiConstant.SUCCESS)
@@ -42,6 +42,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/check-in")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_WRITE)")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn(
             @Valid @RequestBody AttendanceCheckInRequest request) {
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
@@ -51,6 +52,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/check-out")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_WRITE)")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkOut() {
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
                 .success(ApiConstant.SUCCESS)
@@ -59,6 +61,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_READ)")
     public ResponseEntity<ApiResponse<PagingResponse<AttendanceResponse>>> getMyHistory(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

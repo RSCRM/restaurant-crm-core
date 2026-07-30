@@ -2,17 +2,19 @@ package com.restaurant.crm.modules.erp.menu.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Category;
 import com.restaurant.crm.modules.erp.menu.dto.response.CustomerMenuResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuCategoryResponse;
 import com.restaurant.crm.modules.erp.menu.mapper.CustomerMenuMapper;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierGroup;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierGroupRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierGroup;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierGroupRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,9 +62,9 @@ class CustomerMenuServiceImplTest {
                 product("p2", "cat-a", "Banana", "AVAILABLE"),
                 product("p3", "cat-b", "Cherry", "OUT_OF_STOCK"));
         try (var auth = branchContext()) {
-            when(productRepository.findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH)).thenReturn(products);
+            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH)).thenReturn(products);
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
-            when(modifierGroupRepository.findByBranchIdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());
+            when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());
 
             CustomerMenuResponse menu = service.getMenu();
 
@@ -84,10 +86,11 @@ class CustomerMenuServiceImplTest {
     @Test
     void getMenuReturnsCombosWhenNoProductsIsFineAndViceVersa() {
         try (var auth = branchContext()) {
-            when(productRepository.findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH))
+            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH))
                     .thenReturn(List.of(product("p1", "cat-a", "Apple", "AVAILABLE")));
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
-            when(modifierGroupRepository.findByBranchIdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of());
+            when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH))
+                    .thenReturn(List.of());
 
             CustomerMenuResponse menu = service.getMenu();
 
@@ -99,7 +102,8 @@ class CustomerMenuServiceImplTest {
     @Test
     void getMenuThrowsWhenNoProductsAndNoCombos() {
         try (var auth = branchContext()) {
-            when(productRepository.findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH)).thenReturn(List.of());
+            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH))
+                    .thenReturn(List.of());
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
 
             AppException exception = assertThrows(AppException.class, () -> service.getMenu());
@@ -126,10 +130,11 @@ class CustomerMenuServiceImplTest {
                 option("o2", g2, "Cheese"),
                 option("o3", g2, "Egg"));
         try (var auth = branchContext()) {
-            when(productRepository.findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH))
+            when(productRepository.findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH))
                     .thenReturn(List.of(product("p1", "cat-a", "Apple", "AVAILABLE")));
             when(comboRepository.findByBranchIdOrderByComboNameAsc(BRANCH)).thenReturn(List.of());
-            when(modifierGroupRepository.findByBranchIdOrderByGroupNameAsc(BRANCH)).thenReturn(List.of(g1, g2));
+            when(modifierGroupRepository.findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH))
+                    .thenReturn(List.of(g1, g2));
             when(modifierOptionRepository.findByModifierGroupIdInOrderByOptionNameAsc(anyCollection()))
                     .thenReturn(options);
 
@@ -140,9 +145,11 @@ class CustomerMenuServiceImplTest {
             assertEquals(2, menu.getModifierGroups().get(1).getOptions().size()); // g2 → 2 options
 
             // Exactly 4 queries, independent of the number of groups (no N+1).
-            verify(productRepository, times(1)).findByBranchIdOrderByCategoryIdAscProductNameAsc(BRANCH);
+            verify(productRepository, times(1))
+                    .findByBranchIdAndDeletedAtIsNullOrderByCategoryIdAscProductNameAsc(BRANCH);
             verify(comboRepository, times(1)).findByBranchIdOrderByComboNameAsc(BRANCH);
-            verify(modifierGroupRepository, times(1)).findByBranchIdOrderByGroupNameAsc(BRANCH);
+            verify(modifierGroupRepository, times(1))
+                    .findByProduct_Branch_IdOrderByGroupNameAsc(BRANCH);
             verify(modifierOptionRepository, times(1)).findByModifierGroupIdInOrderByOptionNameAsc(anyCollection());
         }
     }
@@ -177,12 +184,14 @@ class CustomerMenuServiceImplTest {
 
     private Product product(String id, String categoryId, String name, String status) {
         return Product.builder()
-                .id(id).branchId(BRANCH).categoryId(categoryId).productName(name)
+                .id(id).branch(OrganizationBranch.builder().id(BRANCH).build())
+                .category(Category.builder().id(categoryId).build()).productName(name)
                 .price(new BigDecimal("10.00")).status(status).requiresPreparation(true).build();
     }
 
     private ModifierGroup group(String id, String name) {
-        return ModifierGroup.builder().id(id).branchId(BRANCH).groupName(name)
+        return ModifierGroup.builder().id(id).product(product("product-" + id, "cat-a", name, "AVAILABLE"))
+                .groupName(name)
                 .minSelection(0).maxSelection(2).build();
     }
 

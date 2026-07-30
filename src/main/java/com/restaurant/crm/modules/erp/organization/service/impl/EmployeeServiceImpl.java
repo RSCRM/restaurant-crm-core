@@ -8,6 +8,7 @@ import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
@@ -109,6 +110,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    private void rejectSelfRoleChange(Employee employee) {
+        if (employee.getId().equals(AuthUtils.getEmployeeId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
+
     @Override
     @Transactional
     public EmployeeResponse assignRole(String employeeId, AssignRoleRequest request) {
@@ -116,6 +123,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         validateBranchAccess(employee.getBranch().getId());
+        rejectSelfRoleChange(employee);
 
         OrgRole orgRole = orgRoleRepository.findById(request.getOrgRoleId())
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
@@ -132,6 +140,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         validateBranchAccess(employee.getBranch().getId());
+        rejectSelfRoleChange(employee);
 
         // idempotent: neu da khong co role thi tra ve binh thuong
         employee.setOrgRole(null);
@@ -150,6 +159,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setSalary(request.getSalary());
         employee = employeeRepository.save(employee);
         return employeeMapper.toEmployeeResponse(employee);
+    }
+
+    @Override
+    @Transactional
+    public EmployeeResponse setProfileUpdateAccess(
+            String employeeId, ProfileUpdateAccessRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        validateBranchAccess(employee.getBranch().getId());
+        employee.setProfileUpdateEnabled(request.getEnabled());
+        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
     }
 
     @Override

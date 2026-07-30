@@ -134,7 +134,7 @@ public class SecurityConfig {
                 // Identity Token or legacy: extract scope (roles) + permissions
                 List<String> roles = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_SCOPE);
                 if (roles != null) {
-                    roles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
+                    roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
                 }
 
                 List<String> permissions = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_PERMISSION);

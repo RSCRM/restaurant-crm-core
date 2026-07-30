@@ -80,7 +80,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
-    private String extractToken(jakarta.servlet.http.HttpServletRequest request) {
+    private String extractToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);

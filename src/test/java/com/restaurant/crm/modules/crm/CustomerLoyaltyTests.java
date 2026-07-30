@@ -19,6 +19,10 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepositor
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.impl.CustomerVoucherServiceImpl;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
 
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -50,6 +54,8 @@ public class CustomerLoyaltyTests {
     CustomerVoucherRepository customerVoucherRepository;
     @Mock
     VoucherRepository voucherRepository;
+    @Mock
+    OrganizationBranchRepository branchRepository;
     @Mock
     CustomerVoucherMapper customerVoucherMapper;
 
@@ -83,13 +89,13 @@ public class CustomerLoyaltyTests {
     public void testRedeemVoucher_Success() {
         VoucherRedeemRequest request = VoucherRedeemRequest.builder()
                 .customerId("cust-1")
-                .restaurantId("rest-1")
+                .branchId("rest-1")
                 .voucherId("vouch-1")
                 .build();
 
         Voucher voucher = Voucher.builder()
                 .id("vouch-1")
-                .restaurantId("rest-1")
+                .branchId("rest-1")
                 .title("Discount 10%")
                 .discountPercent(10)
                 .minBillAmount(BigDecimal.valueOf(100))
@@ -103,6 +109,13 @@ public class CustomerLoyaltyTests {
                 .status(CustomerStatus.ACTIVE)
                 .build();
 
+        Organization org = Organization.builder().id("rest-1").build();
+        OrganizationBranch branch = OrganizationBranch.builder()
+                .id("rest-1")
+                .organization(org)
+                .build();
+        when(branchRepository.findById("rest-1")).thenReturn(Optional.of(branch));
+
         when(voucherRepository.findById("vouch-1")).thenReturn(Optional.of(voucher));
         when(customerRepository.findById("cust-1")).thenReturn(Optional.of(customer));
         when(customerVoucherRepository.findByVoucherSn(anyString())).thenReturn(Optional.empty());
@@ -115,7 +128,7 @@ public class CustomerLoyaltyTests {
                 .build();
         CustomerVoucherResponse expectedResponse = CustomerVoucherResponse.builder()
                 .customerId("cust-1")
-                .restaurantId("rest-1")
+                .branchId("rest-1")
                 .voucher(voucherResponse)
                 .status(CustomerVoucherStatus.AVAILABLE)
                 .build();

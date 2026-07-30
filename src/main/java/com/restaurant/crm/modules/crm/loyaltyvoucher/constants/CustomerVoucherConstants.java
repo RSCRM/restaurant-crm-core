@@ -6,7 +6,7 @@ public class CustomerVoucherConstants {
     public static final String TABLE_CUSTOMER_VOUCHER = "customer_vouchers";
 
     public static final String COL_CUSTOMER_ID = "customer_id";
-    public static final String COL_RESTAURANT_ID = "restaurant_id";
+    public static final String COL_BRANCH_ID = "branch_id";
     public static final String COL_VOUCHER_ID = "voucher_id";
     public static final String COL_VOUCHER_SN = "voucher_sn";
     public static final String COL_STATUS = "status";
