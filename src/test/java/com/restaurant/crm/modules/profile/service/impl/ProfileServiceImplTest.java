@@ -2,6 +2,8 @@ package com.restaurant.crm.modules.profile.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -23,6 +25,8 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -33,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +71,7 @@ class ProfileServiceImplTest {
                 .createdAt(createdAt)
                 .build();
         UserProfile profile = UserProfile.builder()
+                .id("profile-1")
                 .user(user)
                 .fullName("System Admin")
                 .phone("0900000000")
@@ -73,12 +79,12 @@ class ProfileServiceImplTest {
 
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getCurrentUserId).thenReturn("user-1");
-            when(userRepository.findById("user-1")).thenReturn(Optional.of(user));
+            when(userRepository.findWithRolesById("user-1")).thenReturn(Optional.of(user));
             when(userProfileRepository.findByUser_Id("user-1")).thenReturn(Optional.of(profile));
 
             UserProfileResponse response = profileService.getMyInfo();
 
-            assertEquals("user-1", response.getId());
+            assertEquals("profile-1", response.getId());
             assertEquals("user-1", response.getUserId());
             assertEquals("System Admin", response.getFullName());
             assertEquals("admin", response.getUsername());
@@ -89,7 +95,7 @@ class ProfileServiceImplTest {
                     .map(role -> role.getRoleName())
                     .collect(java.util.stream.Collectors.toSet()));
             assertEquals(createdAt, response.getCreatedAt());
-            verify(userRepository).findById("user-1");
+            verify(userRepository).findWithRolesById("user-1");
         }
     }
 
@@ -105,12 +111,13 @@ class ProfileServiceImplTest {
 
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getCurrentUserId).thenReturn("user-1");
-            when(userRepository.findById("user-1")).thenReturn(Optional.of(user));
+            when(userRepository.findWithRolesById("user-1")).thenReturn(Optional.of(user));
             when(userProfileRepository.findByUser_Id("user-1")).thenReturn(Optional.empty());
 
             UserProfileResponse response = profileService.getMyInfo();
 
-            assertEquals("user-1", response.getId());
+            assertNull(response.getId());
+            assertEquals("user-1", response.getUserId());
             assertEquals("admin", response.getUsername());
             assertEquals("admin@example.com", response.getEmail());
             assertNull(response.getFullName());
@@ -122,7 +129,7 @@ class ProfileServiceImplTest {
     void getMyInfoRejectsMissingUser() {
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getCurrentUserId).thenReturn("missing");
-            when(userRepository.findById("missing")).thenReturn(Optional.empty());
+            when(userRepository.findWithRolesById("missing")).thenReturn(Optional.empty());
 
             AppException exception = assertThrows(AppException.class, profileService::getMyInfo);
             assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
@@ -151,6 +158,28 @@ class ProfileServiceImplTest {
                     () -> profileService.updateMyInfo(request));
 
             assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void getAllUsesBranchClaimWithoutLoadingActorEmployee() {
+        PagingRequest request = PagingRequest.builder().page(1).pageSize(10).build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(() -> AuthUtils.hasRole("ADMIN")).thenReturn(false);
+            authUtils.when(AuthUtils::getDataScope).thenReturn(OrgDataScope.BRANCH);
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            when(userProfileRepository.findByBranchId(
+                    org.mockito.ArgumentMatchers.eq("branch-1"),
+                    org.mockito.ArgumentMatchers.any(Pageable.class)))
+                    .thenReturn(Page.empty());
+
+            profileService.getAll(request);
+
+            verify(userProfileRepository).findByBranchId(
+                    org.mockito.ArgumentMatchers.eq("branch-1"),
+                    org.mockito.ArgumentMatchers.any(Pageable.class));
+            verify(employeeRepository, never()).findById("employee-1");
         }
     }
 }
