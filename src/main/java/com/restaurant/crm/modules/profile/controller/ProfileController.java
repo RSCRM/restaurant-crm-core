@@ -74,7 +74,6 @@ public class ProfileController {
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasAuthority('PROFILE_SELF_UPDATE')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateMyInfo(
             @Valid @RequestBody ProfileUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserProfileResponse>builder()
