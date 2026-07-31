@@ -31,7 +31,7 @@ import lombok.experimental.SuperBuilder;
 @Table(
         name = CustomerPointConstants.TABLE_CUSTOMER_POINT,
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_customer_restaurant", columnNames = {CustomerPointConstants.COL_CUSTOMER_ID, CustomerPointConstants.COL_RESTAURANT_ID})
+                @UniqueConstraint(name = "uk_customer_organization", columnNames = {CustomerPointConstants.COL_CUSTOMER_ID, CustomerPointConstants.COL_ORGANIZATION_ID})
         }
 )
 public class CustomerPoint extends BaseEntity {
@@ -42,8 +42,8 @@ public class CustomerPoint extends BaseEntity {
     Customer customer;
 
     @NotNull
-    @Column(name = CustomerPointConstants.COL_RESTAURANT_ID, nullable = false)
-    String restaurantId;
+    @Column(name = CustomerPointConstants.COL_ORGANIZATION_ID, nullable = false)
+    String organizationId;
 
     @Builder.Default
     @Column(name = CustomerPointConstants.COL_CURRENT_POINTS, nullable = false)

@@ -35,7 +35,7 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER_CREATE')")
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @Valid @RequestBody UserCreationRequest request
     ) {
@@ -48,7 +48,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PagingResponse<UserResponse>>> getUsers(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size,
@@ -72,8 +72,19 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable String userId) {
+        ApiResponse<UserResponse> response = ApiResponse.<UserResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(userService.getById(userId))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{userId}/roles")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> updateUserRoles(
             @PathVariable String userId,
             @Valid @RequestBody UserRolesUpdateRequest request
@@ -87,9 +98,9 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userId) {
-        userService.deleteById(userId);
+        userService.softDeleteById(userId);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(ApiConstant.SUCCESS)

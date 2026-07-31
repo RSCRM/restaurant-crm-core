@@ -304,6 +304,10 @@ public enum ErrorCode {
     MENU_BRANCH_CONTEXT_MISSING("MENU_1000", "Branch context is missing from the session", HttpStatus.FORBIDDEN),
     MENU_PRODUCT_NOT_FOUND("MENU_1001", "Product not found in this branch", HttpStatus.NOT_FOUND),
     MENU_EMPTY("MENU_1002", "Menu is not configured for this branch", HttpStatus.NOT_FOUND),
+
+    // ==== CUSTOMER ORDER TRACKING ERRORS ====
+    TRACK_NO_ACTIVE_ORDER("TRACK_1000", "No active order for this session yet", HttpStatus.CONFLICT),
+    TRACK_ORDER_NOT_FOUND("TRACK_1001", "The order linked to this session no longer exists", HttpStatus.NOT_FOUND),
     ;
 
     String code;

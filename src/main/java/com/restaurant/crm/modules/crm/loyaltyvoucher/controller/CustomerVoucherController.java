@@ -43,10 +43,10 @@ public class CustomerVoucherController {
     @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_GIVE')")
     public ResponseEntity<ApiResponse<CustomerVoucherResponse>> giveVoucher(
             @RequestParam String customerId,
-            @RequestParam String restaurantId,
+            @RequestParam String branchId,
             @RequestParam String voucherId
     ) {
-        CustomerVoucherResponse response = customerVoucherService.giveVoucherDirectly(customerId, restaurantId, voucherId);
+        CustomerVoucherResponse response = customerVoucherService.giveVoucherDirectly(customerId, branchId, voucherId);
         return ResponseEntity.ok(ApiResponse.<CustomerVoucherResponse>builder()
                 .success(true)
                 .data(response)
@@ -71,12 +71,12 @@ public class CustomerVoucherController {
     @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerVoucherResponse>>> getCustomerVouchers(
             @RequestParam String customerId,
-            @RequestParam String restaurantId,
+            @RequestParam String branchId,
             @RequestParam(required = false) String status,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ) {
-        PagingResponse<CustomerVoucherResponse> response = customerVoucherService.getCustomerVouchers(customerId, restaurantId, status, page, size);
+        PagingResponse<CustomerVoucherResponse> response = customerVoucherService.getCustomerVouchers(customerId, branchId, status, page, size);
         return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerVoucherResponse>>builder()
                 .success(true)
                 .data(response)

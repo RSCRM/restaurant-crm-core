@@ -90,6 +90,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse getById(String userId) {
+        User user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserResponse(user);
+    }
+
+    @Override
     @Transactional
     public UserResponse updateRoles(String userId, UserRolesUpdateRequest request) {
         User user = usersRepository.findById(userId)
@@ -104,8 +111,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void deleteById(String userId) {
-        usersRepository.deleteById(userId);
+    public void softDeleteById(String userId) {
+        User user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        user.setStatus(UserStatus.DELETED);
+        usersRepository.save(user);
     }
 
 

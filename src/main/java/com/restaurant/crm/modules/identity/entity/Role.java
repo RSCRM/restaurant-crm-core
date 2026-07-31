@@ -2,11 +2,8 @@ package com.restaurant.crm.modules.identity.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.identity.constants.role.RoleConstants;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import com.restaurant.crm.modules.identity.enums.SystemDataScope;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,6 +31,10 @@ public class Role extends BaseEntity {
         @Size(min = RoleConstants.MIN_CHARS_ROLE_NAME,
                 max = RoleConstants.MAX_CHARS_ROLE_NAME)
         String roleName;
+
+        @Enumerated(EnumType.STRING)
+        @Column(name = RoleConstants.COL_DATA_SCOPE, nullable = false)
+        SystemDataScope dataScope;
 
         @ManyToMany(fetch = FetchType.LAZY)
         Set<Permission> permissions;

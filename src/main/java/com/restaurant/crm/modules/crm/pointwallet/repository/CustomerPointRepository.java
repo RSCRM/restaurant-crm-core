@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface CustomerPointRepository extends JpaRepository<CustomerPoint, String> {
-    Optional<CustomerPoint> findByCustomerIdAndRestaurantId(String customerId, String restaurantId);
+    Optional<CustomerPoint> findByCustomerIdAndOrganizationId(String customerId, String organizationId);
 }

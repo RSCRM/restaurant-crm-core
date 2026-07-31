@@ -8,5 +8,5 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.VoucherRespons
 public interface VoucherService {
     VoucherResponse createVoucher(VoucherCreationRequest request);
     VoucherResponse updateVoucher(String id, VoucherUpdateRequest request);
-    PagingResponse<VoucherResponse> getActiveVouchersByRestaurant(String restaurantId, int page, int size);
+    PagingResponse<VoucherResponse> getActiveVouchersByBranch(String branchId, int page, int size);
 }

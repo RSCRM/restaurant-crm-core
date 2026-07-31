@@ -21,7 +21,7 @@ import com.restaurant.crm.modules.crm.pointwallet.enums.PointTransactionType;
 public class CustomerPointHistoryResponse {
     String id;
     String customerId;
-    String restaurantId;
+    String organizationId;
     PointTransactionType transactionType;
     Integer pointsChanged;
     String referenceId;

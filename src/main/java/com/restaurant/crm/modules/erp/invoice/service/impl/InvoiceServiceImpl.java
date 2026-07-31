@@ -101,7 +101,10 @@ public class InvoiceServiceImpl implements InvoiceService {
             if (customer != null) {
                 int points = order.getTotalAmount().divide(BigDecimal.valueOf(10000)).intValue();
                 if (points > 0) {
-                    pointWalletService.earnPoints(customer.getId(), order.getBranchId(), points, order.getId());
+                    OrganizationBranch branch = organizationBranchRepository.findById(order.getBranchId())
+                            .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+                    String organizationId = branch.getOrganization() != null ? branch.getOrganization().getId() : null;
+                    pointWalletService.earnPoints(customer.getId(), organizationId, points, order.getId());
                 }
             }
         }

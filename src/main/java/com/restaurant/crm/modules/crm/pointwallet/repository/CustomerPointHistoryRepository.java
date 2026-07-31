@@ -9,5 +9,5 @@ import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPointHistory;
 
 @Repository
 public interface CustomerPointHistoryRepository extends JpaRepository<CustomerPointHistory, String> {
-    Page<CustomerPointHistory> findByCustomerIdAndRestaurantId(String customerId, String restaurantId, Pageable pageable);
+    Page<CustomerPointHistory> findByCustomerIdAndOrganizationId(String customerId, String organizationId, Pageable pageable);
 }
