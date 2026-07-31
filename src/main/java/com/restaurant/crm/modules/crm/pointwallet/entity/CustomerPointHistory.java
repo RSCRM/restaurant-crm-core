@@ -38,8 +38,8 @@ public class CustomerPointHistory extends BaseEntity {
     Customer customer;
 
     @NotNull
-    @Column(name = CustomerPointHistoryConstants.COL_RESTAURANT_ID, nullable = false)
-    String restaurantId;
+    @Column(name = CustomerPointHistoryConstants.COL_ORGANIZATION_ID, nullable = false)
+    String organizationId;
 
     @NotNull
     @Enumerated(EnumType.STRING)

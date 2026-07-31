@@ -55,11 +55,11 @@ public class VoucherController {
     @GetMapping("/active")
     @PreAuthorize("hasAuthority('VOUCHER_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<VoucherResponse>>> getActiveVouchers(
-            @RequestParam String restaurantId,
+            @RequestParam String branchId,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ) {
-        PagingResponse<VoucherResponse> response = voucherService.getActiveVouchersByRestaurant(restaurantId, page, size);
+        PagingResponse<VoucherResponse> response = voucherService.getActiveVouchersByBranch(branchId, page, size);
         return ResponseEntity.ok(ApiResponse.<PagingResponse<VoucherResponse>>builder()
                 .success(true)
                 .data(response)

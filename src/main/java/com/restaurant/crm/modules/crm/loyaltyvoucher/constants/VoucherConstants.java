@@ -5,7 +5,7 @@ public class VoucherConstants {
 
     public static final String TABLE_VOUCHER = "vouchers";
 
-    public static final String COL_RESTAURANT_ID = "restaurant_id";
+    public static final String COL_BRANCH_ID = "branch_id";
     public static final String COL_TITLE = "title";
     public static final String COL_DISCOUNT_PERCENT = "discount_percent";
     public static final String COL_MIN_BILL_AMOUNT = "min_bill_amount";
