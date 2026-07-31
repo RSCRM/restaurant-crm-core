@@ -27,6 +27,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -41,11 +46,11 @@ public class ProfileServiceImpl implements ProfileService {
     @Transactional(readOnly = true)
     public UserProfileResponse getMyInfo() {
         String userId = AuthUtils.getCurrentUserId();
-        User user = userRepository.findById(userId)
+        User user = userRepository.findWithRolesById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         UserProfile profile = userProfileRepository.findByUser_Id(userId).orElse(null);
 
-        return userProfileMapper.toUserProfileResponse(user, profile);
+        return toResponse(user, profile, AuthUtils.getEmployeeId());
     }
 
     @Override
@@ -57,15 +62,31 @@ public class ProfileServiceImpl implements ProfileService {
                 PagingUtil.createSort(request)
         );
 
-        Page<UserProfile> profilePage = userProfileRepository.findAll(pageable);
+        Page<UserProfile> profilePage;
+        if (isAdmin()) {
+            profilePage = userProfileRepository.findAll(pageable);
+        } else {
+            profilePage = switch (AuthUtils.getDataScope()) {
+                case ORGANIZATION -> userProfileRepository.findByOrganizationId(
+                        AuthUtils.getOrganizationId(), pageable);
+                case BRANCH -> userProfileRepository.findByBranchId(
+                        AuthUtils.getBranchId(), pageable);
+                case SELF -> userProfileRepository.findByUser_Id(
+                        AuthUtils.getCurrentUserId(), pageable);
+            };
+        }
 
+        Map<String, String> employeeIds = resolveEmployeeIds(profilePage.getContent());
         return PagingResponse.<UserProfileResponse>builder()
                 .currentPage(request.getPage())
                 .pageSize(profilePage.getSize())
                 .totalPages(profilePage.getTotalPages())
                 .totalElement(profilePage.getTotalElements())
                 .data(profilePage.getContent().stream()
-                        .map(profile -> userProfileMapper.toUserProfileResponse(profile.getUser(), profile))
+                        .map(profile -> toResponse(
+                                profile.getUser(),
+                                profile,
+                                employeeIds.get(profile.getUser().getId())))
                         .toList())
                 .build();
     }
@@ -73,9 +94,22 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional(readOnly = true)
     public UserProfileResponse getById(String profileId) {
-        UserProfile profile = userProfileRepository.findById(profileId)
+        Optional<UserProfile> result;
+        if (isAdmin()) {
+            result = userProfileRepository.findById(profileId);
+        } else {
+            result = switch (AuthUtils.getDataScope()) {
+                case ORGANIZATION -> userProfileRepository.findByIdAndOrganizationId(
+                        profileId, AuthUtils.getOrganizationId());
+                case BRANCH -> userProfileRepository.findByIdAndBranchId(
+                        profileId, AuthUtils.getBranchId());
+                case SELF -> userProfileRepository.findByUser_Id(AuthUtils.getCurrentUserId())
+                        .filter(profile -> profile.getId().equals(profileId));
+            };
+        }
+        UserProfile profile = result
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return userProfileMapper.toUserProfileResponse(profile.getUser(), profile);
+        return toResponse(profile.getUser(), profile, resolveEmployeeId(profile.getUser()));
     }
 
     @Override
@@ -100,7 +134,7 @@ public class ProfileServiceImpl implements ProfileService {
             profile.setPhone(request.getPhone());
         }
 
-        return userProfileMapper.toUserProfileResponse(user, userProfileRepository.save(profile));
+        return toResponse(user, userProfileRepository.save(profile), AuthUtils.getEmployeeId());
     }
 
     @Override
@@ -136,21 +170,70 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         employeeRepository.save(employee);
-        return userProfileMapper.toUserProfileResponse(user, userProfileRepository.save(profile));
+        return toResponse(user, userProfileRepository.save(profile), employee.getId());
     }
 
     private void validateStaffScope(Employee employee) {
-        String actorEmployeeId = AuthUtils.getEmployeeId();
-        if (actorEmployeeId == null) {
-            if (employee.getBranch() == null
-                    || employee.getBranch().getOrganization() == null
-                    || !AuthUtils.getCurrentUserId().equals(
-                            employee.getBranch().getOrganization().getOwner().getId())) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-        } else if (employee.getBranch() == null
-                || !AuthUtils.getBranchId().equals(employee.getBranch().getId())) {
+        if (isAdmin()) {
+            return;
+        }
+        boolean allowed = employee.getBranch() != null && switch (AuthUtils.getDataScope()) {
+            case ORGANIZATION -> employee.getBranch().getOrganization() != null
+                    && AuthUtils.getOrganizationId().equals(
+                            employee.getBranch().getOrganization().getId());
+            case BRANCH -> AuthUtils.getBranchId().equals(employee.getBranch().getId());
+            case SELF -> AuthUtils.getEmployeeId().equals(employee.getId());
+        };
+        if (!allowed) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
+    }
+
+    private boolean isAdmin() {
+        return AuthUtils.hasRole("ADMIN");
+    }
+
+    private String resolveEmployeeId(User user) {
+        if (isAdmin()) {
+            return employeeRepository.findFirstByUser_Id(user.getId()).map(Employee::getId).orElse(null);
+        }
+        if (AuthUtils.getBranchId() != null) {
+            return employeeRepository.findFirstByUser_IdAndBranch_Id(
+                    user.getId(), AuthUtils.getBranchId()).map(Employee::getId).orElse(null);
+        }
+        return employeeRepository.findFirstByUser_IdAndBranch_Organization_Id(
+                user.getId(), AuthUtils.getOrganizationId())
+                .map(Employee::getId).orElse(null);
+    }
+
+    private Map<String, String> resolveEmployeeIds(List<UserProfile> profiles) {
+        List<String> userIds = profiles.stream().map(profile -> profile.getUser().getId()).toList();
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Employee> employees;
+        if (isAdmin()) {
+            employees = employeeRepository.findByUser_IdIn(userIds);
+        } else {
+            employees = switch (AuthUtils.getDataScope()) {
+                case ORGANIZATION -> employeeRepository
+                        .findByUser_IdInAndBranch_Organization_Id(
+                                userIds, AuthUtils.getOrganizationId());
+                case BRANCH -> employeeRepository.findByUser_IdInAndBranch_Id(
+                        userIds, AuthUtils.getBranchId());
+                case SELF -> employeeRepository.findByUser_IdIn(List.of(
+                        AuthUtils.getCurrentUserId()));
+            };
+        }
+        return employees.stream().collect(Collectors.toMap(
+                employee -> employee.getUser().getId(),
+                Employee::getId,
+                (first, ignored) -> first));
+    }
+
+    private UserProfileResponse toResponse(User user, UserProfile profile, String employeeId) {
+        UserProfileResponse response = userProfileMapper.toUserProfileResponse(user, profile);
+        response.setEmployeeId(employeeId);
+        return response;
     }
 }

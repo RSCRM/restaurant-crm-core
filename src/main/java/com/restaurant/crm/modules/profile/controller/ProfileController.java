@@ -41,7 +41,7 @@ public class ProfileController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PROFILE_VIEW_ALL')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('PROFILE_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<UserProfileResponse>>> getAllProfiles(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size,
@@ -74,7 +74,6 @@ public class ProfileController {
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasAuthority('PROFILE_SELF_UPDATE')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateMyInfo(
             @Valid @RequestBody ProfileUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserProfileResponse>builder()

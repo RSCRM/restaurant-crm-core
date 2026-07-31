@@ -22,6 +22,7 @@ import java.util.Set;
 public class UserProfileResponse {
     String id;
     String userId;
+    String employeeId;
     String fullName;
     String username;
     String email;
