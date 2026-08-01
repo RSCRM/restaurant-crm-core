@@ -17,6 +17,18 @@ public interface WorkScheduleRepository extends JpaRepository<WorkSchedule, Stri
             LocalDate to
     );
 
+    List<WorkSchedule> findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+            String branchId,
+            LocalDate from,
+            LocalDate to
+    );
+
+    List<WorkSchedule> findByBranchOrganizationIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+            String organizationId,
+            LocalDate from,
+            LocalDate to
+    );
+
     boolean existsByEmployeeIdAndWorkDateAndStartTime(
             String employeeId,
             LocalDate workDate,
