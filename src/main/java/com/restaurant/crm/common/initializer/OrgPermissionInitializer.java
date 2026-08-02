@@ -56,6 +56,7 @@ public class OrgPermissionInitializer implements ApplicationRunner {
                 StartDefinedOrgPermission.TABLE_MANAGE,
                 StartDefinedOrgPermission.TABLE_MAP_READ,
                 StartDefinedOrgPermission.TABLE_SEARCH_READ,
+                StartDefinedOrgPermission.TABLE_SESSION_CREATE,
                 StartDefinedOrgPermission.REPORT_VIEW,
 
                 // ── Management & Administration ──

@@ -17,10 +17,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrganizationSearchRequest {
     // Search
-    String organizationName;
-    String taxCode;
-    String phone;
     String email;
+    String organizationName;
+    String phone;
+    String taxCode;
 
     // Filter
     String ownerId;
