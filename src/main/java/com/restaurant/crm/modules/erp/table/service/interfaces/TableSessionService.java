@@ -7,6 +7,8 @@ import com.restaurant.crm.modules.erp.table.dto.response.TableSessionResponse;
 public interface TableSessionService {
     TableSessionResponse create(TableSessionCreationRequest request);
 
+    TableSessionResponse getActiveByTable(String tableId);
+
     TableSessionResponse transfer(String sessionId, TableSessionTransferRequest request);
 
     TableSessionResponse close(String sessionId);
