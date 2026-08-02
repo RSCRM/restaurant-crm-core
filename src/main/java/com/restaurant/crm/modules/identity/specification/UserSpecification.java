@@ -17,8 +17,8 @@ public class UserSpecification {
     public static Specification<User> build(UserSearchRequest request,
             String dataScopeOrgId, String dataScopeBranchId, String currentUserId) {
 
-        Specification<User> spec = (root, query, cb) ->
-                cb.notEqual(root.get("status"), UserStatus.DELETED);
+        Specification<User> spec = Specification.where((root, query, cb) ->
+                cb.notEqual(root.get("status"), UserStatus.DELETED));
 
         // ── Search filters ──
         if (request != null) {

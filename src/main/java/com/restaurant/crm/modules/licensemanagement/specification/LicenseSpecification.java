@@ -9,7 +9,7 @@ public class LicenseSpecification {
     private LicenseSpecification() {}
 
     public static Specification<License> build(LicenseSearchRequest request) {
-        Specification<License> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+        Specification<License> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedAt")));
 
         if (request == null) {
             return spec;

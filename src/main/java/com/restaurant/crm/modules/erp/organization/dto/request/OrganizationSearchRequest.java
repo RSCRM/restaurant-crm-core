@@ -19,11 +19,11 @@ public class OrganizationSearchRequest {
     // Search
     String organizationName;
     String taxCode;
+    String phone;
+    String email;
 
     // Filter
     String ownerId;
     OrganizationStatus status;
     String address;
-    String phone;
-    String email;
 }
