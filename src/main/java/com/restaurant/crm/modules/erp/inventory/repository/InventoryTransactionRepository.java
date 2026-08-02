@@ -6,12 +6,15 @@ import com.restaurant.crm.modules.erp.inventory.enums.InventoryTransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Repository
-public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, String> {
+public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, String>,
+    JpaSpecificationExecutor<InventoryTransaction> {
     Page<InventoryTransaction> findByInventoryId(
         String inventoryId,
         Pageable pageable
@@ -32,16 +35,8 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
         Pageable pageable
     );
 
-    Page<InventoryTransaction> findByInventoryIngredientBranchIdAndTransactionType(
-        String branchId,
-        InventoryTransactionType transactionType,
-        Pageable pageable
-    );
-
-    Page<InventoryTransaction> findByInventoryIngredientBranchIdAndTransactionTimeBetween(
-        String branchId,
-        Instant from,
-        Instant to,
-        Pageable pageable
+    Optional<InventoryTransaction> findByIdAndInventoryIngredientBranchId(
+        String id,
+        String branchId
     );
 }

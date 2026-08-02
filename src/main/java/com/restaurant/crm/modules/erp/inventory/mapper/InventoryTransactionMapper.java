@@ -38,6 +38,9 @@ public interface InventoryTransactionMapper {
         source = "employee.id",
         target = "employeeId"
     )
+    @Mapping(
+        source = "inventory.ingredient.ingredientName",
+        target = "ingredientName")
     InventoryTransactionResponse toInventoryTransactionResponse(
         InventoryTransaction transaction
     );

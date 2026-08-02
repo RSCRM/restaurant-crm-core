@@ -7,7 +7,7 @@ public final class MenuStorageConstants {
     public static final String COMBO_PATH = "combos/";
     public static final String IMAGE_FILE_NAME = "main";
 
-    /** products/<id>/main (public_id; Cloudinary tu suy ext tu file upload). */
+
     public static String productImagePublicId(String productId) {
         return PRODUCT_PATH + productId + "/" + IMAGE_FILE_NAME;
     }

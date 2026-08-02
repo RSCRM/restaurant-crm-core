@@ -12,6 +12,8 @@ public interface ScheduleService {
 
     List<PersonalScheduleResponse> getStaffSchedule(String employeeId, LocalDate from, LocalDate to);
 
+    List<PersonalScheduleResponse> getManagedSchedules(LocalDate from, LocalDate to);
+
     PersonalScheduleResponse createSchedule(ScheduleCreationRequest request);
 
     PersonalScheduleResponse updateSchedule(String scheduleId, ScheduleUpdateRequest request);

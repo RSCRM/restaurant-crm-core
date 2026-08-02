@@ -69,6 +69,22 @@ public class ScheduleController {
                 .build());
     }
 
+    @GetMapping("/staff")
+    @PreAuthorize("hasAuthority('" + SchedulePermissionConstants.SCHEDULE_STAFF_READ + "')")
+    public ResponseEntity<ApiResponse<List<PersonalScheduleResponse>>> getManagedSchedules(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        LocalDate effectiveFrom = from == null ? LocalDate.now() : from;
+        LocalDate effectiveTo = to == null ? effectiveFrom : to;
+        return ResponseEntity.ok(ApiResponse.<List<PersonalScheduleResponse>>builder()
+                .success(true)
+                .data(scheduleService.getManagedSchedules(effectiveFrom, effectiveTo))
+                .build());
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('" + SchedulePermissionConstants.SCHEDULE_MANAGE + "')")
     public ResponseEntity<ApiResponse<PersonalScheduleResponse>> createSchedule(

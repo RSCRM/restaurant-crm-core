@@ -1,12 +1,6 @@
 package com.restaurant.crm.modules.erp.order.enums;
 
-/**
- * Customer-facing cooking stage derived from {@link OrderItemStatus} (uc-c-06).
- * {@code stageOrder} lets the FE draw a progress bar without hardcoding the sequence;
- * {@code CANCELLED} is order 0 (off the progress track) but still shown.
- * The {@link #from} switch is exhaustive on purpose — adding an {@code OrderItemStatus}
- * value will fail compilation here until the mapping is updated.
- */
+
 public enum CustomerOrderStage {
 
     RECEIVED(1),

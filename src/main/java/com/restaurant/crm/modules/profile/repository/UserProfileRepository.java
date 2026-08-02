@@ -8,12 +8,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfile, String> {
     Optional<UserProfile> findByUser_Id(String userId);
     Page<UserProfile> findByUser_Id(String userId, Pageable pageable);
     boolean existsByPhone(String phone);
+    List<UserProfile> findByUser_IdIn(Collection<String> userIds);
 
     @Query("""
             select distinct p from UserProfile p

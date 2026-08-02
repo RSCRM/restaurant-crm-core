@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, String> {
@@ -16,4 +17,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
 
     Page<Attendance> findByShiftAssignmentEmployeeIdAndShiftAssignmentWorkDateBetween(
             String employeeId, LocalDate from, LocalDate to, Pageable pageable);
+
+    List<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
+            String branchId, LocalDate workDate);
 }

@@ -7,6 +7,7 @@ import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.request.LicenseSearchRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
@@ -23,6 +24,7 @@ import com.restaurant.crm.modules.licensemanagement.mapper.LicenseSubscriptionMa
 import com.restaurant.crm.modules.licensemanagement.repository.LicenseRepository;
 import com.restaurant.crm.modules.licensemanagement.repository.LicenseSubscriptionRepository;
 import com.restaurant.crm.modules.licensemanagement.service.interfaces.LicenseService;
+import com.restaurant.crm.modules.licensemanagement.specification.LicenseSpecification;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import lombok.AccessLevel;
@@ -82,6 +84,28 @@ public class LicenseServiceImpl implements LicenseService {
 
         return PagingResponse.<LicenseResponse>builder()
                 .currentPage(request.getPage())
+                .pageSize(licensePage.getSize())
+                .totalPages(licensePage.getTotalPages())
+                .totalElement(licensePage.getTotalElements())
+                .data(licensePage.getContent().stream()
+                        .map(licenseMapper::toLicenseResponse)
+                        .toList())
+                .build();
+    }
+
+    @Override
+    public PagingResponse<LicenseResponse> searchLicenses(LicenseSearchRequest searchRequest, PagingRequest pagingRequest) {
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest)
+        );
+
+        Page<License> licensePage = licenseRepository.findAll(
+                LicenseSpecification.build(searchRequest), pageable);
+
+        return PagingResponse.<LicenseResponse>builder()
+                .currentPage(pagingRequest.getPage())
                 .pageSize(licensePage.getSize())
                 .totalPages(licensePage.getTotalPages())
                 .totalElement(licensePage.getTotalElements())

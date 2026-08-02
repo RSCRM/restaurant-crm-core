@@ -10,7 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
-/** A single modifier option in the customer menu (uc-c-04). */
+
 @Getter
 @Setter
 @NoArgsConstructor
