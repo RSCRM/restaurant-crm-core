@@ -14,7 +14,6 @@ public interface OrganizationBranchService {
     OrganizationBranchResponse getOrganizationBranchById(String id);
 
     PagingResponse<OrganizationBranchResponse> getOrganizationBranches(
-            String organizationId,
             int page,
             int size
     );
