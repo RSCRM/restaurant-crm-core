@@ -23,6 +23,7 @@ public class CustomerVoucherApplicableResponse {
     String title;
     Integer discountPercent;
     BigDecimal minBillAmount;
+    Integer pointsRequired;
     String status;
     Instant expiredAt;
     Boolean isApplicable;
