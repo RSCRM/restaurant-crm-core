@@ -4,6 +4,7 @@ import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.identity.dto.request.UserCreationRequest;
 import com.restaurant.crm.modules.identity.dto.request.UserRolesUpdateRequest;
+import com.restaurant.crm.modules.identity.dto.request.UserSearchRequest;
 import com.restaurant.crm.modules.identity.dto.response.UserResponse;
 
 public interface UserService {
@@ -11,6 +12,8 @@ public interface UserService {
     UserResponse create(UserCreationRequest request);
 
     PagingResponse<UserResponse> getUsers(PagingRequest request);
+
+    PagingResponse<UserResponse> searchUsers(UserSearchRequest searchRequest, PagingRequest pagingRequest);
 
     UserResponse getById(String userId);
 
