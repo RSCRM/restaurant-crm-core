@@ -29,6 +29,10 @@ public interface InventoryMapper {
         source = "ingredient.id",
         target = "ingredientId"
     )
+    @Mapping(
+        source = "ingredient.ingredientName",
+        target = "ingredientName"
+    )
     InventoryResponse toInventoryResponse(
         Inventory inventory
     );
