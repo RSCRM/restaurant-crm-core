@@ -11,12 +11,19 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, String> {
-    Optional<Inventory> findByIngredientId(
-        String ingredientId
+    Optional<Inventory> findByIdAndIngredientBranchId(
+        String ingredientId,
+        String branchId
     );
 
-    boolean existsByIngredientId(
-        String ingredientId
+    Optional<Inventory> findByIngredientIdAndIngredientBranchId(
+        String ingredientId,
+        String branchId
+    );
+
+    boolean existsByIngredientIdAndIngredientBranchId(
+        String ingredientId,
+        String branchId
     );
 
     Page<Inventory> findByStatus(
@@ -31,6 +38,12 @@ public interface InventoryRepository extends JpaRepository<Inventory, String> {
 
     Page<Inventory> findByIngredientIngredientNameContainingIgnoreCase(
         String ingredientName,
+        Pageable pageable
+    );
+
+    Page<Inventory> findByIngredientBranchIdAndStatus(
+        String branchId,
+        InventoryStatus status,
         Pageable pageable
     );
 }

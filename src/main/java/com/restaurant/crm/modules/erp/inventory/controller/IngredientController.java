@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class IngredientController {
-
     IngredientService ingredientService;
-
 
     @PostMapping
     @PreAuthorize("hasAuthority('INGREDIENT_MANAGE')")
@@ -40,17 +38,15 @@ public class IngredientController {
     }
 
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('INGREDIENT_VIEW')")
-    public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> getIngredientsByBranch(
-            @PathVariable String branchId,
+    public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> getIngredients(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
 
         PagingResponse<IngredientResponse> response =
                 ingredientService.getIngredientsByBranch(
-                        branchId,
                         page,
                         size
                 );
@@ -83,7 +79,6 @@ public class IngredientController {
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('INGREDIENT_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> searchIngredients(
-            @RequestParam String branchId,
             @RequestParam String ingredientName,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
@@ -91,7 +86,6 @@ public class IngredientController {
 
         PagingResponse<IngredientResponse> response =
                 ingredientService.searchIngredients(
-                        branchId,
                         ingredientName,
                         page,
                         size
@@ -138,5 +132,20 @@ public class IngredientController {
                 ApiResponse.<Void>builder()
                         .build()
         );
+    }
+
+    @PreAuthorize("hasAuthority('INGREDIENT_VIEW')")
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> getIngredientsByCategory(
+        @PathVariable String categoryId,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        PagingResponse<IngredientResponse> response =
+            ingredientService.getIngredientsByCategory(categoryId, page, size);
+
+        return ResponseEntity.ok(ApiResponse.<PagingResponse<IngredientResponse>>builder()
+            .data(response)
+            .build());
     }
 }

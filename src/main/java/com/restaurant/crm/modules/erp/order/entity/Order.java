@@ -31,64 +31,84 @@ import java.math.BigDecimal;
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = OrderConstants.TABLE_ORDER, uniqueConstraints = {
-                @UniqueConstraint(name = OrderConstants.UK_BRANCH_ORDER_CODE, columnNames = {
-                                OrderConstants.COL_BRANCH_ID, OrderConstants.COL_ORDER_CODE })
-})
+@Table(
+        name = OrderConstants.TABLE_ORDER,
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = OrderConstants.UK_BRANCH_ORDER_CODE,
+                        columnNames = {OrderConstants.COL_BRANCH_ID, OrderConstants.COL_ORDER_CODE}
+                )
+        }
+)
 public class Order extends BaseEntity {
 
-        @NotBlank
-        @NotNull
-        @Column(name = OrderConstants.COL_BRANCH_ID, nullable = false, columnDefinition = OrderConstants.UUID_DEFINITION)
-        String branchId;
+    @NotBlank
+    @NotNull
+    @Column(name = OrderConstants.COL_BRANCH_ID, nullable = false, columnDefinition = OrderConstants.UUID_DEFINITION)
+    String branchId;
 
-        @Column(name = OrderConstants.COL_TABLE_ID, columnDefinition = OrderConstants.UUID_DEFINITION)
-        String tableId;
+    @Column(name = OrderConstants.COL_TABLE_ID, columnDefinition = OrderConstants.UUID_DEFINITION)
+    String tableId;
 
-        @Column(name = OrderConstants.COL_RESERVATION_ID, columnDefinition = OrderConstants.UUID_DEFINITION)
-        String reservationId;
+    @Column(name = OrderConstants.COL_RESERVATION_ID, columnDefinition = OrderConstants.UUID_DEFINITION)
+    String reservationId;
 
-        @NotBlank
-        @NotNull
-        @Size(max = OrderConstants.MAX_CHARS_ORDER_CODE)
-        @Column(name = OrderConstants.COL_ORDER_CODE, nullable = false, columnDefinition = OrderConstants.ORDER_CODE_DEFINITION)
-        String orderCode;
+    @NotBlank
+    @NotNull
+    @Size(max = OrderConstants.MAX_CHARS_ORDER_CODE)
+    @Column(name = OrderConstants.COL_ORDER_CODE, nullable = false, columnDefinition = OrderConstants.ORDER_CODE_DEFINITION)
+    String orderCode;
 
-        @NotNull
-        @Enumerated(EnumType.STRING)
-        @Column(name = OrderConstants.COL_ORDER_TYPE, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
-        OrderType orderType;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = OrderConstants.COL_ORDER_TYPE, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
+    OrderType orderType;
 
-        @Builder.Default
-        @NotNull
-        @Enumerated(EnumType.STRING)
-        @Column(name = OrderConstants.COL_STATUS, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
-        OrderStatus status = OrderStatus.PENDING;
+    @Builder.Default
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = OrderConstants.COL_STATUS, nullable = false, columnDefinition = OrderConstants.ENUM_DEFINITION)
+    OrderStatus status = OrderStatus.PENDING;
 
-        @Size(max = OrderConstants.MAX_CHARS_CUSTOMER_NAME)
-        @Column(name = OrderConstants.COL_CUSTOMER_NAME, columnDefinition = OrderConstants.CUSTOMER_NAME_DEFINITION)
-        String customerName;
+    @Size(max = OrderConstants.MAX_CHARS_CUSTOMER_NAME)
+    @Column(name = OrderConstants.COL_CUSTOMER_NAME, columnDefinition = OrderConstants.CUSTOMER_NAME_DEFINITION)
+    String customerName;
 
-        @Size(max = OrderConstants.MAX_CHARS_CUSTOMER_PHONE)
-        @Column(name = OrderConstants.COL_CUSTOMER_PHONE, columnDefinition = OrderConstants.CUSTOMER_PHONE_DEFINITION)
-        String customerPhone;
+    @Size(max = OrderConstants.MAX_CHARS_CUSTOMER_PHONE)
+    @Column(name = OrderConstants.COL_CUSTOMER_PHONE, columnDefinition = OrderConstants.CUSTOMER_PHONE_DEFINITION)
+    String customerPhone;
 
-        @Size(max = OrderConstants.MAX_CHARS_NOTE)
-        @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
-        String note;
+    @Size(max = OrderConstants.MAX_CHARS_NOTE)
+    @Column(name = OrderConstants.COL_NOTE, columnDefinition = OrderConstants.NOTE_DEFINITION)
+    String note;
 
-        @Builder.Default
-        @NotNull
-        @Column(name = OrderConstants.COL_SUBTOTAL, nullable = false, precision = OrderConstants.MONEY_PRECISION, scale = OrderConstants.MONEY_SCALE)
-        BigDecimal subtotal = BigDecimal.ZERO;
+    @Builder.Default
+    @NotNull
+    @Column(
+            name = OrderConstants.COL_SUBTOTAL,
+            nullable = false,
+            precision = OrderConstants.MONEY_PRECISION,
+            scale = OrderConstants.MONEY_SCALE
+    )
+    BigDecimal subtotal = BigDecimal.ZERO;
 
-        @Builder.Default
-        @NotNull
-        @Column(name = OrderConstants.COL_DISCOUNT_AMOUNT, nullable = false, precision = OrderConstants.MONEY_PRECISION, scale = OrderConstants.MONEY_SCALE)
-        BigDecimal discountAmount = BigDecimal.ZERO;
+    @Builder.Default
+    @NotNull
+    @Column(
+            name = OrderConstants.COL_DISCOUNT_AMOUNT,
+            nullable = false,
+            precision = OrderConstants.MONEY_PRECISION,
+            scale = OrderConstants.MONEY_SCALE
+    )
+    BigDecimal discountAmount = BigDecimal.ZERO;
 
-        @Builder.Default
-        @NotNull
-        @Column(name = OrderConstants.COL_TOTAL_AMOUNT, nullable = false, precision = OrderConstants.MONEY_PRECISION, scale = OrderConstants.MONEY_SCALE)
-        BigDecimal totalAmount = BigDecimal.ZERO;
+    @Builder.Default
+    @NotNull
+    @Column(
+            name = OrderConstants.COL_TOTAL_AMOUNT,
+            nullable = false,
+            precision = OrderConstants.MONEY_PRECISION,
+            scale = OrderConstants.MONEY_SCALE
+    )
+    BigDecimal totalAmount = BigDecimal.ZERO;
 }

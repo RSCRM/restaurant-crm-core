@@ -32,3 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 .env
+src/main/resources/data/seed_data_env.sql
+
+### Claude Code / AI tooling ###
+.claude/
+.superpowers/
+.understand-anything/
+docs/superpowers/
+documents/

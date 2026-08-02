@@ -7,6 +7,7 @@ import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.request.LicenseSearchRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,6 +40,7 @@ public class LicenseController {
     LicenseService licenseService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> createLicense(
             @Valid @RequestBody CreateLicenseRequest request
     ) {
@@ -52,6 +55,7 @@ public class LicenseController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PagingResponse<LicenseResponse>>> getLicenses(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size,
@@ -75,7 +79,34 @@ public class LicenseController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PagingResponse<LicenseResponse>>> searchLicenses(
+            @RequestBody LicenseSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        ApiResponse<PagingResponse<LicenseResponse>> response = ApiResponse.<PagingResponse<LicenseResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(licenseService.searchLicenses(searchRequest, pagingRequest))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> updateLicense(
             @PathVariable String id,
             @Valid @RequestBody UpdateLicenseRequest request
@@ -91,6 +122,7 @@ public class LicenseController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<DeleteLicenseResponse>> deleteLicense(
             @PathVariable String id
     ) {
@@ -105,6 +137,7 @@ public class LicenseController {
     }
 
     @PatchMapping("/{id}/lock")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> lockLicense(
             @PathVariable String id
     ) {
@@ -119,6 +152,7 @@ public class LicenseController {
     }
 
     @PatchMapping("/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseResponse>> reactivateLicense(
             @PathVariable String id
     ) {
@@ -133,6 +167,7 @@ public class LicenseController {
     }
 
     @GetMapping("/{id}/detail")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LicenseDetailResponse>> getLicenseDetail(
             @PathVariable String id,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,

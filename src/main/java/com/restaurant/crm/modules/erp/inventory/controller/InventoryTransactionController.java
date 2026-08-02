@@ -4,6 +4,7 @@ import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryTransactionRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryTransactionResponse;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryTransactionType;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryTransactionService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -12,6 +13,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/v1/erp/inventory-transactions")
@@ -71,16 +74,60 @@ public class InventoryTransactionController {
         );
     }
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_VIEW')")
-    public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactionsByBranch(
-        @PathVariable String branchId,
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactions(
         @RequestParam(value = "page", defaultValue = "1") int page,
         @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         PagingResponse<InventoryTransactionResponse> response =
             inventoryTransactionService.getTransactionsByBranch(
-                branchId,
+                page,
+                size
+            );
+
+        return ResponseEntity.ok(
+            ApiResponse.<PagingResponse<InventoryTransactionResponse>>builder()
+                .data(response)
+                .build()
+        );
+    }
+
+    @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_VIEW')")
+    @GetMapping("/type/{type}")
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactionsByType(
+        @PathVariable InventoryTransactionType type,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+
+        PagingResponse<InventoryTransactionResponse> response =
+            inventoryTransactionService.getTransactionsByType(
+                type,
+                page,
+                size
+            );
+
+        return ResponseEntity.ok(
+            ApiResponse.<PagingResponse<InventoryTransactionResponse>>builder()
+                .data(response)
+                .build()
+        );
+    }
+
+    @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_VIEW')")
+    @GetMapping("/date-range")
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactionsByDateRange(
+        @RequestParam Instant from,
+        @RequestParam Instant to,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+
+        PagingResponse<InventoryTransactionResponse> response =
+            inventoryTransactionService.getTransactionsByDateRange(
+                from,
+                to,
                 page,
                 size
             );

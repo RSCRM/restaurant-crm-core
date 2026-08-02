@@ -16,13 +16,11 @@ public interface IngredientService {
     );
 
     PagingResponse<IngredientResponse> getIngredientsByBranch(
-            String branchId,
             int page,
             int size
     );
 
     PagingResponse<IngredientResponse> searchIngredients(
-            String branchId,
             String ingredientName,
             int page,
             int size
@@ -35,5 +33,11 @@ public interface IngredientService {
 
     void deleteIngredient(
             String id
+    );
+
+    PagingResponse<IngredientResponse> getIngredientsByCategory(
+        String categoryId,
+        int page,
+        int size
     );
 }

@@ -1,23 +1,28 @@
 package com.restaurant.crm.modules.crm;
 
-import com.restaurant.crm.modules.crm.customer_account.dto.request.CustomerIdentifyRequest;
-import com.restaurant.crm.modules.crm.customer_account.dto.response.CustomerResponse;
-import com.restaurant.crm.modules.crm.customer_account.entity.Customer;
-import com.restaurant.crm.modules.crm.customer_account.enums.CustomerStatus;
-import com.restaurant.crm.modules.crm.customer_account.mapper.CustomerMapper;
-import com.restaurant.crm.modules.crm.customer_account.repository.CustomerRepository;
-import com.restaurant.crm.modules.crm.customer_account.service.impl.CustomerServiceImpl;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.request.VoucherRedeemRequest;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.CustomerVoucherResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.dto.response.VoucherResponse;
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.CustomerVoucher;
-import com.restaurant.crm.modules.crm.loyalty_voucher.entity.Voucher;
-import com.restaurant.crm.modules.crm.loyalty_voucher.enums.CustomerVoucherStatus;
-import com.restaurant.crm.modules.crm.loyalty_voucher.mapper.CustomerVoucherMapper;
-import com.restaurant.crm.modules.crm.loyalty_voucher.repository.CustomerVoucherRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.repository.VoucherRepository;
-import com.restaurant.crm.modules.crm.loyalty_voucher.service.impl.CustomerVoucherServiceImpl;
-import com.restaurant.crm.modules.crm.point_wallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.crm.customeraccount.dto.request.CustomerIdentifyRequest;
+import com.restaurant.crm.modules.crm.customeraccount.dto.response.CustomerResponse;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
+import com.restaurant.crm.modules.crm.customeraccount.mapper.CustomerMapper;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.customeraccount.service.impl.CustomerServiceImpl;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.request.VoucherRedeemRequest;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.CustomerVoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.dto.response.VoucherResponse;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.mapper.CustomerVoucherMapper;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
+import com.restaurant.crm.modules.crm.loyaltyvoucher.service.impl.CustomerVoucherServiceImpl;
+import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -49,6 +54,8 @@ public class CustomerLoyaltyTests {
     CustomerVoucherRepository customerVoucherRepository;
     @Mock
     VoucherRepository voucherRepository;
+    @Mock
+    OrganizationBranchRepository branchRepository;
     @Mock
     CustomerVoucherMapper customerVoucherMapper;
 
@@ -82,13 +89,13 @@ public class CustomerLoyaltyTests {
     public void testRedeemVoucher_Success() {
         VoucherRedeemRequest request = VoucherRedeemRequest.builder()
                 .customerId("cust-1")
-                .restaurantId("rest-1")
+                .branchId("rest-1")
                 .voucherId("vouch-1")
                 .build();
 
         Voucher voucher = Voucher.builder()
                 .id("vouch-1")
-                .restaurantId("rest-1")
+                .branchId("rest-1")
                 .title("Discount 10%")
                 .discountPercent(10)
                 .minBillAmount(BigDecimal.valueOf(100))
@@ -102,6 +109,13 @@ public class CustomerLoyaltyTests {
                 .status(CustomerStatus.ACTIVE)
                 .build();
 
+        Organization org = Organization.builder().id("rest-1").build();
+        OrganizationBranch branch = OrganizationBranch.builder()
+                .id("rest-1")
+                .organization(org)
+                .build();
+        when(branchRepository.findById("rest-1")).thenReturn(Optional.of(branch));
+
         when(voucherRepository.findById("vouch-1")).thenReturn(Optional.of(voucher));
         when(customerRepository.findById("cust-1")).thenReturn(Optional.of(customer));
         when(customerVoucherRepository.findByVoucherSn(anyString())).thenReturn(Optional.empty());
@@ -114,7 +128,7 @@ public class CustomerLoyaltyTests {
                 .build();
         CustomerVoucherResponse expectedResponse = CustomerVoucherResponse.builder()
                 .customerId("cust-1")
-                .restaurantId("rest-1")
+                .branchId("rest-1")
                 .voucher(voucherResponse)
                 .status(CustomerVoucherStatus.AVAILABLE)
                 .build();

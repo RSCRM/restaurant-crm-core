@@ -67,12 +67,6 @@ public class InventoryTransaction extends BaseEntity {
     )
     String note;
 
-    @Column(
-        name = InventoryTransactionConstants.COL_REFERENCE_ID,
-        columnDefinition = InventoryTransactionConstants.REFERENCE_ID_DEFINITION
-    )
-    String referenceId;
-
     @NotNull
     @Column(
         name = InventoryTransactionConstants.COL_TRANSACTION_TIME,
