@@ -7,6 +7,7 @@ import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.request.CreateLicenseRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.request.LicenseSearchRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.request.UpdateLicenseRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
@@ -73,6 +74,32 @@ public class LicenseController {
         ApiResponse<PagingResponse<LicenseResponse>> response = ApiResponse.<PagingResponse<LicenseResponse>>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(licenseService.getLicenses(request))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PagingResponse<LicenseResponse>>> searchLicenses(
+            @RequestBody LicenseSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        ApiResponse<PagingResponse<LicenseResponse>> response = ApiResponse.<PagingResponse<LicenseResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(licenseService.searchLicenses(searchRequest, pagingRequest))
                 .build();
 
         return ResponseEntity.ok(response);
