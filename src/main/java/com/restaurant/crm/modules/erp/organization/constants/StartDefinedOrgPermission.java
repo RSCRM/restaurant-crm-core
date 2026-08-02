@@ -19,7 +19,6 @@ public class StartDefinedOrgPermission {
     // Operations & Setup Permissions
     public static final String MENU_MANAGE = "MENU_MANAGE";
     public static final String TABLE_MANAGE = "TABLE_MANAGE";
-    public static final String TABLE_SESSION_CREATE = "TABLE_SESSION_CREATE";
     public static final String TABLE_MAP_READ = "TABLE_MAP_READ";
     public static final String TABLE_SEARCH_READ = "TABLE_SEARCH_READ";
     public static final String REPORT_VIEW = "REPORT_VIEW";

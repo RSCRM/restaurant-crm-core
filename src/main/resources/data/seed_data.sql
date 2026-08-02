@@ -323,3 +323,6 @@ INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, ema
 INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
     ('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
+
+
+

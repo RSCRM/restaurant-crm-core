@@ -6,7 +6,7 @@ Register a walk-in guest at an available table before an order is created.
 
 ## Actors
 
-- Branch manager, cashier, or waiter with `TABLE_SESSION_CREATE`.
+- Branch manager or staff with `TABLE_MANAGE` or `ORDER_CREATE`.
 - The request uses a context token. The branch is read from the token.
 
 ## Business Rules
