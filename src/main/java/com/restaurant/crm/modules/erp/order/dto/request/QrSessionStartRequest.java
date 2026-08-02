@@ -24,6 +24,9 @@ public class QrSessionStartRequest {
     @NotBlank(message = "CUSTOMER_PHONE_REQUIRED")
     String customerPhone;
 
-    @NotBlank(message = "TQR_OTP_TICKET_INVALID")
+    /**
+     * Proof of OTP for phones not yet on file. Optional: a returning customer (phone already
+     * exists in {@code Customer}) skips OTP entirely, so this may be null/blank for them.
+     */
     String otpTicket;
 }

@@ -32,10 +32,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
 
-/**
- * OTP request/verify orchestration (uc-c-03, BR-CST-ACC-02). QR-agnostic: branch/table arrive
- * as trusted parameters, so this class imports nothing from the erp domain. OTP lives in Redis.
- */
+
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

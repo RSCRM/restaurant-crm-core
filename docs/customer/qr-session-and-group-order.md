@@ -164,8 +164,8 @@ from request params (NFR-07).
 
 # OTP identification (uc-c-03)
 
-Phone + OTP is the gate before opening a session: it produces the `otpTicket` that
-`POST /public/customer/qr/session` (uc-c-02) consumes.
+Phone + OTP is the gate before opening a session for a **new** phone number: it produces the
+`otpTicket` that `POST /public/customer/qr/session` (uc-c-02) consumes.
 
 ```
 Scan TABLE QR
@@ -173,6 +173,17 @@ Scan TABLE QR
   → POST /public/customer/otp/verify   { qrToken, customerPhone, otpCode }   → returns otpTicket
   → POST /public/customer/qr/session   { qrToken, customerPhone, otpTicket } → opens the session (uc-c-02)
 ```
+
+> **Returning-customer shortcut (deliberate, team-approved UX trade-off):** if `customerPhone`
+> already exists in `Customer`, `QrSessionServiceImpl.start()` skips OTP entirely — `otpTicket` is
+> optional in that case. A `LOCKED` account is still rejected (`OTP_CUSTOMER_LOCKED`), but an
+> **active** returning phone opens the session with no proof of possession at all.
+>
+> 🔴 **Known security trade-off:** this means anyone who merely *knows* a registered customer's
+> phone number — not necessarily holds their phone — can open a session and become `OWNER` for
+> a table, with orders/points attributed to that phone. Regular customers are the most exposed,
+> since their number is guaranteed to already be on file. This was an explicit product decision to
+> speed up repeat visits; it is not a gap to "fix" without a matching decision to change it back.
 
 ## Module layout (no cross-module cycle)
 

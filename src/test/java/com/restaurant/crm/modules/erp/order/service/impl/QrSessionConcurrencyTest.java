@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
@@ -63,6 +64,7 @@ class QrSessionConcurrencyTest {
     @Mock QrSessionRedisRepository sessionRedisRepository;
     @Mock OrganizationBranchRepository organizationBranchRepository;
     @Mock RestaurantTableRepository restaurantTableRepository;
+    @Mock CustomerRepository customerRepository;
     @InjectMocks QrSessionServiceImpl service;
 
     @Test

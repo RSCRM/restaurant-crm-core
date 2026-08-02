@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Customer digital-menu endpoints (uc-c-04). Requires a CUSTOMER_SESSION token; the branch is
- * always resolved from that token (NFR-07), never from the request.
- */
+
 @Tag(name = "Customer Menu", description = "uc-c-04 — browse the branch digital menu")
 @RestController
 @RequiredArgsConstructor
