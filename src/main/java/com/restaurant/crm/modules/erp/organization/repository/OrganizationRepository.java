@@ -36,4 +36,14 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
     Optional<Organization> findByTaxCode(String taxCode);
 
     boolean existsByTaxCode(String taxCode);
+
+    Page<Organization> findById(
+        String id,
+        Pageable pageable
+    );
+
+    Page<Organization> findByOwnerId(
+        String ownerId,
+        Pageable pageable
+    );
 }
