@@ -10,10 +10,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
-/**
- * A single product in the customer menu (uc-c-04).
- * {@code available} is derived from the entity status; {@code branchId} is intentionally omitted.
- */
 @Getter
 @Setter
 @NoArgsConstructor

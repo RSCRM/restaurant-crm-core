@@ -14,9 +14,6 @@ import lombok.experimental.FieldDefaults;
 public class CreateIngredientCategoryRequest {
 
     @NotBlank
-    String branchId;
-
-    @NotBlank
     @Size(max = IngredientCategoryConstants.MAX_CHARS_CATEGORY_NAME)
     String categoryName;
 

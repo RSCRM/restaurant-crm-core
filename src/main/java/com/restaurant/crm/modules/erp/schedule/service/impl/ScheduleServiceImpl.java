@@ -4,6 +4,7 @@ import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.schedule.constants.WorkScheduleConstants;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleCreationRequest;
@@ -68,6 +69,21 @@ public class ScheduleServiceImpl implements ScheduleService {
                         to
                 )
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PersonalScheduleResponse> getManagedSchedules(LocalDate from, LocalDate to) {
+        validateDateRange(from, to);
+        List<WorkSchedule> schedules = AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION
+                ? workScheduleRepository.findByBranchOrganizationIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                        AuthUtils.getOrganizationId(), from, to)
+                : workScheduleRepository.findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                        AuthUtils.getBranchId(), from, to);
+        String currentEmployeeId = AuthUtils.getEmployeeId();
+        return workScheduleMapper.toResponseList(schedules.stream()
+                .filter(schedule -> !Objects.equals(schedule.getEmployee().getId(), currentEmployeeId))
+                .toList());
     }
 
     @Override

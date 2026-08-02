@@ -23,20 +23,17 @@ public interface InventoryTransactionService {
     );
 
     PagingResponse<InventoryTransactionResponse> getTransactionsByBranch(
-        String branchId,
         int page,
         int size
     );
 
     PagingResponse<InventoryTransactionResponse> getTransactionsByType(
-        String branchId,
         InventoryTransactionType type,
         int page,
         int size
     );
 
     PagingResponse<InventoryTransactionResponse> getTransactionsByDateRange(
-        String branchId,
         Instant from,
         Instant to,
         int page,

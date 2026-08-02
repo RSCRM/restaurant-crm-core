@@ -20,6 +20,7 @@ import java.time.LocalTime;
 public class PersonalScheduleResponse {
     String id;
     String employeeId;
+    String employeeName;
     String branchId;
     String branchName;
     LocalDate workDate;

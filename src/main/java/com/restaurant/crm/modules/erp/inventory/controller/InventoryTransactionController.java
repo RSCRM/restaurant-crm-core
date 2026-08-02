@@ -74,16 +74,14 @@ public class InventoryTransactionController {
         );
     }
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_VIEW')")
-    public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactionsByBranch(
-        @PathVariable String branchId,
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactions(
         @RequestParam(value = "page", defaultValue = "1") int page,
         @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         PagingResponse<InventoryTransactionResponse> response =
             inventoryTransactionService.getTransactionsByBranch(
-                branchId,
                 page,
                 size
             );
@@ -96,9 +94,8 @@ public class InventoryTransactionController {
     }
 
     @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_VIEW')")
-    @GetMapping("/branch/{branchId}/type/{type}")
+    @GetMapping("/type/{type}")
     public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactionsByType(
-        @PathVariable String branchId,
         @PathVariable InventoryTransactionType type,
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "10") int size
@@ -106,7 +103,6 @@ public class InventoryTransactionController {
 
         PagingResponse<InventoryTransactionResponse> response =
             inventoryTransactionService.getTransactionsByType(
-                branchId,
                 type,
                 page,
                 size
@@ -120,9 +116,8 @@ public class InventoryTransactionController {
     }
 
     @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_VIEW')")
-    @GetMapping("/branch/{branchId}/date-range")
+    @GetMapping("/date-range")
     public ResponseEntity<ApiResponse<PagingResponse<InventoryTransactionResponse>>> getTransactionsByDateRange(
-        @PathVariable String branchId,
         @RequestParam Instant from,
         @RequestParam Instant to,
         @RequestParam(defaultValue = "1") int page,
@@ -131,7 +126,6 @@ public class InventoryTransactionController {
 
         PagingResponse<InventoryTransactionResponse> response =
             inventoryTransactionService.getTransactionsByDateRange(
-                branchId,
                 from,
                 to,
                 page,

@@ -16,7 +16,6 @@ public interface IngredientCategoryService {
     );
 
     PagingResponse<IngredientCategoryResponse> getIngredientCategories(
-            String branchId,
             int page,
             int size
     );

@@ -31,10 +31,16 @@
 
 ## API contract
 
-`GET /api/v1/users/me`
+`GET /api/v1/profile/me`
 
 Response: `ApiResponse<UserProfileResponse>`.
 
 ## Database design
 
 The existing `users`, `user_profiles`, `roles`, and user-role relation are reused. `user_profiles.user_id` is unique and references `users.id`; `user_profiles.phone` is also unique.
+
+## Authorization boundary
+
+- Profile APIs enforce `PROFILE_VIEW`, `PROFILE_UPDATE`, and the JWT `dataScope`.
+- Role hierarchy, direct employee permission grants, permission audit history, token invalidation after a role change, and multi-owner safeguards belong to the Employee/Org Role/Auth modules.
+- UC-CM-05 does not modify User, Organization, Branch, Employee, or Org Role management behavior.
