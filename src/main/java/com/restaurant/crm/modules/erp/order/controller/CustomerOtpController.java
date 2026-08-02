@@ -27,7 +27,7 @@ import java.time.Instant;
 
 
 @Tag(name = "Customer OTP", description = "identify a customer by phone + OTP")
-@RestController
+@RestController("erpOrderCustomerOtpController")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomerOtpController {
