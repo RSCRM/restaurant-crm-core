@@ -4,10 +4,13 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.attendance.constants.AttendanceConstants;
+import com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants;
 import com.restaurant.crm.modules.erp.attendance.dto.request.AttendanceCheckInRequest;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceQrResponse;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceResponse;
+import com.restaurant.crm.modules.erp.attendance.dto.response.EmployeeAttendanceResponse;
 import com.restaurant.crm.modules.erp.attendance.entity.Attendance;
 import com.restaurant.crm.modules.erp.attendance.entity.ShiftAssignment;
 import com.restaurant.crm.modules.erp.attendance.enums.AttendanceStatus;
@@ -22,6 +25,8 @@ import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatu
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -39,6 +44,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -51,17 +59,26 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AttendanceServiceImpl implements AttendanceService {
 
+    private static final String MANAGER_ROLE = "MANAGER";
+
     AttendanceRepository attendanceRepository;
     ShiftAssignmentRepository shiftAssignmentRepository;
     EmployeeRepository employeeRepository;
     OrganizationBranchRepository organizationBranchRepository;
+    UserProfileRepository userProfileRepository;
     AttendanceMapper attendanceMapper;
+    SseEmitterService sseEmitterService;
 
     @NonFinal
     @Value("${security.jwt.signer-key}")
@@ -69,14 +86,10 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     @Transactional(readOnly = true)
-    public AttendanceQrResponse getCurrentQr() {
-        String organizationId = AuthUtils.getOrganizationId();
-        String branchId = AuthUtils.getBranchId();
-        if (organizationId == null || branchId == null) {
-            throw new AppException(ErrorCode.ATTENDANCE_QR_CONTEXT_MISMATCH);
-        }
-        OrganizationBranch branch = organizationBranchRepository.findById(branchId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+    public AttendanceQrResponse getCurrentQr(String requestedBranchId) {
+        OrganizationBranch branch = resolveBranch(requestedBranchId);
+        String organizationId = branch.getOrganization().getId();
+        String branchId = branch.getId();
         if (branch.getStatus() != OrganizationBranchStatus.ACTIVE) {
             throw new AppException(ErrorCode.ORGANIZATION_BRANCH_INACTIVE);
         }
@@ -86,10 +99,9 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         Instant now = Instant.now();
-        Instant issuedAt = Instant.ofEpochSecond(
-                now.getEpochSecond() - now.getEpochSecond() % AttendanceConstants.QR_VALIDITY_SECONDS);
+        Instant issuedAt = now.truncatedTo(ChronoUnit.SECONDS);
         Instant expiresAt = issuedAt.plusSeconds(AttendanceConstants.QR_VALIDITY_SECONDS);
-        String qrSessionId = branchId + ":" + issuedAt.getEpochSecond();
+        String qrSessionId = branchId + ":" + UUID.randomUUID();
 
         try {
             byte[] dailySecret = deriveDailySecret(organizationId, branchId, issuedAt);
@@ -149,7 +161,9 @@ public class AttendanceServiceImpl implements AttendanceService {
                         : AttendanceStatus.ON_TIME)
                 .build();
 
-        return attendanceMapper.toResponse(attendanceRepository.save(attendance));
+        Attendance saved = attendanceRepository.save(attendance);
+        broadcastAfterCommit(shift.getBranch().getId(), employee.getId());
+        return attendanceMapper.toResponse(saved);
     }
 
     @Override
@@ -161,21 +175,40 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .orElseThrow(() -> new AppException(ErrorCode.ATTENDANCE_OPEN_RECORD_NOT_FOUND));
 
         attendance.setCheckOutAt(Instant.now());
-        return attendanceMapper.toResponse(attendanceRepository.save(attendance));
+        Attendance saved = attendanceRepository.save(attendance);
+        broadcastAfterCommit(
+                attendance.getShiftAssignment().getBranch().getId(), employee.getId());
+        return attendanceMapper.toResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<AttendanceResponse> getMyHistory(
             LocalDate from, LocalDate to, int page, int size) {
+        return getHistory(currentEmployee().getId(), from, to, page, size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<AttendanceResponse> getEmployeeHistory(
+            String employeeId, LocalDate from, LocalDate to,
+            int page, int size, String requestedBranchId) {
+        String branchId = resolveBranch(requestedBranchId).getId();
+        employeeRepository.findByIdAndBranch_IdAndOrgRole_RoleNameNot(
+                        employeeId, branchId, MANAGER_ROLE)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        return getHistory(employeeId, from, to, page, size);
+    }
+
+    private PagingResponse<AttendanceResponse> getHistory(
+            String employeeId, LocalDate from, LocalDate to, int page, int size) {
         if (from.isAfter(to)) {
             throw new AppException(ErrorCode.ATTENDANCE_DATE_RANGE_INVALID);
         }
 
-        Employee employee = currentEmployee();
         Page<Attendance> result = attendanceRepository
                 .findByShiftAssignmentEmployeeIdAndShiftAssignmentWorkDateBetween(
-                        employee.getId(), from, to,
+                        employeeId, from, to,
                         PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "checkInAt")));
 
         return PagingResponse.<AttendanceResponse>builder()
@@ -185,6 +218,98 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .totalElement(result.getTotalElements())
                 .data(result.getContent().stream().map(attendanceMapper::toResponse).toList())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmployeeAttendanceResponse> getBranchAttendance(
+            LocalDate workDate, String requestedBranchId) {
+        String branchId = resolveBranch(requestedBranchId).getId();
+
+        List<Employee> employees = employeeRepository
+                .findByBranch_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
+                        branchId, EmployeeStatus.ACTIVE, MANAGER_ROLE);
+        Map<String, Attendance> attendanceByEmployee = attendanceRepository
+                .findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(branchId, workDate)
+                .stream()
+                .collect(Collectors.toMap(
+                        attendance -> attendance.getShiftAssignment().getEmployee().getId(),
+                        Function.identity(),
+                        (first, second) -> second.getCheckInAt().isAfter(first.getCheckInAt())
+                                ? second : first));
+        Map<String, String> namesByUser = userProfileRepository
+                .findByUser_IdIn(employees.stream()
+                        .map(employee -> employee.getUser().getId())
+                        .toList())
+                .stream()
+                .filter(profile -> profile.getFullName() != null
+                        && !profile.getFullName().isBlank())
+                .collect(Collectors.toMap(
+                        profile -> profile.getUser().getId(),
+                        UserProfile::getFullName));
+
+        return employees.stream().map(employee -> {
+            Attendance attendance = attendanceByEmployee.get(employee.getId());
+            ShiftAssignment shift = attendance == null ? null : attendance.getShiftAssignment();
+            return EmployeeAttendanceResponse.builder()
+                    .employeeId(employee.getId())
+                    .employeeName(namesByUser.getOrDefault(
+                            employee.getUser().getId(), employee.getUser().getUsername()))
+                    .username(employee.getUser().getUsername())
+                    .workDate(workDate)
+                    .scheduledStart(shift == null ? null : shift.getStartAt())
+                    .scheduledEnd(shift == null ? null : shift.getEndAt())
+                    .checkInAt(attendance == null ? null : attendance.getCheckInAt())
+                    .checkOutAt(attendance == null ? null : attendance.getCheckOutAt())
+                    .status(attendance == null ? null : attendance.getStatus())
+                    .working(LocalDate.now().equals(workDate)
+                            && attendance != null
+                            && attendance.getCheckOutAt() == null)
+                    .build();
+        }).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SseEmitter subscribe(String requestedBranchId) {
+        return sseEmitterService.createEmitter(resolveBranch(requestedBranchId).getId());
+    }
+
+    private void broadcastAfterCommit(String branchId, String employeeId) {
+        Runnable broadcast = () -> sseEmitterService.broadcastToBranch(
+                branchId, "ATTENDANCE_UPDATED", employeeId,
+                AttendancePermissionConstants.BRANCH_READ);
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            broadcast.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        broadcast.run();
+                    }
+                });
+    }
+
+    private OrganizationBranch resolveBranch(String requestedBranchId) {
+        String organizationId = AuthUtils.getOrganizationId();
+        String contextBranchId = AuthUtils.getBranchId();
+        String branchId = contextBranchId == null ? requestedBranchId : contextBranchId;
+        if (organizationId == null || branchId == null
+                || (contextBranchId != null
+                && requestedBranchId != null
+                && !contextBranchId.equals(requestedBranchId))) {
+            throw new AppException(ErrorCode.ATTENDANCE_QR_CONTEXT_MISMATCH);
+        }
+
+        OrganizationBranch branch = organizationBranchRepository.findById(branchId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        if (branch.getOrganization() == null
+                || !organizationId.equals(branch.getOrganization().getId())) {
+            throw new AppException(ErrorCode.ATTENDANCE_QR_CONTEXT_MISMATCH);
+        }
+        return branch;
     }
 
     private Employee currentEmployee() {
