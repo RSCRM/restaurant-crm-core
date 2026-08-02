@@ -8,12 +8,14 @@ import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryTrans
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryTransactionResponse;
 import com.restaurant.crm.modules.erp.inventory.entity.Inventory;
 import com.restaurant.crm.modules.erp.inventory.entity.InventoryTransaction;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryTransactionDirection;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryTransactionType;
 import com.restaurant.crm.modules.erp.inventory.mapper.InventoryTransactionMapper;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryRepository;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryTransactionRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryTransactionService;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,14 +39,15 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         CreateInventoryTransactionRequest request
     ) {
 
+        String branchId = AuthUtils.getBranchId();
+
         Inventory inventory =
-            inventoryRepository.findById(
-                    request.getInventoryId()
+            inventoryRepository.findByIdAndIngredientBranchId(
+                    request.getInventoryId(),
+                    branchId
                 )
                 .orElseThrow(() ->
-                    new AppException(
-                        ErrorCode.INVENTORY_NOT_FOUND
-                    )
+                    new AppException(ErrorCode.INVENTORY_NOT_FOUND)
                 );
 
         InventoryTransaction transaction =
@@ -75,22 +78,45 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         BigDecimal quantity
     ) {
 
-        if(direction == InventoryTransactionDirection.IN) {
+        if (direction == InventoryTransactionDirection.OUT
+            && inventory.getQuantity().compareTo(quantity) < 0) {
+            throw new AppException(ErrorCode.INVENTORY_INSUFFICIENT_STOCK);
+        }
 
+        if(direction == InventoryTransactionDirection.IN) {
             inventory.setQuantity(
                 inventory.getQuantity()
                     .add(quantity)
             );
 
         } else {
-
             inventory.setQuantity(
                 inventory.getQuantity()
                     .subtract(quantity)
             );
         }
 
-        inventoryRepository.save(inventory);
+        inventory.setStatus(
+            calculateStatus(
+                inventory.getQuantity(),
+                inventory.getMinimumQuantity()
+            )
+        );
+    }
+
+    private InventoryStatus calculateStatus(
+        BigDecimal quantity,
+        BigDecimal minimumQuantity
+    ) {
+        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return InventoryStatus.OUT_OF_STOCK;
+        }
+
+        if (quantity.compareTo(minimumQuantity) <= 0) {
+            return InventoryStatus.LOW;
+        }
+
+        return InventoryStatus.GOOD;
     }
 
     @Override
@@ -98,8 +124,12 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     public InventoryTransactionResponse getTransactionById(
         String id
     ) {
+        String branchId = AuthUtils.getBranchId();
 
-        return transactionRepository.findById(id)
+        return transactionRepository.findByIdAndInventoryIngredientBranchId(
+                id,
+                branchId
+            )
             .map(transactionMapper::toInventoryTransactionResponse)
             .orElseThrow(() ->
                 new AppException(
@@ -115,6 +145,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         int page,
         int size
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         Pageable pageable =
             PageRequest.of(
@@ -123,8 +154,9 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             );
 
         Page<InventoryTransaction> result =
-            transactionRepository.findByInventoryId(
+            transactionRepository.findByInventoryIdAndInventoryIngredientBranchId(
                 inventoryId,
+                branchId,
                 pageable
             );
 
@@ -145,10 +177,10 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<InventoryTransactionResponse> getTransactionsByBranch(
-        String branchId,
         int page,
         int size
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         Pageable pageable =
             PageRequest.of(
@@ -179,11 +211,11 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<InventoryTransactionResponse> getTransactionsByType(
-        String branchId,
         InventoryTransactionType type,
         int page,
         int size
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         Pageable pageable =
             PageRequest.of(
@@ -218,12 +250,16 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<InventoryTransactionResponse> getTransactionsByDateRange(
-        String branchId,
         Instant from,
         Instant to,
         int page,
         int size
     ) {
+        String branchId = AuthUtils.getBranchId();
+
+        if (from.isAfter(to)) {
+            throw new AppException(ErrorCode.INVALID_DATE_RANGE);
+        }
 
         Pageable pageable =
             PageRequest.of(

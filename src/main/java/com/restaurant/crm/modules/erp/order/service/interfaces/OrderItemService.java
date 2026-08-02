@@ -8,9 +8,7 @@ import com.restaurant.crm.modules.erp.order.dto.response.AddOrderItemResponse;
 import com.restaurant.crm.modules.erp.order.dto.response.OrderItemResponse;
 import com.restaurant.crm.modules.erp.order.enums.OrderItemStatus;
 
-/**
- * Service interface for managing order items.
- */
+
 public interface OrderItemService {
 
     AddOrderItemResponse addOrderItem(String orderId, AddOrderItemRequestDto request);
@@ -21,12 +19,5 @@ public interface OrderItemService {
 
     void removeOrderItem(String orderId, String orderItemId);
 
-    /**
-     * Updates the preparation status of an order item and triggers a notification if ready.
-     *
-     * @param orderItemId the ID of the order item to update
-     * @param request the request body containing the new status and reason
-     * @return the updated OrderItemResponse
-     */
     OrderItemResponse updateStatus(String orderItemId, UpdateOrderItemStatusRequest request);
 }

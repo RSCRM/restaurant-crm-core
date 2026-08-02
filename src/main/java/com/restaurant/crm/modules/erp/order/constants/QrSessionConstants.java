@@ -3,7 +3,7 @@ package com.restaurant.crm.modules.erp.order.constants;
 public final class QrSessionConstants {
 
 
-    public static final long SESSION_TTL_SECONDS = 14400L;
+    public static final long SESSION_TTL_SECONDS = 86400L;
 
     public static final long GROUP_QR_TTL_SECONDS = 1800L;
 

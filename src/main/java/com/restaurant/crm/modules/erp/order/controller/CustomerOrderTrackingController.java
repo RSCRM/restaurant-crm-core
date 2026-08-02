@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * Customer order-tracking endpoints (uc-c-06). Requires a CUSTOMER_SESSION token; the order id is
- * resolved from the session, never from the client. Real time reuses the order-keyed SSE channel.
- */
+
 @Tag(name = "Customer Order Tracking", description = "uc-c-06 — track cooking progress in real time")
 @RestController
 @RequiredArgsConstructor

@@ -208,7 +208,7 @@ public enum ErrorCode {
     INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
     INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
     INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
-
+    INVALID_DATE_RANGE("INV_1005", "Invalid date", HttpStatus.BAD_REQUEST),
     // ==== INVENTORY TRANSACTION ERRORS ====
     INVENTORY_TRANSACTION_NOT_FOUND("INV_TX_1000", "Inventory transaction not found", HttpStatus.NOT_FOUND),
     INVENTORY_TRANSACTION_INVALID_QUANTITY("INV_TX_1001", "Transaction quantity must be greater than zero", HttpStatus.BAD_REQUEST),

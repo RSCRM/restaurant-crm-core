@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-/** Per-stage item counts for the tracking view (uc-c-06); {@code total} = sum of all lines. */
+
 @Getter
 @Setter
 @NoArgsConstructor

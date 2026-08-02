@@ -12,11 +12,7 @@ import org.mapstruct.Named;
 
 import java.util.List;
 
-/**
- * Maps the internal {@code OrderCookingStatusResponse} to the customer tracking DTO (uc-c-06).
- * Drops {@code customerPhone} (not present on the target) and enriches each line with the
- * customer stage. {@code hasActiveOrder} and {@code summary} are filled by the service.
- */
+
 @Mapper(componentModel = "spring")
 public interface CustomerOrderTrackingMapper {
 
