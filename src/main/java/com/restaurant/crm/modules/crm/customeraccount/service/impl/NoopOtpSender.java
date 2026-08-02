@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@Primary
-@Profile("!dev")
+@Profile("!dev & !local & !default")
 public class NoopOtpSender implements OtpSender {
 
     @Override

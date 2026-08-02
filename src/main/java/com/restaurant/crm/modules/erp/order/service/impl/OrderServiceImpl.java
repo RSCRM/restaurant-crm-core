@@ -201,7 +201,10 @@ public class OrderServiceImpl implements OrderService {
                             .phone(request.getCustomerPhone())
                             .status(com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus.ACTIVE)
                             .build()));
-            pointWalletService.initializeWallet(customer.getId(), branchId);
+            String orgId = organizationBranchRepository.findById(branchId)
+                    .map(b -> b.getOrganization() != null ? b.getOrganization().getId() : branchId)
+                    .orElse(branchId);
+            pointWalletService.initializeWallet(customer.getId(), orgId);
         }
 
         if (table != null) {
