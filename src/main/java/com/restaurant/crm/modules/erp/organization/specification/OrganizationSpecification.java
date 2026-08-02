@@ -14,7 +14,7 @@ public class OrganizationSpecification {
     public static Specification<Organization> build(OrganizationSearchRequest request,
             String dataScopeOrgId, String dataScopeBranchId, String currentUserId) {
 
-        Specification<Organization> spec = Specification.where(null);
+        Specification<Organization> spec = (root, query, cb) -> cb.conjunction();
 
         // ── Search filters ──
         if (request != null) {
@@ -30,6 +30,19 @@ public class OrganizationSpecification {
                         cb.like(cb.lower(root.get("taxCode")), pattern));
             }
 
+            if (request.getPhone() != null && !request.getPhone().isBlank()) {
+                String pattern = "%" + request.getPhone().trim() + "%";
+                spec = spec.and((root, query, cb) ->
+                        cb.like(root.get("phone"), pattern));
+            }
+
+            if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                String pattern = "%" + request.getEmail().trim().toLowerCase() + "%";
+                spec = spec.and((root, query, cb) ->
+                        cb.like(cb.lower(root.get("email")), pattern));
+            }
+
+            // ── Filter fields ──
             if (request.getOwnerId() != null && !request.getOwnerId().isBlank()) {
                 spec = spec.and((root, query, cb) ->
                         cb.equal(root.get("owner").get("id"), request.getOwnerId()));
@@ -44,18 +57,6 @@ public class OrganizationSpecification {
                 String pattern = "%" + request.getAddress().trim().toLowerCase() + "%";
                 spec = spec.and((root, query, cb) ->
                         cb.like(cb.lower(root.get("address")), pattern));
-            }
-
-            if (request.getPhone() != null && !request.getPhone().isBlank()) {
-                String pattern = "%" + request.getPhone().trim() + "%";
-                spec = spec.and((root, query, cb) ->
-                        cb.like(root.get("phone"), pattern));
-            }
-
-            if (request.getEmail() != null && !request.getEmail().isBlank()) {
-                String pattern = "%" + request.getEmail().trim().toLowerCase() + "%";
-                spec = spec.and((root, query, cb) ->
-                        cb.like(cb.lower(root.get("email")), pattern));
             }
         }
 
