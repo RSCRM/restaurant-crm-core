@@ -141,6 +141,22 @@ class TableSessionServiceImplTest {
         }
     }
 
+    @Test
+    void getActiveByTable_returnsSessionInCurrentBranch() {
+        TableSession session = TableSession.builder().id("session-1").branchId("branch-1").status(TableSessionStatus.ACTIVE).build();
+        TableSessionResponse mapped = TableSessionResponse.builder().id("session-1").build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(activeBranch()));
+            when(tableSessionRepository.findByTableIdAndStatus("table-1", TableSessionStatus.ACTIVE))
+                    .thenReturn(Optional.of(session));
+            when(tableSessionMapper.toResponse(session)).thenReturn(mapped);
+
+            assertEquals("session-1", tableSessionService.getActiveByTable("table-1").getId());
+        }
+    }
+
     private OrganizationBranch activeBranch() {
         return OrganizationBranch.builder()
                 .id("branch-1")
