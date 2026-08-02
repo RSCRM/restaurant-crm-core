@@ -61,6 +61,12 @@ public class AuthUtils {
                 .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role));
     }
 
+    public static boolean hasOrgRole(String role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals(role));
+    }
+
     // ==== QR ordering / customer session claims (uc-c-02) ====
 
     public static String getSessionId() {

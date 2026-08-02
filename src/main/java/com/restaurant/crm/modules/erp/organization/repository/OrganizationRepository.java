@@ -5,13 +5,14 @@ import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface OrganizationRepository extends JpaRepository<Organization, String> {
+public interface OrganizationRepository extends JpaRepository<Organization, String>, JpaSpecificationExecutor<Organization> {
 
     Optional<Organization> findByOwnerId(String ownerId);
     Optional<Organization> findByIdAndOwnerId(String id, String ownerId);
