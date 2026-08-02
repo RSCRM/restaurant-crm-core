@@ -1,8 +1,12 @@
 package com.restaurant.crm.modules.erp.inventory.controller;
 
+import com.restaurant.crm.common.constant.PaginationConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryRequest;
+import com.restaurant.crm.modules.erp.inventory.dto.request.InventorySearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
@@ -105,24 +109,35 @@ public class InventoryController {
         );
     }
 
+    @PostMapping("/search")
     @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
-    @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<PagingResponse<InventoryResponse>>> getInventoriesByStatus(
-        @PathVariable InventoryStatus status,
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryResponse>>> searchInventories(
+        @RequestBody InventorySearchRequest searchRequest,
         @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = PaginationConstant.DESC) String direction,
+        @RequestParam(defaultValue = "createdAt") String field
     ) {
 
-        PagingResponse<InventoryResponse> response =
-            inventoryService.getInventoriesByStatus(
-                status,
-                page,
-                size
-            );
+        PagingRequest pagingRequest = PagingRequest.builder()
+            .page(page)
+            .pageSize(size)
+            .sortRequest(
+                SortRequest.builder()
+                    .direction(direction)
+                    .field(field)
+                    .build()
+            )
+            .build();
 
         return ResponseEntity.ok(
             ApiResponse.<PagingResponse<InventoryResponse>>builder()
-                .data(response)
+                .data(
+                    inventoryService.searchInventories(
+                        searchRequest,
+                        pagingRequest
+                    )
+                )
                 .build()
         );
     }

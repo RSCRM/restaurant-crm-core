@@ -5,12 +5,13 @@ import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface InventoryRepository extends JpaRepository<Inventory, String> {
+public interface InventoryRepository extends JpaRepository<Inventory, String>, JpaSpecificationExecutor<Inventory> {
     Optional<Inventory> findByIdAndIngredientBranchId(
         String ingredientId,
         String branchId
@@ -38,12 +39,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, String> {
 
     Page<Inventory> findByIngredientIngredientNameContainingIgnoreCase(
         String ingredientName,
-        Pageable pageable
-    );
-
-    Page<Inventory> findByIngredientBranchIdAndStatus(
-        String branchId,
-        InventoryStatus status,
         Pageable pageable
     );
 }
