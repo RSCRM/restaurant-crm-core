@@ -13,6 +13,7 @@ import com.restaurant.crm.modules.erp.inventory.repository.IngredientCategoryRep
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.IngredientCategoryService;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,19 +34,21 @@ public class IngredientCategoryServiceImpl implements IngredientCategoryService 
 
     IngredientCategoryMapper ingredientCategoryMapper;
 
+
     @Override
     @Transactional
     public IngredientCategoryResponse createIngredientCategory(
             CreateIngredientCategoryRequest request
     ) {
 
-        OrganizationBranch branch = organizationBranchRepository.findById(request.getBranchId())
-                .orElseThrow(() ->
-                        new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        String branchId = AuthUtils.getBranchId();
+        OrganizationBranch branch = organizationBranchRepository.findById(branchId)
+            .orElseThrow(() ->
+                new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
 
         if (ingredientCategoryRepository.existsByBranchIdAndCategoryName(
-                request.getBranchId(),
-                request.getCategoryName())) {
+            branchId,
+            request.getCategoryName())) {
 
             throw new AppException(ErrorCode.INGREDIENT_CATEGORY_EXISTS);
         }
@@ -67,9 +70,10 @@ public class IngredientCategoryServiceImpl implements IngredientCategoryService 
     public IngredientCategoryResponse getIngredientCategoryById(
             String id
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         IngredientCategory ingredientCategory =
-                ingredientCategoryRepository.findById(id)
+                ingredientCategoryRepository.findByIdAndBranchId(id, branchId)
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.INGREDIENT_CATEGORY_NOT_FOUND));
 
@@ -81,7 +85,6 @@ public class IngredientCategoryServiceImpl implements IngredientCategoryService 
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<IngredientCategoryResponse> getIngredientCategories(
-            String branchId,
             int page,
             int size
     ) {
@@ -91,6 +94,7 @@ public class IngredientCategoryServiceImpl implements IngredientCategoryService 
                 size
         );
 
+        String branchId = AuthUtils.getBranchId();
         Page<IngredientCategory> ingredientCategoryPage =
                 ingredientCategoryRepository.findByBranchId(
                         branchId,
@@ -117,16 +121,17 @@ public class IngredientCategoryServiceImpl implements IngredientCategoryService 
             String id,
             UpdateIngredientCategoryRequest request
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         IngredientCategory ingredientCategory =
-                ingredientCategoryRepository.findById(id)
+                ingredientCategoryRepository.findByIdAndBranchId(id, branchId)
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.INGREDIENT_CATEGORY_NOT_FOUND));
 
         if (request.getCategoryName() != null
                 && !request.getCategoryName().equals(ingredientCategory.getCategoryName())
                 && ingredientCategoryRepository.existsByBranchIdAndCategoryName(
-                ingredientCategory.getBranch().getId(),
+                branchId,
                 request.getCategoryName())) {
 
             throw new AppException(ErrorCode.INGREDIENT_CATEGORY_EXISTS);
@@ -151,9 +156,10 @@ public class IngredientCategoryServiceImpl implements IngredientCategoryService 
     public void deleteIngredientCategory(
             String id
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         IngredientCategory ingredientCategory =
-                ingredientCategoryRepository.findById(id)
+                ingredientCategoryRepository.findByIdAndBranchId(id, branchId)
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.INGREDIENT_CATEGORY_NOT_FOUND));
 

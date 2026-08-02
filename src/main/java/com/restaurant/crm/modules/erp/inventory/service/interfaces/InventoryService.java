@@ -20,7 +20,6 @@ public interface InventoryService {
     );
 
     PagingResponse<InventoryResponse> getInventoriesByBranch(
-        String branchId,
         int page,
         int size
     );
@@ -31,7 +30,6 @@ public interface InventoryService {
     );
 
     PagingResponse<InventoryResponse> getInventoriesByStatus(
-        String branchId,
         InventoryStatus status,
         int page,
         int size

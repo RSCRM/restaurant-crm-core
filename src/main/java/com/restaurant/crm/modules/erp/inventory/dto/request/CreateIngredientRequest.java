@@ -14,9 +14,6 @@ import lombok.experimental.FieldDefaults;
 public class CreateIngredientRequest {
 
     @NotBlank
-    String branchId;
-
-    @NotBlank
     String ingredientCategoryId;
 
     @NotBlank

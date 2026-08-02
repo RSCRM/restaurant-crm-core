@@ -38,17 +38,15 @@ public class IngredientCategoryController {
         );
     }
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('INGREDIENT_CATEGORY_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<IngredientCategoryResponse>>> getIngredientCategories(
-            @PathVariable String branchId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
 
         PagingResponse<IngredientCategoryResponse> response =
                 ingredientCategoryService.getIngredientCategories(
-                        branchId,
                         page,
                         size
                 );
