@@ -129,6 +129,7 @@ public class OrgPermissionInitializer implements ApplicationRunner {
                 AttendancePermissionConstants.QR_DISPLAY,
                 AttendancePermissionConstants.SELF_WRITE,
                 AttendancePermissionConstants.SELF_READ,
+                AttendancePermissionConstants.BRANCH_READ,
 
                 // ── Voucher ──
                 VoucherPermissionConstants.VOUCHER_CREATE,

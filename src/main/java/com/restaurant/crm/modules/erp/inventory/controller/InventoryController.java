@@ -67,16 +67,14 @@ public class InventoryController {
         );
     }
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
-    public ResponseEntity<ApiResponse<PagingResponse<InventoryResponse>>> getInventoriesByBranch(
-        @PathVariable String branchId,
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryResponse>>> getInventories(
         @RequestParam(value = "page", defaultValue = "1") int page,
         @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         PagingResponse<InventoryResponse> response =
             inventoryService.getInventoriesByBranch(
-                branchId,
                 page,
                 size
             );
@@ -108,9 +106,8 @@ public class InventoryController {
     }
 
     @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
-    @GetMapping("/branch/{branchId}/status/{status}")
+    @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<PagingResponse<InventoryResponse>>> getInventoriesByStatus(
-        @PathVariable String branchId,
         @PathVariable InventoryStatus status,
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "10") int size
@@ -118,7 +115,6 @@ public class InventoryController {
 
         PagingResponse<InventoryResponse> response =
             inventoryService.getInventoriesByStatus(
-                branchId,
                 status,
                 page,
                 size

@@ -9,6 +9,7 @@ public class JwtClaimSetConstant {
     public static final String CLAIM_BRANCH_ID = "branchId";
     public static final String CLAIM_EMPLOYEE_ID = "employeeId";
     public static final String CLAIM_ORG_ROLE = "orgRole";
+    public static final String CLAIM_DATA_SCOPE = "dataScope";
 
     // ==== QR ordering / customer session claims (uc-c-02) ====
     public static final String CLAIM_TABLE_ID = "tableId";

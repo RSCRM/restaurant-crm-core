@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.inventory.repository;
 
 import com.restaurant.crm.modules.erp.inventory.entity.Ingredient;
+import com.restaurant.crm.modules.erp.inventory.entity.IngredientCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,11 @@ import java.util.Optional;
 
 @Repository
 public interface IngredientRepository extends JpaRepository<Ingredient, String> {
+
+    Optional<Ingredient> findByIdAndBranchId(
+        String id,
+        String branchId
+    );
 
     // Get all ingredients of a branch
     List<Ingredient> findByBranchId(String branchId);
@@ -25,9 +31,10 @@ public interface IngredientRepository extends JpaRepository<Ingredient, String> 
             String ingredientCategoryId
     );
 
-    Page<Ingredient> findByIngredientCategoryId(
-            String ingredientCategoryId,
-            Pageable pageable
+    Page<Ingredient> findByIngredientCategoryIdAndBranchId(
+        String ingredientCategoryId,
+        String branchId,
+        Pageable pageable
     );
 
     // Search ingredient name inside a branch

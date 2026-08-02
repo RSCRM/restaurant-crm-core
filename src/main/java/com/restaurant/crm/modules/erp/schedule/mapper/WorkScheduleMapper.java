@@ -11,6 +11,7 @@ import java.util.List;
 public interface WorkScheduleMapper {
 
     @Mapping(target = "employeeId", source = "employee.id")
+    @Mapping(target = "employeeName", source = "employee.user.username")
     @Mapping(target = "branchId", source = "branch.id")
     @Mapping(target = "branchName", source = "branch.branchName")
     PersonalScheduleResponse toResponse(WorkSchedule workSchedule);

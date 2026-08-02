@@ -31,10 +31,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * OTP ticket crypto (uc-c-03). Mirrors {@code TableQrTokenServiceImpl}: HS512 SignedJWT,
- * secret derived per branch, read-branch-claim-then-verify, exception-to-empty on the verify side.
- */
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

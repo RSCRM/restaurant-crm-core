@@ -5,9 +5,7 @@ import com.restaurant.crm.modules.erp.order.entity.OrderItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-/**
- * Mapper interface for converting OrderItem entities to responses.
- */
+
 @Mapper(componentModel = "spring")
 public interface OrderItemMapper {
 
