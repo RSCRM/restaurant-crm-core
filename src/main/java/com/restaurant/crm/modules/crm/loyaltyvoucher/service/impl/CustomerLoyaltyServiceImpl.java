@@ -86,8 +86,10 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
                 .map(CustomerPoint::getCurrentPoints)
                 .orElse(0);
 
-        // Load active vouchers for this branch
-        List<Voucher> vouchers = voucherRepository.findByBranchIdAndIsActive(branchId, (short) 1);
+        // Load active and unexpired vouchers for this branch (catalog should NEVER show expired vouchers)
+        List<Voucher> vouchers = voucherRepository.findByBranchIdAndIsActive(branchId, (short) 1).stream()
+                .filter(v -> v.getExpiredAt() == null || Instant.now().isBefore(v.getExpiredAt()))
+                .toList();
 
         // Load vouchers already owned by this customer
         List<CustomerVoucher> ownedVouchers = customerVoucherRepository.findByCustomerIdAndBranchId(customer.getId(), branchId);
@@ -96,9 +98,8 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
                 .collect(java.util.stream.Collectors.toSet());
 
         return vouchers.stream().map(v -> {
-            boolean isExpired = v.getExpiredAt() != null && Instant.now().isAfter(v.getExpiredAt());
             boolean canAfford = currentPoints >= v.getPointsRequired();
-            boolean alreadyOwned = ownedVoucherIds.contains(v.getId());
+            boolean alreadyOwned = customerVoucherRepository.existsByCustomerIdAndVoucherId(customer.getId(), v.getId());
 
             boolean isRedeemable = true;
             String reason = null;
@@ -106,9 +107,6 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
             if (alreadyOwned) {
                 isRedeemable = false;
                 reason = "Bạn đã nhận/đổi Voucher này rồi (đã có trong Ví)";
-            } else if (isExpired) {
-                isRedeemable = false;
-                reason = "Voucher đã hết hạn sử dụng";
             } else if (!canAfford) {
                 isRedeemable = false;
                 reason = "Bạn cần " + v.getPointsRequired() + " điểm để đổi (hiện có " + currentPoints + " điểm)";
@@ -120,7 +118,8 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
                     .title(v.getTitle())
                     .discountPercent(v.getDiscountPercent())
                     .minBillAmount(v.getMinBillAmount())
-                    .status(alreadyOwned ? "OWNED" : (isExpired ? "EXPIRED" : "ACTIVE"))
+                    .pointsRequired(v.getPointsRequired())
+                    .status(alreadyOwned ? "OWNED" : "ACTIVE")
                     .expiredAt(v.getExpiredAt())
                     .isApplicable(isRedeemable)
                     .reason(reason)
@@ -137,9 +136,7 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
         String organizationId = resolveOrganizationId(branchId);
 
         // Check if customer already owns this voucher
-        boolean alreadyOwned = customerVoucherRepository.findByCustomerIdAndBranchId(customer.getId(), branchId)
-                .stream().anyMatch(cv -> cv.getVoucher().getId().equals(voucherId));
-        if (alreadyOwned) {
+        if (customerVoucherRepository.existsByCustomerIdAndVoucherId(customer.getId(), voucherId)) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_ALREADY_USED);
         }
 
@@ -228,6 +225,7 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
                     .title(voucher.getTitle())
                     .discountPercent(voucher.getDiscountPercent())
                     .minBillAmount(voucher.getMinBillAmount())
+                    .pointsRequired(voucher.getPointsRequired())
                     .status(status)
                     .expiredAt(voucher.getExpiredAt())
                     .isApplicable(isApplicable)
