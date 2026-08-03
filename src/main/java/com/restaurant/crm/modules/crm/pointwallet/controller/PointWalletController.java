@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.bind.annotation.PathVariable;
+
 @RestController
 @RequestMapping("/api/v1/crm/wallets")
 @RequiredArgsConstructor
@@ -27,9 +29,11 @@ public class PointWalletController {
     @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<CustomerPointResponse>> getBalance(
             @RequestParam String customerId,
-            @RequestParam String organizationId
+            @RequestParam(required = false) String organizationId,
+            @RequestParam(required = false) String restaurantId
     ) {
-        CustomerPointResponse response = pointWalletService.getWallet(customerId, organizationId);
+        String targetOrgId = organizationId != null ? organizationId : restaurantId;
+        CustomerPointResponse response = pointWalletService.getWallet(customerId, targetOrgId);
         return ResponseEntity.ok(ApiResponse.<CustomerPointResponse>builder()
                 .success(true)
                 .data(response)
@@ -40,12 +44,29 @@ public class PointWalletController {
     @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerPointHistoryResponse>>> getHistory(
             @RequestParam String customerId,
-            @RequestParam String organizationId,
+            @RequestParam(required = false) String organizationId,
+            @RequestParam(required = false) String restaurantId,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ) {
-        PagingResponse<CustomerPointHistoryResponse> response = pointWalletService.getHistory(customerId, organizationId, page, size);
+        String targetOrgId = organizationId != null ? organizationId : restaurantId;
+        PagingResponse<CustomerPointHistoryResponse> response = pointWalletService.getHistory(customerId, targetOrgId, page, size);
         return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerPointHistoryResponse>>builder()
+                .success(true)
+                .data(response)
+                .build());
+    }
+
+    @GetMapping("/organization/{organizationId}/list")
+    @PreAuthorize("hasAuthority('POINT_WALLET_READ')")
+    public ResponseEntity<ApiResponse<PagingResponse<CustomerPointResponse>>> getOrganizationCustomers(
+            @PathVariable String organizationId,
+            @RequestParam(value = "searchPhone", required = false) String searchPhone,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+    ) {
+        PagingResponse<CustomerPointResponse> response = pointWalletService.getOrganizationCustomers(organizationId, searchPhone, page, size);
+        return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerPointResponse>>builder()
                 .success(true)
                 .data(response)
                 .build());

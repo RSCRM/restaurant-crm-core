@@ -52,7 +52,18 @@ public class PointWalletServiceImpl implements PointWalletService {
         validateOrganizationAccess(organizationId);
 
         CustomerPoint wallet = customerPointRepository.findByCustomerIdAndOrganizationId(customerId, organizationId)
-                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_POINT_NOT_FOUND));
+                .orElseGet(() -> {
+                    Customer customer = customerRepository.findById(customerId)
+                            .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+
+                    CustomerPoint newWallet = CustomerPoint.builder()
+                            .customer(customer)
+                            .organizationId(organizationId)
+                            .currentPoints(0)
+                            .lifetimePoints(0)
+                            .build();
+                    return customerPointRepository.save(newWallet);
+                });
         return customerPointMapper.toCustomerPointResponse(wallet);
     }
 
@@ -157,5 +168,31 @@ public class PointWalletServiceImpl implements PointWalletService {
         customerPointHistoryRepository.save(history);
 
         return customerPointMapper.toCustomerPointResponse(wallet);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<CustomerPointResponse> getOrganizationCustomers(String organizationId, String searchPhone, int page, int size) {
+        validateOrganizationAccess(organizationId);
+
+        int adjustedPage = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+
+        Page<CustomerPoint> customerPointPage;
+        if (searchPhone != null && !searchPhone.trim().isEmpty()) {
+            customerPointPage = customerPointRepository.findByOrganizationIdAndCustomer_PhoneContaining(organizationId, searchPhone.trim(), pageable);
+        } else {
+            customerPointPage = customerPointRepository.findByOrganizationId(organizationId, pageable);
+        }
+
+        return PagingResponse.<CustomerPointResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(customerPointPage.getTotalPages())
+                .totalElement(customerPointPage.getTotalElements())
+                .data(customerPointPage.getContent().stream()
+                        .map(customerPointMapper::toCustomerPointResponse)
+                        .toList())
+                .build();
     }
 }

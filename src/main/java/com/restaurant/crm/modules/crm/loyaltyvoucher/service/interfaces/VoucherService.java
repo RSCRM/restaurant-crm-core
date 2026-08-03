@@ -9,4 +9,5 @@ public interface VoucherService {
     VoucherResponse createVoucher(VoucherCreationRequest request);
     VoucherResponse updateVoucher(String id, VoucherUpdateRequest request);
     PagingResponse<VoucherResponse> getActiveVouchersByBranch(String branchId, int page, int size);
+    PagingResponse<VoucherResponse> getVouchersByBranch(String branchId, int page, int size);
 }

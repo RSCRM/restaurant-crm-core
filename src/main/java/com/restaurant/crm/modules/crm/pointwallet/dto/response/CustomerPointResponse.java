@@ -19,6 +19,7 @@ import java.time.Instant;
 public class CustomerPointResponse {
     String id;
     String customerId;
+    String customerPhone;
     String organizationId;
     Integer currentPoints;
     Integer lifetimePoints;
