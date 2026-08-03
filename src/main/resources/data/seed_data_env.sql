@@ -246,93 +246,35 @@ SET area_id = EXCLUDED.area_id,
     position_y = EXCLUDED.position_y,
     updated_at = NOW();
 
+-- =============================================================================
+-- CRM LOYALTY & VOUCHERS SEED DATA
+-- =============================================================================
+
+-- Seed Vouchers for Branch Phở Việt Q1 ('e0000000-0000-0000-0000-000000000001')
+INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_amount, points_required, is_active, expired_at, created_at, updated_at)
+VALUES
+    ('v0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Thành Viên Giảm 10%', 10, 50000, 50, 1, NOW() + INTERVAL '30 days', NOW(), NOW()),
+    ('v0000000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher Thân Thiết Giảm 20%', 20, 100000, 100, 1, NOW() + INTERVAL '60 days', NOW(), NOW()),
+    ('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'Voucher VIP Giảm 30%', 30, 200000, 200, 1, NOW() + INTERVAL '90 days', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed Customer accounts
 INSERT INTO customers (id, version, phone, status, created_at, updated_at)
 VALUES
-    ('d1000000-0000-0000-0000-000000000003', 0, '0905000013', 'ACTIVE', NOW(), NOW()),
-    ('d1000000-0000-0000-0000-000000000007', 0, '0905000017', 'ACTIVE', NOW(), NOW()),
-    ('d1000000-0000-0000-0000-000000000008', 0, '0905000018', 'ACTIVE', NOW(), NOW()),
-    ('d1000000-0000-0000-0000-000000000009', 0, '0905000019', 'ACTIVE', NOW(), NOW())
-ON CONFLICT (phone) DO NOTHING;
+    ('c0000000-0000-0000-0000-000000000099', 0, '0966888888', 'ACTIVE', NOW(), NOW()),
+    ('c0000000-0000-0000-0000-000000000098', 0, '0987654321', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO bookings
-    (id, version, branch_id, table_id, customer_id, booking_time,
-     guest_count, status, note, created_at, updated_at)
+-- Seed Customer Point Wallets for Phở Việt Organization ('d0000000-0000-0000-0000-000000000001')
+INSERT INTO customer_points (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
 VALUES
-    ('b1000000-0000-0000-0000-000000000003', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000003',
-     (SELECT id FROM customers WHERE phone = '0905000013'),
-     NOW() + INTERVAL '2 hours', 4, 'PENDING', 'Test reservation - table 03', NOW(), NOW()),
-    ('b1000000-0000-0000-0000-000000000007', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000007',
-     (SELECT id FROM customers WHERE phone = '0905000017'),
-     NOW() + INTERVAL '3 hours', 3, 'PENDING', 'Test reservation - table 07', NOW(), NOW()),
-    ('b1000000-0000-0000-0000-000000000008', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000008',
-     (SELECT id FROM customers WHERE phone = '0905000018'),
-     NOW() + INTERVAL '4 hours', 5, 'PENDING', 'Test reservation - table 08', NOW(), NOW()),
-    ('b1000000-0000-0000-0000-000000000009', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000009',
-     (SELECT id FROM customers WHERE phone = '0905000019'),
-     NOW() + INTERVAL '5 hours', 6, 'PENDING', 'Test reservation - table 09', NOW(), NOW())
-ON CONFLICT (id) DO UPDATE
-SET branch_id = EXCLUDED.branch_id,
-    table_id = EXCLUDED.table_id,
-    customer_id = EXCLUDED.customer_id,
-    booking_time = EXCLUDED.booking_time,
-    guest_count = EXCLUDED.guest_count,
-    status = EXCLUDED.status,
-    note = EXCLUDED.note,
-    updated_at = NOW();
+    ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW()),
+    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000098', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
-UPDATE restaurant_tables table_data
-SET status = 'RESERVED',
-    updated_at = NOW()
-WHERE table_data.table_id IN (
-    SELECT booking.table_id
-    FROM bookings booking
-    WHERE booking.status IN ('PENDING', 'CONFIRMED')
-)
-AND NOT EXISTS (
-    SELECT 1
-    FROM table_sessions session
-    WHERE session.table_id = table_data.table_id
-      AND session.status = 'ACTIVE'
-);
-
-INSERT INTO table_sessions
-    (table_session_id, version, branch_id, table_id, guest_name, guest_phone,
-     party_size, status, started_at, ended_at, note, created_at, updated_at)
+-- Seed Customer Vouchers
+INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, used_at, order_id, created_at, updated_at)
 VALUES
-    ('s0000000-0000-0000-0000-000000000002', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000002',
-     'Khách bàn 02', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW()),
-    ('s0000000-0000-0000-0000-000000000005', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000005',
-     'Khách bàn 05', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW())
-ON CONFLICT (table_session_id) DO UPDATE
-SET branch_id = EXCLUDED.branch_id,
-    table_id = EXCLUDED.table_id,
-    guest_name = EXCLUDED.guest_name,
-    guest_phone = EXCLUDED.guest_phone,
-    party_size = EXCLUDED.party_size,
-    status = EXCLUDED.status,
-    started_at = EXCLUDED.started_at,
-    ended_at = NULL,
-    note = EXCLUDED.note,
-    updated_at = NOW();
+    ('cv000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000099', 'e0000000-0000-0000-0000-000000000001', 'v0000000-0000-0000-0000-000000000001', 'V10PERCENTTEST', 'AVAILABLE', NULL, NULL, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
-UPDATE restaurant_tables table_data
-SET status = 'OCCUPIED',
-    updated_at = NOW()
-WHERE EXISTS (
-    SELECT 1
-    FROM table_sessions session
-    WHERE session.table_id = table_data.table_id
-      AND session.status = 'ACTIVE'
-);

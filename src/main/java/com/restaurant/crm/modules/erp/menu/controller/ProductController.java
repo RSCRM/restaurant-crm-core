@@ -1,9 +1,14 @@
 package com.restaurant.crm.modules.erp.menu.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
+import com.restaurant.crm.common.constant.PaginationConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.menu.constants.permission.MenuPermissionConstants;
 import com.restaurant.crm.modules.erp.menu.dto.request.CreateProductRequest;
+import com.restaurant.crm.modules.erp.menu.dto.request.ProductSearchRequest;
 import com.restaurant.crm.modules.erp.menu.dto.request.UpdateProductRequest;
 import com.restaurant.crm.modules.erp.menu.dto.response.ProductResponse;
 import com.restaurant.crm.modules.erp.menu.service.interfaces.ProductManagementService;
@@ -50,6 +55,31 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<ApiResponse<PagingResponse<ProductResponse>>> searchProducts(
+            @RequestBody ProductSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        ApiResponse<PagingResponse<ProductResponse>> response = ApiResponse.<PagingResponse<ProductResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(service.searchProducts(searchRequest, pagingRequest))
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping

@@ -1,9 +1,14 @@
 package com.restaurant.crm.modules.erp.menu.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
+import com.restaurant.crm.common.constant.PaginationConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.menu.constants.permission.MenuPermissionConstants;
 import com.restaurant.crm.modules.erp.menu.dto.request.ComboItemRequest;
+import com.restaurant.crm.modules.erp.menu.dto.request.ComboSearchRequest;
 import com.restaurant.crm.modules.erp.menu.dto.request.CreateComboRequest;
 import com.restaurant.crm.modules.erp.menu.dto.request.UpdateComboRequest;
 import com.restaurant.crm.modules.erp.menu.dto.response.ComboItemResponse;
@@ -47,6 +52,31 @@ public class ComboController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());
+    }
+
+    @PostMapping("/combos/search")
+    public ResponseEntity<ApiResponse<PagingResponse<ComboResponse>>> searchCombos(
+            @RequestBody ComboSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        ApiResponse<PagingResponse<ComboResponse>> response = ApiResponse.<PagingResponse<ComboResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(service.searchCombos(searchRequest, pagingRequest))
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/combos")

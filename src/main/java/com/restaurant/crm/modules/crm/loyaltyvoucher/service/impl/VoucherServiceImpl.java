@@ -85,4 +85,21 @@ public class VoucherServiceImpl implements VoucherService {
                 .data(voucherPage.getContent().stream().map(voucherMapper::toVoucherResponse).toList())
                 .build();
     }
+
+    @Override
+    public PagingResponse<VoucherResponse> getVouchersByBranch(String branchId, int page, int size) {
+        validateBranchAccess(branchId);
+
+        int adjustedPage = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Voucher> voucherPage = voucherRepository.findByBranchId(branchId, pageable);
+
+        return PagingResponse.<VoucherResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(voucherPage.getTotalPages())
+                .totalElement(voucherPage.getTotalElements())
+                .data(voucherPage.getContent().stream().map(voucherMapper::toVoucherResponse).toList())
+                .build();
+    }
 }

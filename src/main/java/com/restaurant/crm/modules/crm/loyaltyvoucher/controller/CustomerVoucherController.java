@@ -71,12 +71,14 @@ public class CustomerVoucherController {
     @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_READ')")
     public ResponseEntity<ApiResponse<PagingResponse<CustomerVoucherResponse>>> getCustomerVouchers(
             @RequestParam String customerId,
-            @RequestParam String branchId,
+            @RequestParam(required = false) String branchId,
+            @RequestParam(required = false) String restaurantId,
             @RequestParam(required = false) String status,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ) {
-        PagingResponse<CustomerVoucherResponse> response = customerVoucherService.getCustomerVouchers(customerId, branchId, status, page, size);
+        String targetBranchId = branchId != null ? branchId : restaurantId;
+        PagingResponse<CustomerVoucherResponse> response = customerVoucherService.getCustomerVouchers(customerId, targetBranchId, status, page, size);
         return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerVoucherResponse>>builder()
                 .success(true)
                 .data(response)
