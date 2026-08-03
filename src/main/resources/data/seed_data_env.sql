@@ -246,9 +246,106 @@ SET area_id = EXCLUDED.area_id,
     position_y = EXCLUDED.position_y,
     updated_at = NOW();
 
+-- SW-04: reservations and active sessions used by table-management tests.
+INSERT INTO customers (id, version, phone, status, created_at, updated_at)
+VALUES
+    ('d1000000-0000-0000-0000-000000000003', 0, '0905000013', 'ACTIVE', NOW(), NOW()),
+    ('d1000000-0000-0000-0000-000000000007', 0, '0905000017', 'ACTIVE', NOW(), NOW()),
+    ('d1000000-0000-0000-0000-000000000008', 0, '0905000018', 'ACTIVE', NOW(), NOW()),
+    ('d1000000-0000-0000-0000-000000000009', 0, '0905000019', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (phone) DO NOTHING;
+
+INSERT INTO bookings
+    (id, version, branch_id, table_id, customer_id, booking_time,
+     guest_count, status, note, created_at, updated_at)
+VALUES
+    ('b1000000-0000-0000-0000-000000000003', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000003',
+     (SELECT id FROM customers WHERE phone = '0905000013'),
+     NOW() + INTERVAL '2 hours', 4, 'PENDING', 'Test reservation - table 03', NOW(), NOW()),
+    ('b1000000-0000-0000-0000-000000000007', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000007',
+     (SELECT id FROM customers WHERE phone = '0905000017'),
+     NOW() + INTERVAL '3 hours', 3, 'PENDING', 'Test reservation - table 07', NOW(), NOW()),
+    ('b1000000-0000-0000-0000-000000000008', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000008',
+     (SELECT id FROM customers WHERE phone = '0905000018'),
+     NOW() + INTERVAL '4 hours', 5, 'PENDING', 'Test reservation - table 08', NOW(), NOW()),
+    ('b1000000-0000-0000-0000-000000000009', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000009',
+     (SELECT id FROM customers WHERE phone = '0905000019'),
+     NOW() + INTERVAL '5 hours', 6, 'PENDING', 'Test reservation - table 09', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE
+SET branch_id = EXCLUDED.branch_id,
+    table_id = EXCLUDED.table_id,
+    customer_id = EXCLUDED.customer_id,
+    booking_time = EXCLUDED.booking_time,
+    guest_count = EXCLUDED.guest_count,
+    status = EXCLUDED.status,
+    note = EXCLUDED.note,
+    updated_at = NOW();
+
+UPDATE restaurant_tables table_data
+SET status = 'RESERVED',
+    updated_at = NOW()
+WHERE table_data.table_id IN (
+    SELECT booking.table_id
+    FROM bookings booking
+    WHERE booking.status IN ('PENDING', 'CONFIRMED')
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM table_sessions session
+    WHERE session.table_id = table_data.table_id
+      AND session.status = 'ACTIVE'
+);
+
+INSERT INTO table_sessions
+    (table_session_id, version, branch_id, table_id, guest_name, guest_phone,
+     party_size, status, started_at, ended_at, note, created_at, updated_at)
+VALUES
+    ('s0000000-0000-0000-0000-000000000002', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000002',
+     'Khách bàn 02', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW()),
+    ('s0000000-0000-0000-0000-000000000005', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000005',
+     'Khách bàn 05', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW())
+ON CONFLICT (table_session_id) DO UPDATE
+SET branch_id = EXCLUDED.branch_id,
+    table_id = EXCLUDED.table_id,
+    guest_name = EXCLUDED.guest_name,
+    guest_phone = EXCLUDED.guest_phone,
+    party_size = EXCLUDED.party_size,
+    status = EXCLUDED.status,
+    started_at = EXCLUDED.started_at,
+    ended_at = NULL,
+    note = EXCLUDED.note,
+    updated_at = NOW();
+
+UPDATE restaurant_tables table_data
+SET status = 'OCCUPIED',
+    updated_at = NOW()
+WHERE EXISTS (
+    SELECT 1
+    FROM table_sessions session
+    WHERE session.table_id = table_data.table_id
+      AND session.status = 'ACTIVE'
+);
+
 -- =============================================================================
 -- CRM LOYALTY & VOUCHERS SEED DATA
 -- =============================================================================
+
+ALTER TABLE vouchers DROP COLUMN IF EXISTS restaurant_id;
+ALTER TABLE customer_point DROP COLUMN IF EXISTS restaurant_id;
+ALTER TABLE customer_point_history DROP COLUMN IF EXISTS restaurant_id;
+ALTER TABLE customer_vouchers DROP COLUMN IF EXISTS restaurant_id;
 
 -- Seed Vouchers for Branch Phở Việt Q1 ('e0000000-0000-0000-0000-000000000001')
 INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_amount, points_required, is_active, expired_at, created_at, updated_at)
@@ -266,7 +363,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Customer Point Wallets for Phở Việt Organization ('d0000000-0000-0000-0000-000000000001')
-INSERT INTO customer_points (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
+INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
 VALUES
     ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW()),
     ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000098', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
