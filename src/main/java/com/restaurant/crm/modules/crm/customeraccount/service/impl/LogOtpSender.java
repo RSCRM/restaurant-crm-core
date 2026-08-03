@@ -10,7 +10,7 @@ import com.restaurant.crm.modules.crm.customeraccount.utils.PhoneNumberUtils;
 
 @Slf4j
 @Service
-@Profile("dev")
+@Profile({"dev", "default", "local"})
 public class LogOtpSender implements OtpSender {
 
     @Override
