@@ -238,4 +238,23 @@ public class LicenseServiceImpl implements LicenseService {
                 .pagination(pagination)
                 .build();
     }
+
+    @Override
+    public List<LicenseResponse> getLicensesByOrganizationId(String organizationId) {
+        List<LicenseSubscription> subscriptions =
+                subscriptionRepository.findByOrganizationId(organizationId);
+
+        List<String> licenseIds = subscriptions.stream()
+                .map(LicenseSubscription::getLicenseId)
+                .distinct()
+                .toList();
+
+        if (licenseIds.isEmpty()) {
+            return List.of();
+        }
+
+        return licenseRepository.findByIdInAndDeletedAtIsNull(licenseIds).stream()
+                .map(licenseMapper::toLicenseResponse)
+                .toList();
+    }
 }
