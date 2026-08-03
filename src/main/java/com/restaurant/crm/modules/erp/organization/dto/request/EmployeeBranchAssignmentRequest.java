@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.organization.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EmployeeBranchAssignmentRequest {
 
+    @Schema(
+            description = "User ID of the manager employee",
+            example = "a0000000-0000-0000-0000-000000000001"
+    )
     @NotBlank(message = "BRANCH_MANAGER_INVALID_REQUEST")
     String managerId;
 }

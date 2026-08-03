@@ -11,8 +11,10 @@ import com.restaurant.crm.modules.erp.organization.dto.request.OrganizationSearc
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationMapper;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationService;
 import com.restaurant.crm.modules.erp.organization.specification.OrganizationSpecification;
@@ -22,11 +24,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrganizationServiceImpl implements OrganizationService {
 
     OrganizationRepository organizationRepository;
-
+    OrganizationBranchRepository organizationBranchRepository;
     OrganizationMapper organizationMapper;
 
     @Override
@@ -83,27 +88,89 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<OrganizationResponse> getOrganizations(
-            int page,
-            int size
+        int page,
+        int size
     ) {
 
-        Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
+        Pageable pageable = PageRequest.of(
+            page - GlobalVariableConstant.PAGE_SIZE_INDEX,
+            size
+        );
 
-        Page<Organization> organizationPage =
-                organizationRepository.findAll(pageable);
+        Page<Organization> organizationPage;
+
+        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
+
+            organizationPage = organizationRepository.findAll(pageable);
+
+        } else {
+
+            OrgDataScope dataScope = AuthUtils.getDataScope();
+
+            switch (dataScope) {
+
+                case ORGANIZATION ->
+
+                    organizationPage = organizationRepository.findById(
+                            AuthUtils.getOrganizationId()
+                        )
+                        .map(organization ->
+                            new PageImpl<>(
+                                List.of(organization),
+                                pageable,
+                                1
+                            )
+                        )
+                        .orElseThrow(() ->
+                            new AppException(
+                                ErrorCode.ORGANIZATION_NOT_FOUND
+                            )
+                        );
+
+                case BRANCH -> {
+
+                    OrganizationBranch branch =
+                        organizationBranchRepository.findById(
+                                AuthUtils.getBranchId()
+                            )
+                            .orElseThrow(() ->
+                                new AppException(
+                                    ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND
+                                )
+                            );
+
+                    organizationPage =
+                        new PageImpl<>(
+                            List.of(branch.getOrganization()),
+                            pageable,
+                            1
+                        );
+                }
+
+                case SELF ->
+
+                    organizationPage = organizationRepository.findByOwnerId(
+                        AuthUtils.getCurrentUserId(),
+                        pageable
+                    );
+
+                default ->
+                    throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+            }
+        }
 
         return PagingResponse.<OrganizationResponse>builder()
-                .currentPage(page)
-                .pageSize(organizationPage.getSize())
-                .totalPages(organizationPage.getTotalPages())
-                .totalElement(organizationPage.getTotalElements())
-                .data(
-                        organizationPage.getContent()
-                                .stream()
-                                .map(organizationMapper::toOrganizationResponse)
-                                .toList()
-                )
-                .build();
+            .currentPage(page)
+            .pageSize(organizationPage.getSize())
+            .totalPages(organizationPage.getTotalPages())
+            .totalElement(organizationPage.getTotalElements())
+            .data(
+                organizationPage.getContent()
+                    .stream()
+                    .map(organizationMapper::toOrganizationResponse)
+                    .toList()
+            )
+            .build();
     }
 
     @Override

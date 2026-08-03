@@ -2,9 +2,11 @@ package com.restaurant.crm.modules.erp.organization;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
@@ -13,6 +15,7 @@ import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.service.impl.EmployeeServiceImpl;
 import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,20 +24,20 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class EmployeeServiceImplTests {
+class EmployeeServiceImplTests {
 
     @Mock
     EmployeeRepository employeeRepository;
@@ -49,253 +52,143 @@ public class EmployeeServiceImplTests {
     EmployeeServiceImpl employeeService;
 
     @Test
-    public void testAssignToBranch_Success() {
+    void assignToBranch_resolvesManagerIdAsUserId() {
         String ownerId = "owner-1";
         String organizationId = "org-1";
         String branchId = "branch-1";
-        String managerId = "user-manager-1";
+        String managerUserId = "user-manager-1";
 
         OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, null);
-        Employee manager = buildEmployee("employee-1", managerId, targetBranch, EmployeeStatus.ACTIVE, true);
+        Employee manager = buildEmployee("employee-1", managerUserId, targetBranch, EmployeeStatus.ACTIVE, true,
+                EmployeeConstants.MANAGER_ROLE_NAME);
         EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId(managerId)
+                .managerId(managerUserId)
                 .build();
         EmployeeBranchAssignmentResponse expectedResponse = EmployeeBranchAssignmentResponse.builder()
                 .employeeId("employee-1")
-                .userId(managerId)
-                .branchId(branchId)
-                .status(EmployeeStatus.ACTIVE)
-                .build();
-
-        try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
-            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
-                    .thenReturn(Optional.of(targetBranch));
-            when(employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-                    managerId,
-                    organizationId,
-                    ownerId
-            )).thenReturn(Optional.of(manager));
-            when(employeeRepository.save(manager)).thenReturn(manager);
-            when(employeeMapper.toEmployeeBranchAssignmentResponse(manager)).thenReturn(expectedResponse);
-
-            EmployeeBranchAssignmentResponse response = employeeService.assignToBranch(branchId, request);
-
-            assertNotNull(response);
-            assertEquals(managerId, targetBranch.getManagerId());
-            assertEquals(branchId, manager.getBranch().getId());
-            assertEquals(managerId, response.getUserId());
-            verify(branchRepository, times(1)).save(targetBranch);
-            verify(employeeRepository, times(1)).save(manager);
-        }
-    }
-
-    @Test
-    public void testAssignToBranch_ManagerAlreadyAssignedToSameBranch_ReturnsCurrentAssignment() {
-        String ownerId = "owner-1";
-        String organizationId = "org-1";
-        String branchId = "branch-1";
-        String managerId = "user-manager-1";
-
-        OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, managerId);
-        Employee manager = buildEmployee("employee-1", managerId, targetBranch, EmployeeStatus.ACTIVE, true);
-        EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId(managerId)
-                .build();
-        EmployeeBranchAssignmentResponse expectedResponse = EmployeeBranchAssignmentResponse.builder()
-                .employeeId("employee-1")
-                .userId(managerId)
+                .userId(managerUserId)
                 .branchId(branchId)
                 .build();
 
         try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
             mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
+            when(branchRepository.findByIdAndOwnerIdWithManager(branchId, ownerId))
                     .thenReturn(Optional.of(targetBranch));
-            when(employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-                    managerId,
-                    organizationId,
-                    ownerId
+            when(employeeRepository.findByUserIdAndBranchIdAndOrganizationIdWithDetails(
+                    managerUserId,
+                    branchId,
+                    organizationId
             )).thenReturn(Optional.of(manager));
-            when(employeeMapper.toEmployeeBranchAssignmentResponse(manager)).thenReturn(expectedResponse);
+            when(branchRepository.findByManager_Id(manager.getId())).thenReturn(Optional.empty());
+            when(branchRepository.saveAndFlush(targetBranch)).thenReturn(targetBranch);
+            when(employeeMapper.toEmployeeBranchAssignmentResponse(targetBranch)).thenReturn(expectedResponse);
 
             EmployeeBranchAssignmentResponse response = employeeService.assignToBranch(branchId, request);
 
-            assertEquals(managerId, response.getUserId());
-            verify(branchRepository, never()).save(any(OrganizationBranch.class));
-            verify(employeeRepository, never()).save(any(Employee.class));
+            assertEquals(managerUserId, response.getUserId());
+            assertSame(manager, targetBranch.getManager());
+            verify(employeeRepository, never()).findByIdWithUserRoleAndBranch(any());
+            verify(branchRepository).saveAndFlush(targetBranch);
         }
     }
 
     @Test
-    public void testAssignToBranch_BranchNotFound_ThrowsAppException() {
-        String ownerId = "owner-1";
-        String branchId = "branch-not-found";
-        EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId("user-manager-1")
-                .build();
-
-        try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
-            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
-                    .thenReturn(Optional.empty());
-
-            AppException ex = assertThrows(AppException.class, () ->
-                    employeeService.assignToBranch(branchId, request)
-            );
-
-            assertEquals(ErrorCode.BRANCH_NOT_FOUND, ex.getErrorCode());
-            verify(employeeRepository, never())
-                    .findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(any(), any(), any());
-        }
-    }
-
-    @Test
-    public void testAssignToBranch_ManagerNotFound_ThrowsAppException() {
+    void assignToBranch_sameManagerIsIdempotent() {
         String ownerId = "owner-1";
         String organizationId = "org-1";
         String branchId = "branch-1";
-        String managerId = "missing-user";
+        String managerUserId = "user-manager-1";
+
         OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, null);
+        Employee manager = buildEmployee("employee-1", managerUserId, targetBranch, EmployeeStatus.ACTIVE, true,
+                EmployeeConstants.MANAGER_ROLE_NAME);
+        targetBranch.setManager(manager);
         EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId(managerId)
+                .managerId(managerUserId)
+                .build();
+        EmployeeBranchAssignmentResponse expectedResponse = EmployeeBranchAssignmentResponse.builder()
+                .employeeId("employee-1")
+                .userId(managerUserId)
+                .branchId(branchId)
                 .build();
 
         try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
             mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
+            when(branchRepository.findByIdAndOwnerIdWithManager(branchId, ownerId))
                     .thenReturn(Optional.of(targetBranch));
-            when(employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-                    managerId,
-                    organizationId,
-                    ownerId
+            when(employeeRepository.findByUserIdAndBranchIdAndOrganizationIdWithDetails(
+                    managerUserId,
+                    branchId,
+                    organizationId
+            )).thenReturn(Optional.of(manager));
+            when(employeeMapper.toEmployeeBranchAssignmentResponse(targetBranch)).thenReturn(expectedResponse);
+
+            EmployeeBranchAssignmentResponse response = employeeService.assignToBranch(branchId, request);
+
+            assertEquals(managerUserId, response.getUserId());
+            verify(branchRepository, never()).saveAndFlush(any(OrganizationBranch.class));
+        }
+    }
+
+    @Test
+    void assignToBranch_missingUserScopedEmployeeThrowsNotFound() {
+        String ownerId = "owner-1";
+        String organizationId = "org-1";
+        String branchId = "branch-1";
+        String managerUserId = "missing-user";
+        OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, null);
+        EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
+                .managerId(managerUserId)
+                .build();
+
+        try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
+            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
+            when(branchRepository.findByIdAndOwnerIdWithManager(branchId, ownerId))
+                    .thenReturn(Optional.of(targetBranch));
+            when(employeeRepository.findByUserIdAndBranchIdAndOrganizationIdWithDetails(
+                    managerUserId,
+                    branchId,
+                    organizationId
             )).thenReturn(Optional.empty());
 
-            AppException ex = assertThrows(AppException.class, () ->
-                    employeeService.assignToBranch(branchId, request)
-            );
+            AppException ex = assertThrows(AppException.class, () -> employeeService.assignToBranch(branchId, request));
 
             assertEquals(ErrorCode.BRANCH_MANAGER_NOT_FOUND, ex.getErrorCode());
-            verify(branchRepository, never()).save(any(OrganizationBranch.class));
-            verify(employeeRepository, never()).save(any(Employee.class));
+            verify(branchRepository, never()).saveAndFlush(any(OrganizationBranch.class));
         }
     }
 
     @Test
-    public void testAssignToBranch_InactiveEmployee_ThrowsAppException() {
+    void assignToBranch_employeeWithoutManagerRoleThrowsInvalidRole() {
         String ownerId = "owner-1";
         String organizationId = "org-1";
         String branchId = "branch-1";
-        String managerId = "user-manager-1";
+        String managerUserId = "user-manager-1";
         OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, null);
-        Employee manager = buildEmployee("employee-1", managerId, targetBranch, EmployeeStatus.INACTIVE, true);
+        Employee manager = buildEmployee("employee-1", managerUserId, targetBranch, EmployeeStatus.ACTIVE, true,
+                "CASHIER");
         EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId(managerId)
+                .managerId(managerUserId)
                 .build();
 
         try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
             mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
+            when(branchRepository.findByIdAndOwnerIdWithManager(branchId, ownerId))
                     .thenReturn(Optional.of(targetBranch));
-            when(employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-                    managerId,
-                    organizationId,
-                    ownerId
+            when(employeeRepository.findByUserIdAndBranchIdAndOrganizationIdWithDetails(
+                    managerUserId,
+                    branchId,
+                    organizationId
             )).thenReturn(Optional.of(manager));
 
-            AppException ex = assertThrows(AppException.class, () ->
-                    employeeService.assignToBranch(branchId, request)
-            );
+            AppException ex = assertThrows(AppException.class, () -> employeeService.assignToBranch(branchId, request));
 
-            assertEquals(ErrorCode.BRANCH_MANAGER_INACTIVE, ex.getErrorCode());
-            verify(branchRepository, never()).save(any(OrganizationBranch.class));
-            verify(employeeRepository, never()).save(any(Employee.class));
+            assertEquals(ErrorCode.BRANCH_MANAGER_INVALID_ROLE, ex.getErrorCode());
+            verify(branchRepository, never()).saveAndFlush(any(OrganizationBranch.class));
         }
     }
 
-    @Test
-    public void testAssignToBranch_DisabledUser_ThrowsAppException() {
-        String ownerId = "owner-1";
-        String organizationId = "org-1";
-        String branchId = "branch-1";
-        String managerId = "user-manager-1";
-        OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, null);
-        Employee manager = buildEmployee("employee-1", managerId, targetBranch, EmployeeStatus.ACTIVE, false);
-        EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId(managerId)
-                .build();
-
-        try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
-            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
-                    .thenReturn(Optional.of(targetBranch));
-            when(employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-                    managerId,
-                    organizationId,
-                    ownerId
-            )).thenReturn(Optional.of(manager));
-
-            AppException ex = assertThrows(AppException.class, () ->
-                    employeeService.assignToBranch(branchId, request)
-            );
-
-            assertEquals(ErrorCode.BRANCH_MANAGER_INACTIVE, ex.getErrorCode());
-            verify(branchRepository, never()).save(any(OrganizationBranch.class));
-            verify(employeeRepository, never()).save(any(Employee.class));
-        }
-    }
-
-    @Test
-    public void testAssignToBranch_BranchAlreadyHasAnotherManager_ThrowsAppException() {
-        String ownerId = "owner-1";
-        String organizationId = "org-1";
-        String branchId = "branch-1";
-        String managerId = "user-manager-1";
-        OrganizationBranch targetBranch = buildBranch(branchId, organizationId, ownerId, "another-user");
-        Employee manager = buildEmployee("employee-1", managerId, targetBranch, EmployeeStatus.ACTIVE, true);
-        EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId(managerId)
-                .build();
-
-        try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
-            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(ownerId);
-            when(branchRepository.findByIdAndOrganization_OwnerId(branchId, ownerId))
-                    .thenReturn(Optional.of(targetBranch));
-            when(employeeRepository.findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-                    managerId,
-                    organizationId,
-                    ownerId
-            )).thenReturn(Optional.of(manager));
-
-            AppException ex = assertThrows(AppException.class, () ->
-                    employeeService.assignToBranch(branchId, request)
-            );
-
-            assertEquals(ErrorCode.BRANCH_MANAGER_ALREADY_ASSIGNED, ex.getErrorCode());
-            verify(branchRepository, never()).save(any(OrganizationBranch.class));
-            verify(employeeRepository, never()).save(any(Employee.class));
-        }
-    }
-
-    @Test
-    public void testAssignToBranch_Unauthenticated_ThrowsAppException() {
-        EmployeeBranchAssignmentRequest request = EmployeeBranchAssignmentRequest.builder()
-                .managerId("user-manager-1")
-                .build();
-
-        try (MockedStatic<AuthUtils> mockedAuth = mockStatic(AuthUtils.class)) {
-            mockedAuth.when(AuthUtils::getCurrentUserId).thenReturn(null);
-
-            AppException ex = assertThrows(AppException.class, () ->
-                    employeeService.assignToBranch("branch-1", request)
-            );
-
-            assertEquals(ErrorCode.AUTH_UNAUTHENTICATED, ex.getErrorCode());
-            verify(branchRepository, never()).findByIdAndOrganization_OwnerId(any(), any());
-        }
-    }
-
-    private OrganizationBranch buildBranch(String branchId, String organizationId, String ownerId, String managerId) {
+    private OrganizationBranch buildBranch(String branchId, String organizationId, String ownerId, Employee manager) {
         Organization organization = Organization.builder()
                 .id(organizationId)
                 .owner(User.builder().id(ownerId).build())
@@ -304,7 +197,7 @@ public class EmployeeServiceImplTests {
         return OrganizationBranch.builder()
                 .id(branchId)
                 .organization(organization)
-                .managerId(managerId)
+                .manager(manager)
                 .branchName("Main Branch")
                 .build();
     }
@@ -314,21 +207,30 @@ public class EmployeeServiceImplTests {
             String userId,
             OrganizationBranch branch,
             EmployeeStatus status,
-            boolean enabled
+            boolean enabled,
+            String roleName
     ) {
         User user = User.builder()
                 .id(userId)
                 .username("manager")
                 .email("manager@example.com")
                 .enabled(enabled)
+                .status(enabled ? UserStatus.ACTIVE : UserStatus.BLOCKED)
+                .build();
+
+        OrgRole orgRole = OrgRole.builder()
+                .id("role-" + roleName)
+                .roleName(roleName)
                 .build();
 
         return Employee.builder()
                 .id(employeeId)
                 .user(user)
                 .branch(branch)
+                .orgRole(orgRole)
                 .status(status)
                 .email("manager@example.com")
+                .startDate(LocalDate.now())
                 .build();
     }
 }

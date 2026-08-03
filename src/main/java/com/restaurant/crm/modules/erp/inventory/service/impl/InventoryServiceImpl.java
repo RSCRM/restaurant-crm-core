@@ -1,10 +1,13 @@
 package com.restaurant.crm.modules.erp.inventory.service.impl;
 
 import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryRequest;
+import com.restaurant.crm.modules.erp.inventory.dto.request.InventorySearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
 import com.restaurant.crm.modules.erp.inventory.entity.Ingredient;
@@ -14,6 +17,7 @@ import com.restaurant.crm.modules.erp.inventory.mapper.InventoryMapper;
 import com.restaurant.crm.modules.erp.inventory.repository.IngredientRepository;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryService;
+import com.restaurant.crm.modules.erp.inventory.specification.InventorySpecification;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -196,25 +200,26 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponse<InventoryResponse> getInventoriesByStatus(
-        InventoryStatus status,
-        int page,
-        int size
+    public PagingResponse<InventoryResponse> searchInventories(
+        InventorySearchRequest searchRequest,
+        PagingRequest pagingRequest
     ) {
+
+        Pageable pageable = PageRequest.of(
+            pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+            pagingRequest.getPageSize(),
+            PagingUtil.createSort(pagingRequest)
+        );
+
         String branchId = AuthUtils.getBranchId();
 
-        Pageable pageable =
-            PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
-
-        Page<Inventory> inventoryPage =
-            inventoryRepository.findByIngredientBranchIdAndStatus(
-                branchId,
-                status,
-                pageable
-            );
+        Page<Inventory> inventoryPage = inventoryRepository.findAll(
+            InventorySpecification.build(branchId, searchRequest),
+            pageable
+        );
 
         return PagingResponse.<InventoryResponse>builder()
-            .currentPage(page)
+            .currentPage(pagingRequest.getPage())
             .pageSize(inventoryPage.getSize())
             .totalPages(inventoryPage.getTotalPages())
             .totalElement(inventoryPage.getTotalElements())

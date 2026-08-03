@@ -13,14 +13,16 @@ BEGIN
     IF has_permission_code THEN
         EXECUTE $sql$
             INSERT INTO org_permissions (id, version, permission_code, permission_name, description, created_at, updated_at)
-            VALUES ('d0000000-0000-0000-0000-000000000305', 0, 'STAFF_VIEW', 'View staff', 'View employees in permitted scope', NOW(), NOW())
+            VALUES
+                ('d0000000-0000-0000-0000-000000000401', 0, 'BRANCH_MANAGER_ASSIGN', 'Assign branch manager', 'Assign an employee as branch manager', NOW(), NOW())
             ON CONFLICT (permission_code) DO NOTHING
         $sql$;
         permission_match := 'p.permission_code';
     ELSE
         EXECUTE $sql$
             INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at)
-            VALUES ('d0000000-0000-0000-0000-000000000305', 0, 'STAFF_VIEW', NOW(), NOW())
+            VALUES
+                ('d0000000-0000-0000-0000-000000000401', 0, 'BRANCH_MANAGER_ASSIGN', NOW(), NOW())
             ON CONFLICT (permission_name) DO NOTHING
         $sql$;
         permission_match := 'p.permission_name';
@@ -31,8 +33,9 @@ BEGIN
             INSERT INTO org_role_permissions (org_role_id, org_permission_id)
             SELECT r.id, p.id
             FROM org_roles r
-            JOIN org_permissions p ON %s = 'STAFF_VIEW'
-            WHERE r.role_name IN ('OWNER', 'MANAGER')
+            JOIN org_permissions p
+                ON %s = 'BRANCH_MANAGER_ASSIGN'
+            WHERE r.role_name = 'OWNER'
             ON CONFLICT DO NOTHING
         $sql$, permission_match);
     END IF;
@@ -42,8 +45,9 @@ BEGIN
             INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
             SELECT r.id, p.id
             FROM org_roles r
-            JOIN org_permissions p ON %s = 'STAFF_VIEW'
-            WHERE r.role_name IN ('OWNER', 'MANAGER')
+            JOIN org_permissions p
+                ON %s = 'BRANCH_MANAGER_ASSIGN'
+            WHERE r.role_name = 'OWNER'
             ON CONFLICT DO NOTHING
         $sql$, permission_match);
     END IF;

@@ -3,6 +3,8 @@ package com.restaurant.crm.modules.erp.organization.repository;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -33,9 +35,41 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
     Optional<Employee> findByIdAndBranch_IdAndOrgRole_RoleNameNot(
             String id, String branchId, String excludedRole);
 
-    Optional<Employee> findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-            String userId,
+    Optional<Employee> findByIdAndBranch_Organization_IdAndBranch_Organization_Owner_Id(
+            String id,
             String organizationId,
             String ownerId
+    );
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM Employee e
+            JOIN FETCH e.user u
+            LEFT JOIN FETCH e.orgRole r
+            LEFT JOIN FETCH e.branch b
+            LEFT JOIN FETCH b.organization o
+            LEFT JOIN FETCH o.owner ow
+            WHERE e.id = :employeeId
+            """)
+    Optional<Employee> findByIdWithUserRoleAndBranch(
+            @Param("employeeId") String employeeId
+    );
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM Employee e
+            JOIN FETCH e.user u
+            LEFT JOIN FETCH e.orgRole r
+            JOIN FETCH e.branch b
+            JOIN FETCH b.organization o
+            LEFT JOIN FETCH o.owner ow
+            WHERE u.id = :userId
+              AND b.id = :branchId
+              AND o.id = :organizationId
+            """)
+    Optional<Employee> findByUserIdAndBranchIdAndOrganizationIdWithDetails(
+            @Param("userId") String userId,
+            @Param("branchId") String branchId,
+            @Param("organizationId") String organizationId
     );
 }

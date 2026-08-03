@@ -38,25 +38,23 @@ public class OrganizationBranchController {
         );
     }
 
-    @GetMapping("/organization/{organizationId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<OrganizationBranchResponse>>> getOrganizationBranches(
-            @PathVariable String organizationId,
-            @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+        @RequestParam(value = "page", defaultValue = "1") int page,
+        @RequestParam(value = "size", defaultValue = "10") int size
     ) {
 
         PagingResponse<OrganizationBranchResponse> response =
-                organizationBranchService.getOrganizationBranches(
-                        organizationId,
-                        page,
-                        size
-                );
+            organizationBranchService.getOrganizationBranches(
+                page,
+                size
+            );
 
         return ResponseEntity.ok(
-                ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
-                        .data(response)
-                        .build()
+            ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
+                .data(response)
+                .build()
         );
     }
 

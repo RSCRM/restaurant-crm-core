@@ -1,10 +1,13 @@
 package com.restaurant.crm.modules.erp.inventory.service.impl;
 
 import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryTransactionRequest;
+import com.restaurant.crm.modules.erp.inventory.dto.request.InventoryTransactionSearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryTransactionResponse;
 import com.restaurant.crm.modules.erp.inventory.entity.Inventory;
 import com.restaurant.crm.modules.erp.inventory.entity.InventoryTransaction;
@@ -15,6 +18,7 @@ import com.restaurant.crm.modules.erp.inventory.mapper.InventoryTransactionMappe
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryRepository;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryTransactionRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryTransactionService;
+import com.restaurant.crm.modules.erp.inventory.specification.InventoryTransactionSpecification;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -140,42 +144,6 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponse<InventoryTransactionResponse> getTransactionsByInventory(
-        String inventoryId,
-        int page,
-        int size
-    ) {
-        String branchId = AuthUtils.getBranchId();
-
-        Pageable pageable =
-            PageRequest.of(
-                page - GlobalVariableConstant.PAGE_SIZE_INDEX,
-                size
-            );
-
-        Page<InventoryTransaction> result =
-            transactionRepository.findByInventoryIdAndInventoryIngredientBranchId(
-                inventoryId,
-                branchId,
-                pageable
-            );
-
-        return PagingResponse.<InventoryTransactionResponse>builder()
-            .currentPage(page)
-            .pageSize(result.getSize())
-            .totalPages(result.getTotalPages())
-            .totalElement(result.getTotalElements())
-            .data(
-                result.getContent()
-                    .stream()
-                    .map(transactionMapper::toInventoryTransactionResponse)
-                    .toList()
-            )
-            .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public PagingResponse<InventoryTransactionResponse> getTransactionsByBranch(
         int page,
         int size
@@ -210,83 +178,37 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponse<InventoryTransactionResponse> getTransactionsByType(
-        InventoryTransactionType type,
-        int page,
-        int size
+    public PagingResponse<InventoryTransactionResponse> searchTransactions(
+        InventoryTransactionSearchRequest searchRequest,
+        PagingRequest pagingRequest
     ) {
+
         String branchId = AuthUtils.getBranchId();
 
-        Pageable pageable =
-            PageRequest.of(
-                page - GlobalVariableConstant.PAGE_SIZE_INDEX,
-                size
-            );
+        Pageable pageable = PageRequest.of(
+            pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+            pagingRequest.getPageSize(),
+            PagingUtil.createSort(pagingRequest)
+        );
 
         Page<InventoryTransaction> transactionPage =
-            transactionRepository
-                .findByInventoryIngredientBranchIdAndTransactionType(
+            transactionRepository.findAll(
+                InventoryTransactionSpecification.build(
                     branchId,
-                    type,
-                    pageable
-                );
+                    searchRequest
+                ),
+                pageable
+            );
 
         return PagingResponse.<InventoryTransactionResponse>builder()
-            .currentPage(page)
+            .currentPage(pagingRequest.getPage())
             .pageSize(transactionPage.getSize())
             .totalPages(transactionPage.getTotalPages())
             .totalElement(transactionPage.getTotalElements())
             .data(
                 transactionPage.getContent()
                     .stream()
-                    .map(
-                        transactionMapper::toInventoryTransactionResponse
-                    )
-                    .toList()
-            )
-            .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PagingResponse<InventoryTransactionResponse> getTransactionsByDateRange(
-        Instant from,
-        Instant to,
-        int page,
-        int size
-    ) {
-        String branchId = AuthUtils.getBranchId();
-
-        if (from.isAfter(to)) {
-            throw new AppException(ErrorCode.INVALID_DATE_RANGE);
-        }
-
-        Pageable pageable =
-            PageRequest.of(
-                page - GlobalVariableConstant.PAGE_SIZE_INDEX,
-                size
-            );
-
-        Page<InventoryTransaction> transactionPage =
-            transactionRepository
-                .findByInventoryIngredientBranchIdAndTransactionTimeBetween(
-                    branchId,
-                    from,
-                    to,
-                    pageable
-                );
-
-        return PagingResponse.<InventoryTransactionResponse>builder()
-            .currentPage(page)
-            .pageSize(transactionPage.getSize())
-            .totalPages(transactionPage.getTotalPages())
-            .totalElement(transactionPage.getTotalElements())
-            .data(
-                transactionPage.getContent()
-                    .stream()
-                    .map(
-                        transactionMapper::toInventoryTransactionResponse
-                    )
+                    .map(transactionMapper::toInventoryTransactionResponse)
                     .toList()
             )
             .build();

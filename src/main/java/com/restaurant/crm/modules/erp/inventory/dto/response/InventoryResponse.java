@@ -17,6 +17,7 @@ import java.time.Instant;
 public class InventoryResponse {
     String id;
     String ingredientId;
+    String ingredientName;
     BigDecimal quantity;
     BigDecimal minimumQuantity;
     InventoryStatus status;

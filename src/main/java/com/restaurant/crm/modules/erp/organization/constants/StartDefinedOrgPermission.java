@@ -21,11 +21,13 @@ public class StartDefinedOrgPermission {
     public static final String TABLE_MANAGE = "TABLE_MANAGE";
     public static final String TABLE_MAP_READ = "TABLE_MAP_READ";
     public static final String TABLE_SEARCH_READ = "TABLE_SEARCH_READ";
+    public static final String TABLE_SESSION_CREATE = "TABLE_SESSION_CREATE";
     public static final String REPORT_VIEW = "REPORT_VIEW";
 
     // Management & Administration Permissions
     public static final String STAFF_MANAGE = "STAFF_MANAGE";
     public static final String BRANCH_MANAGE = "BRANCH_MANAGE";
+    public static final String BRANCH_MANAGER_ASSIGN = "BRANCH_MANAGER_ASSIGN";
     public static final String ORG_MANAGE = "ORG_MANAGE";
 
     // ===== ORGANIZATION =====
