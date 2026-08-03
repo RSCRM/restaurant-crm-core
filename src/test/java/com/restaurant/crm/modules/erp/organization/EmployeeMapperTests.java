@@ -1,6 +1,6 @@
 package com.restaurant.crm.modules.erp.organization;
 
-import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgRole;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
@@ -73,7 +73,7 @@ public class EmployeeMapperTests {
                         .build())
                 .orgRole(OrgRole.builder()
                         .id("r0000000-0000-0000-0000-000000000002")
-                        .roleName(StartDefinedOrgRole.MANAGER)
+                        .roleName(EmployeeConstants.MANAGER_ROLE_NAME)
                         .build())
                 .branch(branch)
                 .status(EmployeeStatus.ACTIVE)
