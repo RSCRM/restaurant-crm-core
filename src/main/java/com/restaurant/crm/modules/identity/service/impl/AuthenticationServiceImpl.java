@@ -1,7 +1,5 @@
 package com.restaurant.crm.modules.identity.service.impl;
 
-<<<<<<< HEAD
-=======
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
@@ -15,7 +13,6 @@ import com.restaurant.crm.modules.identity.entity.User;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.service.interfaces.AuthenticationService;
->>>>>>> be38cfc (feat/ impl logout function)
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -26,23 +23,18 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.restaurant.crm.common.constant.JwtClaimSetConstant;
-import com.restaurant.crm.common.enums.ErrorCode;
-import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
-import com.restaurant.crm.modules.identity.dto.request.AuthenticationRequest;
+import com.restaurant.crm.modules.erp.organization.repository.OrgRoleRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.identity.dto.request.ContextSelectionRequest;
-import com.restaurant.crm.modules.identity.dto.request.IntrospectRequest;
-import com.restaurant.crm.modules.identity.dto.response.AuthenticationResponse;
 import com.restaurant.crm.modules.identity.dto.response.ContextResponse;
 import com.restaurant.crm.modules.identity.dto.response.ContextSelectionResponse;
-import com.restaurant.crm.modules.identity.dto.response.IntrospectResponse;
-import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.repository.UserRepository;
-import com.restaurant.crm.modules.identity.service.interfaces.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -69,17 +61,17 @@ import java.util.UUID;
 public class AuthenticationServiceImpl implements AuthenticationService {
     private static final String TOKEN_TYPE_IDENTITY = "IDENTITY";
     private static final String TOKEN_TYPE_CONTEXT = "CONTEXT";
+    private static final String OWNER_ROLE = "OWNER";
     private static final long IDENTITY_TOKEN_EXPIRY_MINUTES = 15;
     private static final long CONTEXT_TOKEN_EXPIRY_HOURS = 72;
 
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
-<<<<<<< HEAD
     EmployeeRepository employeeRepository;
-=======
+    OrganizationRepository organizationRepository;
+    OrgRoleRepository orgRoleRepository;
     RoleRepository roleRepository;
     RedisBlacklistRepository redisBlacklistRepository;
->>>>>>> be38cfc (feat/ impl logout function)
 
     @NonFinal
     @Value(value = "${security.jwt.signer-key}")
@@ -100,9 +92,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         List<Employee> employees = employeeRepository.findByUserIdAndStatus(
                 user.getId(), EmployeeStatus.ACTIVE);
 
-        List<ContextResponse> contexts = employees.stream()
+        List<ContextResponse> contexts = new java.util.ArrayList<>(employees.stream()
                 .map(this::buildContextResponse)
-                .toList();
+                .toList());
+
+        // Load owner context (user is owner of an organization)
+        organizationRepository.findByOwnerId(user.getId())
+                .ifPresent(organization -> contexts.add(buildOwnerContextResponse(organization)));
 
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
@@ -133,7 +129,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Owner path: no employeeId, just organizationId
         if (request.getEmployeeId() == null) {
-            String contextToken = generateOwnerContextToken(userId, request.getOrganizationId(), request.getRole());
+            Organization organization = organizationRepository
+                    .findByIdAndOwnerId(request.getOrganizationId(), userId)
+                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
+            String contextToken = generateOwnerContextToken(userId, organization.getId());
             return ContextSelectionResponse.builder()
                     .contextToken(contextToken)
                     .build();
@@ -150,10 +149,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Load permissions from OrgRole
         Set<String> permissions = buildOrgPermissions(employee);
 
-        String roleName = employee.getOrgRole() != null ? employee.getOrgRole().getRoleName() : null;
+        if (employee.getOrgRole() == null) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+        String roleName = employee.getOrgRole().getRoleName();
 
         // Generate Context Token
-        String contextToken = generateContextToken(userId, employee, roleName, permissions);
+        String contextToken = generateContextToken(
+                userId, employee, roleName, employee.getOrgRole().getDataScope(), permissions);
 
         return ContextSelectionResponse.builder()
                 .contextToken(contextToken)
@@ -178,11 +181,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-<<<<<<< HEAD
-    // ==================== Token Generation ====================
-
     private String generateIdentityToken(User user) {
-=======
+        return getJwsHeader(user);
+    }
+
     @Override
     public void logout(String token) {
         try {
@@ -217,24 +219,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    private String generateToken(User user) {
-        // header
->>>>>>> be38cfc (feat/ impl logout function)
+
+    private String getJwsHeader(User user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getEmail())
                 .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(IDENTITY_TOKEN_EXPIRY_MINUTES, ChronoUnit.MINUTES)))
+                .expirationTime(Date.from(Instant.now().plus(IDENTITY_TOKEN_EXPIRY_MINUTES, ChronoUnit.DAYS)))
                 .jwtID(UUID.randomUUID().toString())
                 .claim(JwtClaimSetConstant.CLAIM_USER_ID, user.getId())
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_IDENTITY)
+                .claim(JwtClaimSetConstant.CLAIM_SCOPE, buildSystemRoles(user))
                 .build();
 
         return signToken(jwsHeader, jwtClaimsSet);
     }
 
-    private String generateContextToken(String userId, Employee employee, String roleName, Set<String> permissions) {
+    private String generateContextToken(
+            String userId,
+            Employee employee,
+            String roleName,
+            OrgDataScope dataScope,
+            Set<String> permissions) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         OrganizationBranch branch = employee.getBranch();
@@ -251,6 +258,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_CONTEXT)
                 .claim(JwtClaimSetConstant.CLAIM_EMPLOYEE_ID, employee.getId())
                 .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, roleName)
+                .claim(JwtClaimSetConstant.CLAIM_DATA_SCOPE, dataScope.name())
                 .claim(JwtClaimSetConstant.CLAIM_PERMISSION, permissions);
 
         if (organizationId != null) {
@@ -263,8 +271,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return signToken(jwsHeader, claimsBuilder.build());
     }
 
-    private String generateOwnerContextToken(String userId, String organizationId, String role) {
+    private String generateOwnerContextToken(String userId, String organizationId) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
+        Set<String> permissions = orgRoleRepository.findByRoleName(OWNER_ROLE)
+                .map(this::buildOrgPermissions)
+                .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)
@@ -274,7 +285,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .claim(JwtClaimSetConstant.CLAIM_USER_ID, userId)
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_CONTEXT)
                 .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, organizationId)
-                .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, role)
+                .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, OWNER_ROLE)
+                .claim(JwtClaimSetConstant.CLAIM_DATA_SCOPE, OrgDataScope.ORGANIZATION.name())
+                .claim(JwtClaimSetConstant.CLAIM_PERMISSION, permissions)
                 .build();
 
         return signToken(jwsHeader, jwtClaimsSet);
@@ -321,8 +334,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    // ==================== Helper Methods ====================
-
     private ContextResponse buildContextResponse(Employee employee) {
         OrganizationBranch branch = employee.getBranch();
         String branchId = branch != null ? branch.getId() : null;
@@ -343,6 +354,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    private ContextResponse buildOwnerContextResponse(Organization organization) {
+        return ContextResponse.builder()
+                .employeeId(null)
+                .organizationId(organization.getId())
+                .organizationName(organization.getOrganizationName())
+                .branchId(null)
+                .branchName(null)
+                .role("OWNER")
+                .build();
+    }
+
     private Set<String> buildSystemRoles(User user) {
         Set<String> roles = new HashSet<>();
         if (user.getRoles() != null) {
@@ -352,9 +374,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private Set<String> buildOrgPermissions(Employee employee) {
+        return buildOrgPermissions(employee.getOrgRole());
+    }
+
+    private Set<String> buildOrgPermissions(OrgRole orgRole) {
         Set<String> permissions = new HashSet<>();
-        if (employee.getOrgRole() != null && employee.getOrgRole().getOrgPermissions() != null) {
-            employee.getOrgRole().getOrgPermissions()
+        if (orgRole != null && orgRole.getOrgPermissions() != null) {
+            orgRole.getOrgPermissions()
                     .forEach(permission -> permissions.add(permission.getPermissionName()));
         }
         return permissions;

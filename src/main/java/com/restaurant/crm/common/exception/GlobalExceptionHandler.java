@@ -5,17 +5,18 @@ import com.restaurant.crm.common.dto.ErrorMessage;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.nio.file.AccessDeniedException;
 import java.util.Objects;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends RuntimeException{
     @ExceptionHandler(value = RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handlingRuntimeException(RuntimeException exception){
+        exception.printStackTrace(); // Log stack trace for debugging
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(ApiConstant.FAILURE)
                 .errorMessage(ErrorMessage.builder()
@@ -23,7 +24,7 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .message(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getMessage())
                         .build())
                 .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getHttpStatusCode()).body(response);
     }
 
     @ExceptionHandler(value = AppException.class)
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .message(errorCode.getMessage())
                         .build())
                 .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
     }
 
     //handling Denied Access
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .message(ErrorCode.AUTHZ_UNAUTHORIZED.getMessage())
                         .build())
                 .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(ErrorCode.AUTHZ_UNAUTHORIZED.getHttpStatusCode()).body(response);
     }
 
     //handling MethodArgumentNotValidException
@@ -65,6 +66,6 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .build())
                 .build();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
     }
 }

@@ -7,20 +7,25 @@ import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
-import com.restaurant.crm.modules.erp.shared.entity.Organization;
-import com.restaurant.crm.modules.erp.shared.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationBranchMapper;
-import com.restaurant.crm.modules.erp.shared.repository.OrganizationBranchRepository;
-import com.restaurant.crm.modules.erp.shared.repository.OrganizationRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationBranchService;
+import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -74,34 +79,71 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<OrganizationBranchResponse> getOrganizationBranches(
-            String organizationId,
-            int page,
-            int size
+        int page,
+        int size
     ) {
 
         Pageable pageable = PageRequest.of(
-                page - GlobalVariableConstant.PAGE_SIZE_INDEX,
-                size
+            page - GlobalVariableConstant.PAGE_SIZE_INDEX,
+            size
         );
 
-        Page<OrganizationBranch> organizationBranchPage =
-                organizationBranchRepository.findByOrganizationId(
-                        organizationId,
-                        pageable
-                );
+        Page<OrganizationBranch> organizationBranchPage;
+
+        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
+
+            organizationBranchPage =
+                organizationBranchRepository.findAll(pageable);
+
+        } else {
+
+            switch (AuthUtils.getDataScope()) {
+
+                case ORGANIZATION ->
+
+                    organizationBranchPage =
+                        organizationBranchRepository.findByOrganizationId(
+                            AuthUtils.getOrganizationId(),
+                            pageable
+                        );
+
+                case BRANCH ->
+
+                    organizationBranchPage =
+                        organizationBranchRepository.findById(
+                                AuthUtils.getBranchId()
+                            )
+                            .map(branch ->
+                                new PageImpl<>(
+                                    List.of(branch),
+                                    pageable,
+                                    1
+                                )
+                            )
+                            .orElseThrow(() ->
+                                new AppException(
+                                    ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND
+                                )
+                            );
+
+                case SELF -> throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+
+                default -> throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+            }
+        }
 
         return PagingResponse.<OrganizationBranchResponse>builder()
-                .currentPage(page)
-                .pageSize(organizationBranchPage.getSize())
-                .totalPages(organizationBranchPage.getTotalPages())
-                .totalElement(organizationBranchPage.getTotalElements())
-                .data(
-                        organizationBranchPage.getContent()
-                                .stream()
-                                .map(organizationBranchMapper::toOrganizationBranchResponse)
-                                .toList()
-                )
-                .build();
+            .currentPage(page)
+            .pageSize(organizationBranchPage.getSize())
+            .totalPages(organizationBranchPage.getTotalPages())
+            .totalElement(organizationBranchPage.getTotalElements())
+            .data(
+                organizationBranchPage.getContent()
+                    .stream()
+                    .map(organizationBranchMapper::toOrganizationBranchResponse)
+                    .toList()
+            )
+            .build();
     }
 
     @Override

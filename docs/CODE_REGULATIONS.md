@@ -33,6 +33,7 @@ com.restaurant.crm
 │   ├── enums                           # Enum lỗi & trạng thái dùng chung (ErrorCode)
 │   ├── exception                       # Xử lý ngoại lệ toàn cục (AppException, GlobalExceptionHandler)
 │   ├── properties                      # Configuration Properties (@ConfigurationProperties)
+│   ├── sse                             # Hạ tầng truyền phát tin Server-Sent Events (SSE) dùng chung
 │   └── utils                           # Utility dùng chung (PagingUtil)
 └── modules                             # Các module nghiệp vụ tách biệt
     ├── identity                        # Module Quản lý Định danh (User, Role, Permission, Auth)
@@ -63,7 +64,7 @@ com.restaurant.crm.modules.<module_name>
 └── utils                               # Utility nội bộ module
 ```
 
-> ⚠️ **LƯU Ý VỀ ĐẶT TÊN PACKAGE**: Package Java **TUYỆT ĐỐI KHÔNG** chứa dấu gạch ngang (`-`). Sử dụng snake_case hoặc camelCase nếu cần (Ví dụ: dùng `loyalty_voucher` thay vì `loyalty-voucher`).
+> ⚠️ **LƯU Ý VỀ ĐẶT TÊN PACKAGE**: Package Java **TUYỆT ĐỐI KHÔNG** chứa dấu gạch ngang (`-`). Sử dụng snake_case hoặc camelCase nếu cần (Ví dụ: dùng `loyaltyvoucher` thay vì `loyalty-voucher`).
 
 ---
 
@@ -322,6 +323,7 @@ Sử dụng `com.restaurant.crm.modules.identity.utils.AuthUtils` để truy v�
 5. **Dùng Constant Classes** riêng cho từng Entity/Module để quản lý tên cột, tên bảng và thông báo lỗi.
 6. **Khởi tạo dữ liệu hệ thống** qua `ApplicationRunner` có `@Order` rõ ràng.
 7. **Sử dụng `@Transactional`** ở tầng Service đối với các phương thức ghi/sửa dữ liệu Database.
+8. **Tái sử dụng hạ tầng SSE dùng chung (`common.sse`)** cho mọi yêu cầu phát tin realtime trong toàn hệ thống (như hoàn thành món, đặt bàn, tin nhắn), tránh tự triển khai riêng hoặc tạo phụ thuộc chéo vào module notification.
 
 ### ❌ KHÔNG NÊN LÀM (DON'TS):
 1. **KHÔNG** sử dụng `@Autowired` trên private field.

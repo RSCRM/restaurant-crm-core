@@ -10,6 +10,9 @@ import com.restaurant.crm.modules.identity.entity.User;
 import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,6 +33,7 @@ import java.util.Set;
 @Slf4j
 public class AdminInitializer implements ApplicationRunner {
     UserRepository usersRepository;
+    UserProfileRepository userProfileRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
     AdminProperties adminProperties;
@@ -37,14 +41,13 @@ public class AdminInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing admin ...");
+         log.info("Initializing admin ...");
 
-        boolean existed = usersRepository.existsByUsername(adminProperties.getUsername());
-        if (!existed) {
+        User admin = usersRepository.findByUsername(adminProperties.getUsername()).orElseGet(() -> {
             Role adminRole = roleRepository.findByRoleName(PredefinedRole.ADMIN_ROLE)
                     .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
-            User admin = User.builder()
+            User createdAdmin = User.builder()
                     .username(adminProperties.getUsername())
                     .password(passwordEncoder.encode(adminProperties.getPassword()))
                     .email(adminProperties.getUsername())
@@ -52,12 +55,18 @@ public class AdminInitializer implements ApplicationRunner {
                     .status(UserStatus.ACTIVE)
                     .roles(Set.of(adminRole))
                     .build();
-            usersRepository.save(admin);
+            User savedAdmin = usersRepository.save(createdAdmin);
 
-            log.info("Admin has been created with username {}", admin.getUsername());
-        } else {
-            log.info("Admin already exists with username {}", adminProperties.getUsername());
-        }
+            log.info("Admin has been created with username {}", savedAdmin.getUsername());
+            return savedAdmin;
+        });
+
+        userProfileRepository.findByUser_Id(admin.getId()).orElseGet(() ->
+                userProfileRepository.save(UserProfile.builder()
+                        .user(admin)
+                        .fullName(UserProfileConstants.DEFAULT_ADMIN_FULL_NAME)
+                        .phone(UserProfileConstants.DEFAULT_ADMIN_PHONE)
+                        .build()));
     }
 }
 

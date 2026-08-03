@@ -1,7 +1,7 @@
 package com.restaurant.crm.modules.erp.organization.dto.response;
 
 
-import com.restaurant.crm.modules.erp.shared.enums.OrganizationBranchStatus;
+import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +17,7 @@ import java.time.Instant;
 public class OrganizationBranchResponse {
     String id;
     String organizationId;
+    String managerId;
     String branchName;
     String address;
     String phone;

@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,6 +23,7 @@ public class OrganizationBranchController {
     OrganizationBranchService organizationBranchService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_MANAGE')")
     public ResponseEntity<ApiResponse<OrganizationBranchResponse>> createOrganizationBranch(
             @Valid @RequestBody CreateOrganizationBranchRequest request
     ) {
@@ -36,28 +38,28 @@ public class OrganizationBranchController {
         );
     }
 
-    @GetMapping("/organization/{organizationId}")
+    @GetMapping
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<OrganizationBranchResponse>>> getOrganizationBranches(
-            @PathVariable String organizationId,
-            @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+        @RequestParam(value = "page", defaultValue = "1") int page,
+        @RequestParam(value = "size", defaultValue = "10") int size
     ) {
 
         PagingResponse<OrganizationBranchResponse> response =
-                organizationBranchService.getOrganizationBranches(
-                        organizationId,
-                        page,
-                        size
-                );
+            organizationBranchService.getOrganizationBranches(
+                page,
+                size
+            );
 
         return ResponseEntity.ok(
-                ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
-                        .data(response)
-                        .build()
+            ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
+                .data(response)
+                .build()
         );
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_VIEW')")
     public ResponseEntity<ApiResponse<OrganizationBranchResponse>> getOrganizationBranchById(
             @PathVariable String id
     ) {
@@ -73,6 +75,7 @@ public class OrganizationBranchController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_MANAGE')")
     public ResponseEntity<ApiResponse<OrganizationBranchResponse>> updateOrganizationBranch(
             @PathVariable String id,
             @Valid @RequestBody UpdateOrganizationBranchRequest request
@@ -90,5 +93,4 @@ public class OrganizationBranchController {
                         .build()
         );
     }
-
 }

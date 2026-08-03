@@ -7,6 +7,7 @@ import com.restaurant.crm.modules.identity.constants.permission.StartDefinedPerm
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Permission;
 import com.restaurant.crm.modules.identity.entity.Role;
+import com.restaurant.crm.modules.identity.enums.SystemDataScope;
 import com.restaurant.crm.modules.identity.repository.PermissionRepository;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import lombok.AccessLevel;
@@ -34,29 +35,19 @@ public class RoleInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        Set<Permission> adminPermissions = getAdminPermissions();
-        Role adminRole = roleRepository.findByRoleName(PredefinedRole.ADMIN_ROLE)
-                .orElse(null);
-
-        if (adminRole == null) {
-            adminRole = Role.builder()
+        if (!roleRepository.existsByRoleName(PredefinedRole.ADMIN_ROLE)) {
+            Role adminRole = Role.builder()
                     .roleName(PredefinedRole.ADMIN_ROLE)
-                    .permissions(adminPermissions)
+                    .dataScope(SystemDataScope.SYSTEM)
+                    .permissions(getAdminPermissions())
                     .build();
-            roleRepository.save(adminRole);
-        } else {
-            Set<Permission> permissions = adminRole.getPermissions();
-            if (permissions == null) {
-                permissions = new HashSet<>();
-            }
-            permissions.addAll(adminPermissions);
-            adminRole.setPermissions(permissions);
             roleRepository.save(adminRole);
         }
 
         if (!roleRepository.existsByRoleName(PredefinedRole.USER_ROLE)) {
             Role staffRole = Role.builder()
                     .roleName(PredefinedRole.USER_ROLE)
+                    .dataScope(SystemDataScope.TENANT)
                     .permissions(null)
                     .build();
             roleRepository.save(staffRole);
@@ -94,22 +85,6 @@ public class RoleInitializer implements ApplicationRunner {
         permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.USER_UPDATE)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
         permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.USER_DELETE)
-                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
-
-        // Branch manager permissions
-        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_VIEW)
-                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
-        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_CREATE)
-                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
-        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_UPDATE)
-                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
-        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_DELETE)
-                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
-        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.BRANCH_MANAGER_ASSIGN)
-                .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
-
-        // Contract permissions
-        permissions.add(permissionRepository.findByPermissionName(StartDefinedPermission.CONTRACT_LICENSE_VIEW)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_FOUND)));
 
         return permissions;
