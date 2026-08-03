@@ -21,4 +21,6 @@ public interface TableManagementService {
     void deleteTable(String tableId);
     List<RestaurantTableResponse> listTablesByArea(String areaId);
     RestaurantTableResponse getTable(String tableId);
+    RestaurantTableResponse confirmReservation(String tableId);
+    RestaurantTableResponse cancelReservation(String tableId);
 }

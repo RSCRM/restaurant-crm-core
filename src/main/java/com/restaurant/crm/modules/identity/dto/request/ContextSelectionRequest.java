@@ -18,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ContextSelectionRequest {
     String employeeId;
+    String branchId;
 
     @NotNull
     @NotBlank

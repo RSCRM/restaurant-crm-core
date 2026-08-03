@@ -2,8 +2,12 @@ package com.restaurant.crm.modules.erp.table.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.booking.entity.Booking;
+import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
+import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.constants.TableManagementConstants;
+import com.restaurant.crm.modules.erp.table.constants.TableSessionConstants;
 import com.restaurant.crm.modules.erp.table.dto.request.CreateAreaRequest;
 import com.restaurant.crm.modules.erp.table.dto.request.CreateTableRequest;
 import com.restaurant.crm.modules.erp.table.dto.request.UpdateAreaRequest;
@@ -12,9 +16,13 @@ import com.restaurant.crm.modules.erp.table.dto.response.RestaurantTableResponse
 import com.restaurant.crm.modules.erp.table.dto.response.TableAreaResponse;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.entity.TableArea;
+import com.restaurant.crm.modules.erp.table.entity.TableSession;
+import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
+import com.restaurant.crm.modules.erp.table.enums.TableSessionStatus;
 import com.restaurant.crm.modules.erp.table.mapper.TableManagementMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableAreaRepository;
+import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
 import com.restaurant.crm.modules.erp.table.service.interfaces.TableManagementService;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
@@ -23,6 +31,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -33,6 +42,8 @@ public class TableManagementServiceImpl implements TableManagementService {
     TableAreaRepository tableAreaRepository;
     RestaurantTableRepository restaurantTableRepository;
     OrganizationBranchRepository organizationBranchRepository;
+    BookingRepository bookingRepository;
+    TableSessionRepository tableSessionRepository;
     TableManagementMapper mapper;
 
     // ================= AREA =================
@@ -183,6 +194,65 @@ public class TableManagementServiceImpl implements TableManagementService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESTAURANT_TABLE_NOT_FOUND));
         validateBranchAccess(table.getArea().getBranchId());
         return mapper.toTableResponse(table);
+    }
+
+    @Override
+    @Transactional
+    public RestaurantTableResponse confirmReservation(String tableId) {
+        RestaurantTable table = getReservedTable(tableId);
+        Booking booking = getActiveBooking(tableId);
+        if (tableSessionRepository.existsByTableIdAndStatus(tableId, TableSessionStatus.ACTIVE)) {
+            throw new AppException(ErrorCode.TABLE_SESSION_ACTIVE_EXISTS);
+        }
+
+        booking.setStatus(BookingStatus.SEATED);
+        table.setStatus(RestaurantTableStatus.OCCUPIED);
+        bookingRepository.save(booking);
+        restaurantTableRepository.save(table);
+        tableSessionRepository.save(TableSession.builder()
+                .branchId(table.getArea().getBranchId())
+                .table(table)
+                .guestName("Khách đặt bàn")
+                .guestPhone(booking.getCustomer().getPhone())
+                .partySize(booking.getGuestCount())
+                .status(TableSessionStatus.ACTIVE)
+                .startedAt(Instant.now())
+                .note(booking.getNote() == null ? null
+                        : booking.getNote().substring(
+                                0,
+                                Math.min(booking.getNote().length(), TableSessionConstants.MAX_NOTE_LENGTH)))
+                .build());
+        return mapper.toTableResponse(table);
+    }
+
+    @Override
+    @Transactional
+    public RestaurantTableResponse cancelReservation(String tableId) {
+        RestaurantTable table = getReservedTable(tableId);
+        Booking booking = getActiveBooking(tableId);
+        booking.setStatus(BookingStatus.CANCELLED);
+        table.setStatus(RestaurantTableStatus.AVAILABLE);
+        bookingRepository.save(booking);
+        restaurantTableRepository.save(table);
+        return mapper.toTableResponse(table);
+    }
+
+    private RestaurantTable getReservedTable(String tableId) {
+        RestaurantTable table = restaurantTableRepository.findById(tableId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESTAURANT_TABLE_NOT_FOUND));
+        validateBranchAccess(table.getArea().getBranchId());
+        if (table.getStatus() != RestaurantTableStatus.RESERVED) {
+            throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
+        }
+        return table;
+    }
+
+    private Booking getActiveBooking(String tableId) {
+        return bookingRepository.findFirstByTables_IdAndStatusInOrderByBookingTimeAsc(
+                        tableId,
+                        List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
     }
 
     // ================= AUTHZ =================

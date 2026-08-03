@@ -127,22 +127,21 @@ SET shift_assignment_id = EXCLUDED.shift_assignment_id,
     status = EXCLUDED.status,
     updated_at = NOW();
 
--- UC-CM-07: manager/owner view staff schedules; manager's own row verifies self-exclusion.
+-- UC-CM-07: manager/owner view and create staff schedules.
 INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
 SELECT role.id, permission.id
 FROM org_roles role
 CROSS JOIN org_permissions permission
 WHERE role.role_name IN ('OWNER', 'MANAGER')
-  AND permission.permission_name = 'SCHEDULE_STAFF_READ'
+  AND permission.permission_name IN ('SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE')
 ON CONFLICT DO NOTHING;
+
+DELETE FROM work_schedules
+WHERE employee_id = 'f0000000-0000-0000-0000-000000000001';
 
 INSERT INTO work_schedules
     (id, version, employee_id, branch_id, work_date, start_time, end_time, note, created_at, updated_at)
 VALUES
-    ('77000000-0000-0000-0000-000000000001', 0,
-     'f0000000-0000-0000-0000-000000000001',
-     'e0000000-0000-0000-0000-000000000001',
-     CURRENT_DATE, '08:00', '17:00', 'Manager - must not appear', NOW(), NOW()),
     ('77000000-0000-0000-0000-000000000002', 0,
      'f0000000-0000-0000-0000-000000000008',
      'e0000000-0000-0000-0000-000000000001',
@@ -183,6 +182,15 @@ WHERE (role.role_name IN ('OWNER', 'MANAGER', 'CASHIER', 'WAITER', 'CHEF')
        AND permission.permission_name = 'TABLE_SESSION_CREATE')
 ON CONFLICT DO NOTHING;
 
+-- Owner/manager handle reservations from the table-management screen.
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT role.id, permission.id
+FROM org_roles role
+CROSS JOIN org_permissions permission
+WHERE role.role_name IN ('OWNER', 'MANAGER')
+  AND permission.permission_name IN ('BOOKING_READ', 'BOOKING_UPDATE')
+ON CONFLICT DO NOTHING;
+
 INSERT INTO table_areas
     (area_id, version, branch_id, area_name, description, display_order, created_at, updated_at)
 VALUES
@@ -220,12 +228,101 @@ VALUES
      'Bàn 05', 4, 'OCCUPIED', 1, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000006', 0,
      'a0000000-0000-0000-0000-000000000002',
-     'Bàn 06', 8, 'AVAILABLE', 2, 0, NOW(), NOW())
+     'Bàn 06', 8, 'AVAILABLE', 2, 0, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000007', 0,
+     'a0000000-0000-0000-0000-000000000001',
+     'Bàn 07', 4, 'RESERVED', 3, 0, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000008', 0,
+     'a0000000-0000-0000-0000-000000000002',
+     'Bàn 08', 6, 'RESERVED', 3, 0, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000009', 0,
+     'a0000000-0000-0000-0000-000000000002',
+     'Bàn 09', 8, 'RESERVED', 4, 0, NOW(), NOW())
 ON CONFLICT (table_id) DO UPDATE
 SET area_id = EXCLUDED.area_id,
     table_number = EXCLUDED.table_number,
     capacity = EXCLUDED.capacity,
-    status = EXCLUDED.status,
     position_x = EXCLUDED.position_x,
     position_y = EXCLUDED.position_y,
     updated_at = NOW();
+
+INSERT INTO customers (id, version, phone, status, created_at, updated_at)
+VALUES
+    ('d1000000-0000-0000-0000-000000000003', 0, '0905000013', 'ACTIVE', NOW(), NOW()),
+    ('d1000000-0000-0000-0000-000000000007', 0, '0905000017', 'ACTIVE', NOW(), NOW()),
+    ('d1000000-0000-0000-0000-000000000008', 0, '0905000018', 'ACTIVE', NOW(), NOW()),
+    ('d1000000-0000-0000-0000-000000000009', 0, '0905000019', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (phone) DO NOTHING;
+
+INSERT INTO bookings
+    (id, version, branch_id, table_id, customer_id, booking_time,
+     guest_count, status, note, created_at, updated_at)
+VALUES
+    ('b1000000-0000-0000-0000-000000000003', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000003',
+     (SELECT id FROM customers WHERE phone = '0905000013'),
+     NOW() + INTERVAL '2 hours', 4, 'PENDING', 'Test reservation - table 03', NOW(), NOW()),
+    ('b1000000-0000-0000-0000-000000000007', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000007',
+     (SELECT id FROM customers WHERE phone = '0905000017'),
+     NOW() + INTERVAL '3 hours', 3, 'PENDING', 'Test reservation - table 07', NOW(), NOW()),
+    ('b1000000-0000-0000-0000-000000000008', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000008',
+     (SELECT id FROM customers WHERE phone = '0905000018'),
+     NOW() + INTERVAL '4 hours', 5, 'PENDING', 'Test reservation - table 08', NOW(), NOW()),
+    ('b1000000-0000-0000-0000-000000000009', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000009',
+     (SELECT id FROM customers WHERE phone = '0905000019'),
+     NOW() + INTERVAL '5 hours', 6, 'PENDING', 'Test reservation - table 09', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE
+SET branch_id = EXCLUDED.branch_id,
+    table_id = EXCLUDED.table_id,
+    customer_id = EXCLUDED.customer_id,
+    booking_time = EXCLUDED.booking_time,
+    guest_count = EXCLUDED.guest_count,
+    status = EXCLUDED.status,
+    note = EXCLUDED.note,
+    updated_at = NOW();
+
+UPDATE restaurant_tables table_data
+SET status = 'RESERVED',
+    updated_at = NOW()
+WHERE table_data.table_id IN (
+    SELECT booking.table_id
+    FROM bookings booking
+    WHERE booking.status IN ('PENDING', 'CONFIRMED')
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM table_sessions session
+    WHERE session.table_id = table_data.table_id
+      AND session.status = 'ACTIVE'
+);
+
+INSERT INTO table_sessions
+    (table_session_id, version, branch_id, table_id, guest_name, guest_phone,
+     party_size, status, started_at, ended_at, note, created_at, updated_at)
+VALUES
+    ('s0000000-0000-0000-0000-000000000002', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000002',
+     'Khách bàn 02', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW()),
+    ('s0000000-0000-0000-0000-000000000005', 0,
+     'e0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000005',
+     'Khách bàn 05', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW())
+ON CONFLICT (table_session_id) DO NOTHING;
+
+UPDATE restaurant_tables table_data
+SET status = 'OCCUPIED',
+    updated_at = NOW()
+WHERE EXISTS (
+    SELECT 1
+    FROM table_sessions session
+    WHERE session.table_id = table_data.table_id
+      AND session.status = 'ACTIVE'
+);
