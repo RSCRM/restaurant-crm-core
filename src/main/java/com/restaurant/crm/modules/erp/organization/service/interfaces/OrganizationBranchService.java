@@ -18,6 +18,12 @@ public interface OrganizationBranchService {
             int size
     );
 
+    PagingResponse<OrganizationBranchResponse> getOrganizationBranchesByOrganization(
+            String organizationId,
+            int page,
+            int size
+    );
+
     OrganizationBranchResponse updateOrganizationBranch(
             String id,
             UpdateOrganizationBranchRequest request

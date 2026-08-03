@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -34,6 +35,19 @@ public class EmployeeController {
 
     EmployeeService employeeService;
 
+    @GetMapping("/{branchId}/manager")
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_VIEW') or hasAuthority('" + EmployeeConstants.BRANCH_MANAGER_ASSIGN + "')")
+    public ResponseEntity<ApiResponse<EmployeeBranchAssignmentResponse>> getBranchManager(
+            @PathVariable String branchId
+    ) {
+        ApiResponse<EmployeeBranchAssignmentResponse> response = ApiResponse.<EmployeeBranchAssignmentResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(employeeService.getBranchManager(branchId))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{branchId}/manager")
     @PreAuthorize("hasAuthority('" + EmployeeConstants.BRANCH_MANAGER_ASSIGN + "')")
     public ResponseEntity<ApiResponse<EmployeeBranchAssignmentResponse>> assignManagerToBranch(
@@ -43,6 +57,19 @@ public class EmployeeController {
         ApiResponse<EmployeeBranchAssignmentResponse> response = ApiResponse.<EmployeeBranchAssignmentResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(employeeService.assignToBranch(branchId, request))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{branchId}/manager")
+    @PreAuthorize("hasAuthority('" + EmployeeConstants.BRANCH_MANAGER_ASSIGN + "')")
+    public ResponseEntity<ApiResponse<EmployeeBranchAssignmentResponse>> removeBranchManager(
+            @PathVariable String branchId
+    ) {
+        ApiResponse<EmployeeBranchAssignmentResponse> response = ApiResponse.<EmployeeBranchAssignmentResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(employeeService.removeBranchManager(branchId))
                 .build();
 
         return ResponseEntity.ok(response);

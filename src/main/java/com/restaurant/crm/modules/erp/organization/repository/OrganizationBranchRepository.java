@@ -55,14 +55,13 @@ public interface OrganizationBranchRepository extends JpaRepository<Organization
             String ownerId
     );
 
-    Optional<OrganizationBranch> findByManager_Id(String employeeId);
+    List<OrganizationBranch> findByManagerId(String employeeId);
 
     @Query("""
             SELECT b
             FROM OrganizationBranch b
             JOIN FETCH b.organization o
             JOIN FETCH o.owner owner
-            LEFT JOIN FETCH b.manager m
             WHERE b.id = :branchId
               AND owner.id = :ownerId
             """)

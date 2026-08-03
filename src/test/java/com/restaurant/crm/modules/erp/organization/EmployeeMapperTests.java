@@ -26,10 +26,11 @@ public class EmployeeMapperTests {
     @Test
     public void toEmployeeBranchAssignmentResponse_MapsBranchAndManagerDetails() {
         OrganizationBranch branch = branch();
-        branch.setManager(managerEmployee(branch));
+        Employee manager = managerEmployee(branch);
+        branch.setManagerId(manager.getId());
 
         EmployeeBranchAssignmentResponse response =
-                employeeMapper.toEmployeeBranchAssignmentResponse(branch);
+                employeeMapper.toEmployeeBranchAssignmentResponse(branch, manager);
 
         assertEquals("e0000000-0000-0000-0000-000000000005", response.getBranchId());
         assertEquals("BBQ Garden - Q3", response.getBranchName());

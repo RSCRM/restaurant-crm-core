@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.organization.controller;
 
+import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
@@ -33,6 +34,7 @@ public class OrganizationBranchController {
 
         return ResponseEntity.ok(
                 ApiResponse.<OrganizationBranchResponse>builder()
+                        .success(ApiConstant.SUCCESS)
                         .data(response)
                         .build()
         );
@@ -53,8 +55,31 @@ public class OrganizationBranchController {
 
         return ResponseEntity.ok(
             ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
+                .success(ApiConstant.SUCCESS)
                 .data(response)
                 .build()
+        );
+    }
+
+    @GetMapping("/organization/{organizationId}")
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_VIEW')")
+    public ResponseEntity<ApiResponse<PagingResponse<OrganizationBranchResponse>>> getOrganizationBranchesByOrganization(
+            @PathVariable String organizationId,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        PagingResponse<OrganizationBranchResponse> response =
+                organizationBranchService.getOrganizationBranchesByOrganization(
+                        organizationId,
+                        page,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
+                        .success(ApiConstant.SUCCESS)
+                        .data(response)
+                        .build()
         );
     }
 
@@ -69,6 +94,7 @@ public class OrganizationBranchController {
 
         return ResponseEntity.ok(
                 ApiResponse.<OrganizationBranchResponse>builder()
+                        .success(ApiConstant.SUCCESS)
                         .data(response)
                         .build()
         );
@@ -89,7 +115,21 @@ public class OrganizationBranchController {
 
         return ResponseEntity.ok(
                 ApiResponse.<OrganizationBranchResponse>builder()
+                        .success(ApiConstant.SUCCESS)
                         .data(response)
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ORGANIZATION_BRANCH_MANAGE')")
+    public ResponseEntity<ApiResponse<Void>> deleteOrganizationBranch(
+            @PathVariable String id
+    ) {
+        organizationBranchService.deleteOrganizationBranch(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(ApiConstant.SUCCESS)
                         .build()
         );
     }

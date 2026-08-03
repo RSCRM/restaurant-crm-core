@@ -18,6 +18,10 @@ public class OrganizationBranchResponse {
     String id;
     String organizationId;
     String managerId;
+    String managerUserId;
+    String managerName;
+    String managerUsername;
+    String managerEmail;
     String branchName;
     String address;
     String phone;

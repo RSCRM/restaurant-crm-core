@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.organization.dto.request;
 
+import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -43,4 +44,8 @@ public class CreateEmployeeRequest {
 
     @PositiveOrZero(message = "EMPLOYEE_SALARY_INVALID")
     BigDecimal salary;
+
+    EmployeeStatus status;
+
+    LocalDate endDate;
 }

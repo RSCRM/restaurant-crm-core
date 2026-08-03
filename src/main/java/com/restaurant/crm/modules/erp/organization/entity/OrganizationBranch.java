@@ -3,11 +3,24 @@ package com.restaurant.crm.modules.erp.organization.entity;
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.organization.constants.OrganizationBranchConstants;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
@@ -26,9 +39,8 @@ public class OrganizationBranch extends BaseEntity {
     @JoinColumn(name = OrganizationBranchConstants.COL_ORGANIZATION_ID, nullable = false)
     Organization organization;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = OrganizationBranchConstants.COL_MANAGER_ID, unique = true)
-    Employee manager;
+    @Column(name = OrganizationBranchConstants.COL_MANAGER_ID, unique = true)
+    String managerId;
 
     @NotBlank
     @NotNull

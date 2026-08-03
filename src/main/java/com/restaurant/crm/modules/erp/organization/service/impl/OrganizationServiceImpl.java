@@ -78,9 +78,10 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Transactional(readOnly = true)
     public OrganizationResponse getOrganizationByOwnerId(String ownerId) {
 
-        Organization organization = organizationRepository.findByOwnerId(ownerId)
-                .orElseThrow(() ->
-                        new AppException(ErrorCode.ORGANIZATION_NOT_FOUND));
+        Organization organization = organizationRepository.findAllByOwnerId(ownerId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_NOT_FOUND));
 
         return organizationMapper.toOrganizationResponse(organization);
     }
