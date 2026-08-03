@@ -315,7 +315,17 @@ VALUES
      'e0000000-0000-0000-0000-000000000001',
      't0000000-0000-0000-0000-000000000005',
      'Khách bàn 05', NULL, 2, 'ACTIVE', NOW(), NULL, 'Dữ liệu môi trường', NOW(), NOW())
-ON CONFLICT (table_session_id) DO NOTHING;
+ON CONFLICT (table_session_id) DO UPDATE
+SET branch_id = EXCLUDED.branch_id,
+    table_id = EXCLUDED.table_id,
+    guest_name = EXCLUDED.guest_name,
+    guest_phone = EXCLUDED.guest_phone,
+    party_size = EXCLUDED.party_size,
+    status = EXCLUDED.status,
+    started_at = EXCLUDED.started_at,
+    ended_at = NULL,
+    note = EXCLUDED.note,
+    updated_at = NOW();
 
 UPDATE restaurant_tables table_data
 SET status = 'OCCUPIED',
