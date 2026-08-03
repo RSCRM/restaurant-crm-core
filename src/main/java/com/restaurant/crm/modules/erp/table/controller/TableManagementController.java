@@ -109,4 +109,18 @@ public class TableManagementController {
         return ResponseEntity.ok(ApiResponse.<RestaurantTableResponse>builder()
                 .success(ApiConstant.SUCCESS).data(tableManagementService.getTable(id)).build());
     }
+
+    @PutMapping(TableManagementConstants.TABLES + "/{id}/reservation/confirm")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
+    public ResponseEntity<ApiResponse<RestaurantTableResponse>> confirmReservation(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.<RestaurantTableResponse>builder()
+                .success(ApiConstant.SUCCESS).data(tableManagementService.confirmReservation(id)).build());
+    }
+
+    @PutMapping(TableManagementConstants.TABLES + "/{id}/reservation/cancel")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
+    public ResponseEntity<ApiResponse<RestaurantTableResponse>> cancelReservation(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.<RestaurantTableResponse>builder()
+                .success(ApiConstant.SUCCESS).data(tableManagementService.cancelReservation(id)).build());
+    }
 }

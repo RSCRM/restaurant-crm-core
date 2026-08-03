@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, String> {
@@ -33,4 +34,9 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
     List<Booking> findByBranchIdAndStatus(String branchId, BookingStatus status);
 
     List<Booking> findByCustomerIdAndStatus(String customerId, BookingStatus status);
+
+    Optional<Booking> findFirstByTables_IdAndStatusInOrderByBookingTimeAsc(
+            String tableId,
+            List<BookingStatus> statuses
+    );
 }

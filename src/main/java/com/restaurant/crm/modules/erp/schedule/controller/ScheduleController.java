@@ -5,6 +5,7 @@ import com.restaurant.crm.modules.erp.schedule.constants.SchedulePermissionConst
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleCreationRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleUpdateRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.response.PersonalScheduleResponse;
+import com.restaurant.crm.modules.erp.schedule.dto.response.ScheduleEmployeeResponse;
 import com.restaurant.crm.modules.erp.schedule.service.interfaces.ScheduleService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -82,6 +83,15 @@ public class ScheduleController {
         return ResponseEntity.ok(ApiResponse.<List<PersonalScheduleResponse>>builder()
                 .success(true)
                 .data(scheduleService.getManagedSchedules(effectiveFrom, effectiveTo))
+                .build());
+    }
+
+    @GetMapping("/staff/employees")
+    @PreAuthorize("hasAuthority('" + SchedulePermissionConstants.SCHEDULE_MANAGE + "')")
+    public ResponseEntity<ApiResponse<List<ScheduleEmployeeResponse>>> getManagedEmployees() {
+        return ResponseEntity.ok(ApiResponse.<List<ScheduleEmployeeResponse>>builder()
+                .success(true)
+                .data(scheduleService.getManagedEmployees())
                 .build());
     }
 

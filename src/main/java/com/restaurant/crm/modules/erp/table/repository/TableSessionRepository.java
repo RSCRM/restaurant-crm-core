@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface TableSessionRepository extends JpaRepository<TableSession, String> {
     boolean existsByTableIdAndStatus(String tableId, TableSessionStatus status);
 
+    Optional<TableSession> findByTableIdAndStatus(String tableId, TableSessionStatus status);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select session from TableSession session join fetch session.table table join fetch table.area where session.id = :id")
     Optional<TableSession> findByIdForUpdate(String id);

@@ -13,12 +13,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,6 +30,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class TableSessionController {
 
     TableSessionService tableSessionService;
+
+    @GetMapping("/active")
+    @PreAuthorize("hasAuthority('TABLE_MANAGE') or hasAuthority('ORDER_UPDATE')")
+    public ResponseEntity<ApiResponse<TableSessionResponse>> getActiveByTable(@RequestParam String tableId) {
+        return ResponseEntity.ok(ApiResponse.<TableSessionResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(tableSessionService.getActiveByTable(tableId))
+                .build());
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.TABLE_SESSION_CREATE + "')")

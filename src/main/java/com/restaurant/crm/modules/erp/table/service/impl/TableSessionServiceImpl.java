@@ -79,6 +79,17 @@ public class TableSessionServiceImpl implements TableSessionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public TableSessionResponse getActiveByTable(String tableId) {
+        String branchId = AuthUtils.getBranchId();
+        validateBranch(branchId);
+        TableSession session = tableSessionRepository.findByTableIdAndStatus(tableId, TableSessionStatus.ACTIVE)
+                .filter(candidate -> branchId.equals(candidate.getBranchId()))
+                .orElseThrow(() -> new AppException(ErrorCode.TABLE_SESSION_NOT_FOUND));
+        return tableSessionMapper.toResponse(session);
+    }
+
+    @Override
     @Transactional
     public TableSessionResponse transfer(String sessionId, TableSessionTransferRequest request) {
         String branchId = AuthUtils.getBranchId();

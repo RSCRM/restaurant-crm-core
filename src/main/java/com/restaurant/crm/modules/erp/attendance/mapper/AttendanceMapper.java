@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 public interface AttendanceMapper {
 
     @Mapping(target = "employeeId", source = "shiftAssignment.employee.id")
+    @Mapping(target = "employeeName", ignore = true)
     @Mapping(target = "branchId", source = "shiftAssignment.branch.id")
     @Mapping(target = "shiftAssignmentId", source = "shiftAssignment.id")
     @Mapping(target = "workDate", source = "shiftAssignment.workDate")

@@ -169,10 +169,27 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     @Transactional
     public AttendanceResponse checkOut() {
+        return completeCheckOut(null);
+    }
+
+    @Override
+    @Transactional
+    public AttendanceResponse checkOutWithQr(AttendanceCheckInRequest request) {
+        return completeCheckOut(validateQr(request.getQrToken(), Instant.now()));
+    }
+
+    private AttendanceResponse completeCheckOut(QrContext qrContext) {
         Employee employee = currentEmployee();
         Attendance attendance = attendanceRepository
                 .findFirstByShiftAssignmentEmployeeIdAndCheckOutAtIsNullOrderByCheckInAtDesc(employee.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.ATTENDANCE_OPEN_RECORD_NOT_FOUND));
+
+        if (qrContext != null
+                && (!attendance.getShiftAssignment().getBranch().getId().equals(qrContext.branchId())
+                || !attendance.getShiftAssignment().getBranch().getOrganization().getId()
+                        .equals(qrContext.organizationId()))) {
+            throw new AppException(ErrorCode.ATTENDANCE_QR_CONTEXT_MISMATCH);
+        }
 
         attendance.setCheckOutAt(Instant.now());
         Attendance saved = attendanceRepository.save(attendance);
@@ -198,6 +215,59 @@ public class AttendanceServiceImpl implements AttendanceService {
                         employeeId, branchId, MANAGER_ROLE)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
         return getHistory(employeeId, from, to, page, size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<AttendanceResponse> getBranchHistory(
+            String employeeId, LocalDate workDate,
+            int page, int size, String requestedBranchId) {
+        String branchId = resolveBranch(requestedBranchId).getId();
+        PageRequest pageable = PageRequest.of(
+                page - 1, size, Sort.by(Sort.Direction.DESC, "checkInAt"));
+        Page<Attendance> result;
+        if (employeeId == null) {
+            result = workDate == null
+                    ? attendanceRepository.findByShiftAssignmentBranchId(branchId, pageable)
+                    : attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
+                            branchId, workDate, pageable);
+        } else {
+            result = workDate == null
+                    ? attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeId(
+                            branchId, employeeId, pageable)
+                    : attendanceRepository
+                            .findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDate(
+                                    branchId, employeeId, workDate, pageable);
+        }
+        Map<String, String> namesByUser = userProfileRepository
+                .findByUser_IdIn(result.getContent().stream()
+                        .map(attendance -> attendance.getShiftAssignment()
+                                .getEmployee().getUser().getId())
+                        .distinct()
+                        .toList())
+                .stream()
+                .filter(profile -> profile.getFullName() != null
+                        && !profile.getFullName().isBlank())
+                .collect(Collectors.toMap(
+                        profile -> profile.getUser().getId(),
+                        UserProfile::getFullName));
+        List<AttendanceResponse> data = result.getContent().stream()
+                .map(attendance -> {
+                    AttendanceResponse response = attendanceMapper.toResponse(attendance);
+                    Employee employee = attendance.getShiftAssignment().getEmployee();
+                    response.setEmployeeName(namesByUser.getOrDefault(
+                            employee.getUser().getId(), employee.getUser().getUsername()));
+                    return response;
+                })
+                .toList();
+
+        return PagingResponse.<AttendanceResponse>builder()
+                .currentPage(page)
+                .pageSize(result.getSize())
+                .totalPages(result.getTotalPages())
+                .totalElement(result.getTotalElements())
+                .data(data)
+                .build();
     }
 
     private PagingResponse<AttendanceResponse> getHistory(
