@@ -9,6 +9,8 @@ import com.restaurant.crm.modules.licensemanagement.dto.response.DeleteLicenseRe
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseDetailResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.response.LicenseResponse;
 
+import java.util.List;
+
 public interface LicenseService {
 
     LicenseResponse createLicense(CreateLicenseRequest request);
@@ -26,4 +28,6 @@ public interface LicenseService {
     LicenseResponse reactivateLicense(String id);
 
     LicenseDetailResponse getLicenseDetail(String id, int page, int size);
+
+    List<LicenseResponse> getLicensesByOrganizationId(String organizationId);
 }
