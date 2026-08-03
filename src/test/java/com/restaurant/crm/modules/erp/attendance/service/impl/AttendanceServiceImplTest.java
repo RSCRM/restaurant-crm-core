@@ -33,6 +33,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.text.ParseException;
@@ -83,7 +85,7 @@ class AttendanceServiceImplTest {
     }
 
     @Test
-    void getCurrentQrCreatesSixtySecondTokenForContext() throws ParseException {
+    void getCurrentQrUsesConfiguredValidityForContext() throws ParseException {
         OrganizationBranch branch = branch("branch-1", "organization-1");
 
         try (MockedStatic<AuthUtils> auth = currentContext()) {
@@ -126,6 +128,28 @@ class AttendanceServiceImplTest {
             verify(sseEmitterService).broadcastToBranch(
                     "branch-1", "ATTENDANCE_UPDATED", "employee-1",
                     "ATTENDANCE_BRANCH_READ");
+        }
+    }
+
+    @Test
+    void checkInMarksAttendanceLateAfterFiveMinutes() {
+        Employee employee = employee();
+        OrganizationBranch branch = branch("branch-1", "organization-1");
+        ShiftAssignment shift = currentShift(employee, branch);
+        shift.setStartAt(Instant.now().minusSeconds(6 * 60));
+
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            stubEmployeeAndShift(employee, shift);
+            when(attendanceRepository.save(any(Attendance.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+            when(attendanceMapper.toResponse(any(Attendance.class)))
+                    .thenReturn(AttendanceResponse.builder().build());
+
+            attendanceService.checkIn(request(validQr(branch)));
+
+            ArgumentCaptor<Attendance> captor = ArgumentCaptor.forClass(Attendance.class);
+            verify(attendanceRepository).save(captor.capture());
+            assertEquals(AttendanceStatus.LATE, captor.getValue().getStatus());
         }
     }
 
@@ -233,6 +257,31 @@ class AttendanceServiceImplTest {
     }
 
     @Test
+    void checkOutWithQrClosesAttendanceInQrBranch() {
+        Employee employee = employee();
+        OrganizationBranch branch = branch("branch-1", "organization-1");
+        Attendance attendance = Attendance.builder()
+                .shiftAssignment(currentShift(employee, branch))
+                .checkInAt(Instant.now().minusSeconds(3600))
+                .build();
+
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            when(employeeRepository.findByIdAndUserId("employee-1", "user-1"))
+                    .thenReturn(Optional.of(employee));
+            when(attendanceRepository
+                    .findFirstByShiftAssignmentEmployeeIdAndCheckOutAtIsNullOrderByCheckInAtDesc("employee-1"))
+                    .thenReturn(Optional.of(attendance));
+            when(attendanceRepository.save(attendance)).thenReturn(attendance);
+            when(attendanceMapper.toResponse(attendance))
+                    .thenReturn(AttendanceResponse.builder().build());
+
+            attendanceService.checkOutWithQr(request(validQr(branch)));
+
+            assertNotNull(attendance.getCheckOutAt());
+        }
+    }
+
+    @Test
     void getCurrentQrReloadCreatesNewToken() {
         OrganizationBranch branch = branch("branch-1", "organization-1");
 
@@ -318,6 +367,36 @@ class AttendanceServiceImplTest {
                             LocalDate.now(), 1, 10, null));
 
             assertEquals(ErrorCode.EMPLOYEE_NOT_FOUND, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void getBranchHistorySupportsAllEmployeesAndOneDate() {
+        Employee employee = employee();
+        employee.getUser().setUsername("waiter");
+        Attendance attendance = Attendance.builder()
+                .shiftAssignment(currentShift(
+                        employee, branch("branch-1", "organization-1")))
+                .checkInAt(Instant.now())
+                .status(AttendanceStatus.ON_TIME)
+                .build();
+        AttendanceResponse mapped = new AttendanceResponse();
+
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            when(organizationBranchRepository.findById("branch-1"))
+                    .thenReturn(Optional.of(branch("branch-1", "organization-1")));
+            when(attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
+                    eq("branch-1"), eq(LocalDate.now()), any()))
+                    .thenReturn(new PageImpl<>(
+                            List.of(attendance), PageRequest.of(0, 10), 1));
+            when(userProfileRepository.findByUser_IdIn(any())).thenReturn(List.of());
+            when(attendanceMapper.toResponse(attendance)).thenReturn(mapped);
+
+            var result = attendanceService.getBranchHistory(
+                    null, LocalDate.now(), 1, 10, null);
+
+            assertEquals(1, result.getTotalElement());
+            assertEquals("waiter", result.getData().get(0).getEmployeeName());
         }
     }
 

@@ -12,8 +12,8 @@ public final class AttendanceConstants {
     public static final String COL_CHECK_IN_AT = "check_in_at";
     public static final String COL_CHECK_OUT_AT = "check_out_at";
     public static final String COL_STATUS = "status";
-    public static final long LATE_THRESHOLD_MINUTES = 15;
-    public static final long QR_VALIDITY_SECONDS = 60;
+    public static final long LATE_THRESHOLD_MINUTES = 5;
+    public static final long QR_VALIDITY_SECONDS = 300;
     public static final String QR_TOKEN_TYPE = "ATTENDANCE_QR";
     public static final String CLAIM_QR_SESSION_ID = "qrSessionId";
     public static final String CLAIM_NONCE = "nonce";

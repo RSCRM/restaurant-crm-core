@@ -21,6 +21,7 @@ import java.time.LocalDate;
 public class AttendanceResponse {
     String id;
     String employeeId;
+    String employeeName;
     String branchId;
     String shiftAssignmentId;
     LocalDate workDate;

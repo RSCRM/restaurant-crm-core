@@ -66,6 +66,16 @@ public class AttendanceController {
                 .build());
     }
 
+    @PostMapping("/check-out/qr")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_WRITE)")
+    public ResponseEntity<ApiResponse<AttendanceResponse>> checkOutWithQr(
+            @Valid @RequestBody AttendanceCheckInRequest request) {
+        return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(attendanceService.checkOutWithQr(request))
+                .build());
+    }
+
     @GetMapping("/me")
     @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_READ)")
     public ResponseEntity<ApiResponse<PagingResponse<AttendanceResponse>>> getMyHistory(
@@ -119,6 +129,22 @@ public class AttendanceController {
                 .success(ApiConstant.SUCCESS)
                 .data(attendanceService.getEmployeeHistory(
                         employeeId, resolvedFrom, resolvedTo, page, size, branchId))
+                .build());
+    }
+
+    @GetMapping("/branch/history")
+    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).BRANCH_READ)")
+    public ResponseEntity<ApiResponse<PagingResponse<AttendanceResponse>>> getBranchHistory(
+            @RequestParam(required = false) String employeeId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(required = false) String branchId) {
+        return ResponseEntity.ok(ApiResponse.<PagingResponse<AttendanceResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(attendanceService.getBranchHistory(
+                        employeeId, date, page, size, branchId))
                 .build());
     }
 }
