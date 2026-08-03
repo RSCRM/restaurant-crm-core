@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.attendance.controller;
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants;
 import com.restaurant.crm.modules.erp.attendance.dto.request.AttendanceCheckInRequest;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceQrResponse;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceResponse;
@@ -38,7 +39,7 @@ public class AttendanceController {
     AttendanceService attendanceService;
 
     @GetMapping("/qr")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).QR_DISPLAY)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.QR_DISPLAY + "')")
     public ResponseEntity<ApiResponse<AttendanceQrResponse>> getCurrentQr(
             @RequestParam(required = false) String branchId) {
         return ResponseEntity.ok(ApiResponse.<AttendanceQrResponse>builder()
@@ -48,7 +49,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/check-in")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_WRITE)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.SELF_WRITE + "')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn(
             @Valid @RequestBody AttendanceCheckInRequest request) {
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
@@ -58,7 +59,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/check-out")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_WRITE)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.SELF_WRITE + "')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkOut() {
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
                 .success(ApiConstant.SUCCESS)
@@ -67,7 +68,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/check-out/qr")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_WRITE)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.SELF_WRITE + "')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkOutWithQr(
             @Valid @RequestBody AttendanceCheckInRequest request) {
         return ResponseEntity.ok(ApiResponse.<AttendanceResponse>builder()
@@ -77,7 +78,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).SELF_READ)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.SELF_READ + "')")
     public ResponseEntity<ApiResponse<PagingResponse<AttendanceResponse>>> getMyHistory(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -94,7 +95,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/branch")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).BRANCH_READ)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.BRANCH_READ + "')")
     public ResponseEntity<ApiResponse<List<EmployeeAttendanceResponse>>> getBranchAttendance(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -107,13 +108,13 @@ public class AttendanceController {
     }
 
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).BRANCH_READ)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.BRANCH_READ + "')")
     public SseEmitter subscribe(@RequestParam(required = false) String branchId) {
         return attendanceService.subscribe(branchId);
     }
 
     @GetMapping("/branch/employees/{employeeId}/history")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).BRANCH_READ)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.BRANCH_READ + "')")
     public ResponseEntity<ApiResponse<PagingResponse<AttendanceResponse>>> getEmployeeHistory(
             @PathVariable String employeeId,
             @RequestParam(required = false)
@@ -133,7 +134,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/branch/history")
-    @PreAuthorize("hasAuthority(T(com.restaurant.crm.modules.erp.attendance.constants.permission.AttendancePermissionConstants).BRANCH_READ)")
+    @PreAuthorize("hasAuthority('" + AttendancePermissionConstants.BRANCH_READ + "')")
     public ResponseEntity<ApiResponse<PagingResponse<AttendanceResponse>>> getBranchHistory(
             @RequestParam(required = false) String employeeId,
             @RequestParam(required = false)
