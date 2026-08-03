@@ -326,3 +326,217 @@ INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, ema
 
 
 
+
+-- 15. ERP MODULE: ORG_ROLE <-> ORG_PERMISSION MAPPINGS
+-- OWNER Role Mappings
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT 'r0000000-0000-0000-0000-000000000001', id FROM org_permissions
+    ON CONFLICT DO NOTHING;
+
+-- MANAGER Role Mappings (Standard Manager Tasks + Booking + Loyalty permissions)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT 'r0000000-0000-0000-0000-000000000002', id FROM org_permissions
+WHERE permission_name IN (
+                          'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
+                          'PAYMENT_READ', 'PAYMENT_CREATE',
+                          'MENU_MANAGE', 'TABLE_MANAGE', 'REPORT_VIEW',
+                          'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
+                          'EMPLOYEE_DELETE', 'EMPLOYEE_ROLE_ASSIGN', 'EMPLOYEE_ROLE_REVOKE',
+                          'TABLE_MAP_READ', 'TABLE_SEARCH_READ',
+                          'BOOKING_READ', 'BOOKING_CREATE', 'BOOKING_UPDATE', 'BOOKING_DELETE',
+                          'CUSTOMER_READ', 'POINT_WALLET_READ', 'VOUCHER_CREATE', 'VOUCHER_READ',
+                          'VOUCHER_UPDATE', 'CUSTOMER_VOUCHER_READ', 'CUSTOMER_VOUCHER_REDEEM',
+                          'CUSTOMER_VOUCHER_GIVE', 'CUSTOMER_VOUCHER_USE'
+    )
+    ON CONFLICT DO NOTHING;
+
+-- CASHIER Role Mappings
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT 'r0000000-0000-0000-0000-000000000003', id FROM org_permissions
+WHERE permission_name IN (
+                          'ORDER_READ', 'ORDER_CREATE', 'PAYMENT_READ', 'PAYMENT_CREATE',
+                          'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
+                          'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+    )
+    ON CONFLICT DO NOTHING;
+
+-- WAITER Role Mappings
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT 'r0000000-0000-0000-0000-000000000004', id FROM org_permissions
+WHERE permission_name IN (
+                          'ORDER_READ', 'ORDER_CREATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
+                          'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+    )
+    ON CONFLICT DO NOTHING;
+
+-- CHEF Role Mappings
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT 'r0000000-0000-0000-0000-000000000005', id FROM org_permissions
+WHERE permission_name IN (
+                          'ORDER_READ', 'ORDER_UPDATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
+                          'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+    )
+    ON CONFLICT DO NOTHING;
+
+
+-- =========================================================================
+-- 16. BUSINESS TEST DATA: WBS 69 & WBS 70
+-- =========================================================================
+
+
+-- 16.2. Restaurant Tables
+INSERT INTO restaurant_tables (table_id, area_id, table_number, capacity, status, version) VALUES
+                                                                                               ('t0000000-0000-0000-0000-000000000101', 'a0000000-0000-0000-0000-000000000001', '101', 2, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000102', 'a0000000-0000-0000-0000-000000000001', '102', 4, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000103', 'a0000000-0000-0000-0000-000000000001', '103', 6, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000104', 'a0000000-0000-0000-0000-000000000001', '104', 8, 'AVAILABLE', 0)
+    ON CONFLICT (area_id, table_number) DO NOTHING;
+
+-- 16.3. Test Customers
+INSERT INTO customers (id, phone, status, version, created_at, updated_at) VALUES
+                                                                               ('c0000000-0000-0000-0000-000000000001', '0987654321', 'ACTIVE', 0, NOW(), NOW()),
+                                                                               ('c0000000-0000-0000-0000-000000000002', '0912345678', 'ACTIVE', 0, NOW(), NOW()),
+                                                                               ('c0000000-0000-0000-0000-000000000099', '0966888888', 'ACTIVE', 0, NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING;
+
+-- 16.4. Bookings (WBS 69)
+INSERT INTO bookings (id, branch_id, table_id, customer_id, booking_time, guest_count, status, note, version) VALUES
+                                                                                                                  (
+                                                                                                                      'b0000000-0000-0000-0000-000000000001',
+                                                                                                                      'e0000000-0000-0000-0000-000000000001',
+                                                                                                                      't0000000-0000-0000-0000-000000000102',
+                                                                                                                      'c0000000-0000-0000-0000-000000000001',
+                                                                                                                      '2026-07-30 19:00:00',
+                                                                                                                      3,
+                                                                                                                      'CONFIRMED',
+                                                                                                                      'Khách đặt trước ăn tối gia đình. Lưu ý: Ngồi cạnh cửa sổ.',
+                                                                                                                      0
+                                                                                                                  ),
+                                                                                                                  (
+                                                                                                                      'b0000000-0000-0000-0000-000000000002',
+                                                                                                                      'e0000000-0000-0000-0000-000000000001',
+                                                                                                                      't0000000-0000-0000-0000-000000000103',
+                                                                                                                      'c0000000-0000-0000-0000-000000000002',
+                                                                                                                      '2026-07-30 20:30:00',
+                                                                                                                      5,
+                                                                                                                      'PENDING',
+                                                                                                                      'Sinh nhật anh Nam. Có mang theo bánh kem.',
+                                                                                                                      0
+                                                                                                                  )
+    ON CONFLICT (id) DO NOTHING;
+
+-- 16.5. Customer Point Wallet (WBS 70 - Chain-wide Organization ID: d0000000-0000-0000-0000-000000000001)
+INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
+VALUES (
+           'cp000000-0000-0000-0000-000000000001',
+           0,
+           'c0000000-0000-0000-0000-000000000099',
+           'd0000000-0000-0000-0000-000000000001',
+           500,
+           1000,
+           NOW(),
+           NOW()
+       )
+    ON CONFLICT (id) DO NOTHING;
+
+-- 16.6. Point Wallet History (WBS 70)
+INSERT INTO customer_point_history (id, version, customer_id, organization_id, transaction_type, points_changed, reference_id, created_at, updated_at) VALUES
+                                                                                                                                                           ('cph00000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 'EARN', 600, 'BILL-1001', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+                                                                                                                                                           ('cph00000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 'EARN', 400, 'BILL-1002', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+                                                                                                                                                           ('cph00000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 'REDEEM', -500, 'VOU-888888', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day')
+    ON CONFLICT (id) DO NOTHING;
+
+-- 16.7. System Vouchers Catalog (WBS 70 - Branch-specific Branch ID: e0000000-0000-0000-0000-000000000001)
+INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_amount, points_required, is_active, expired_at, created_at, updated_at) VALUES
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', '🎁 Voucher Giảm 10% Chào Mới (Miễn phí 0 Điểm)', 10, 0.00, 0, 1, NOW() + INTERVAL '30 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', '👑 Voucher VIP Giảm 30% (Yêu cầu 100 Điểm)', 30, 50000.00, 100, 1, NOW() + INTERVAL '60 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', '💎 Voucher Kim Cương Giảm 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW())
+    ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+                            discount_percent = EXCLUDED.discount_percent,
+                            min_bill_amount = EXCLUDED.min_bill_amount,
+                            points_required = EXCLUDED.points_required,
+                            expired_at = EXCLUDED.expired_at;
+
+-- ================
+-- CATEGORIES & PRODUCTS SEED DATA FOR DIGITAL MENU (uc-c-04)
+-- ================
+INSERT INTO categories (category_id, version, branch_id, category_name, description, display_order, created_at, updated_at) VALUES
+                                                                                                                                ('cat00000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Phở & Bún', 'Các món Phở truyền thống Việt Nam', 1, NOW(), NOW()),
+                                                                                                                                ('cat00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'Đồ Uống', 'Nước giải khát & Trà thanh nhiệt', 2, NOW(), NOW())
+    ON CONFLICT (category_id) DO NOTHING;
+
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+                                                                                                                                                                          ('prd00000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Phở Bò Tái', 'Phở bò tái truyền thống với nước dùng đậm đà', 55000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
+                                                                                                                                                                          ('prd00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Phở Gà Đặc Biệt', 'Phở gà ta thịt đùi xé phay kèm trứng non', 65000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
+                                                                                                                                                                          ('prd00000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000002', 'Trà Đá', 'Trà đá ướp hoa lài ướp lạnh', 5000.00, NULL, 'AVAILABLE', false, NOW(), NOW()),
+                                                                                                                                                                          ('prd00000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000002', 'cat00000-0000-0000-0000-000000000002', 'Nước Cam Ép', 'Cam sành ép tươi 100% nguyên chất', 25000.00, NULL, 'AVAILABLE', false, NOW(), NOW())
+    ON CONFLICT (product_id) DO NOTHING;
+
+-- 16.9. Tự động gắn Voucher 0 điểm mẫu cho tất cả Khách hàng hiện có (nếu chưa có trong ví)
+INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, created_at, updated_at)
+SELECT
+    gen_random_uuid(), 0, c.id, 'e0000000-0000-0000-0000-000000000001',
+    'v0000000-0000-0000-0000-000000000001', 'VFREE' || substring(gen_random_uuid()::text, 1, 8),
+    'AVAILABLE', NOW(), NOW()
+FROM customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM customer_vouchers cv WHERE cv.customer_id = c.id AND cv.voucher_id = 'v0000000-0000-0000-0000-000000000001'
+);
+
+-- ============================================================================
+-- CÁC CÂU LỆNH HỖ TRỢ TEST & RESET (MẶC ĐỊNH ĐÃ COMMENT OUT KHÓA LẠI)
+-- (Mở comment '--' trước câu lệnh bạn muốn chạy trong DBeaver/pgAdmin khi test)
+-- ============================================================================
+
+-- 1. Lệnh Redis xóa session (chạy trong Terminal):
+-- docker exec -it redis-crm redis-cli flushall
+
+-- 2. XÓA SẠCH 100% TẤT CẢ ĐƠN HÀNG VÀ MÓN ĂN CŨ (Reset từ đầu như hệ thống mới):
+-- TRUNCATE TABLE order_item_modifiers, order_items, orders RESTART IDENTITY CASCADE;
+-- UPDATE restaurant_tables SET status = 'AVAILABLE', updated_at = NOW();
+
+-- 3. Reset Bàn ăn về AVAILABLE & Hủy đơn dở dang cũ (Nếu không muốn xóa hẳn dữ liệu đơn cũ):
+-- UPDATE restaurant_tables SET status = 'AVAILABLE', updated_at = NOW();
+-- UPDATE orders SET status = 'CANCELLED', updated_at = NOW() WHERE status = 'PENDING';
+-- UPDATE order_items SET status = 'CANCELLED', updated_at = NOW() WHERE status = 'PENDING';
+
+-- 3. Reset Voucher của tất cả khách hàng về AVAILABLE (để test lại luồng áp dụng voucher):
+-- UPDATE customer_vouchers SET status = 'AVAILABLE', used_at = NULL, order_id = NULL, updated_at = NOW();
+-- UPDATE orders SET discount_amount = 0.00, total_amount = subtotal, updated_at = NOW() WHERE status = 'PENDING';
+
+-- 4. Xem danh sách các món trong đơn hàng đang mở (join với bảng products để xem tên món):
+-- SELECT oi.id, p.product_name, oi.quantity, oi.status
+-- FROM order_items oi
+-- LEFT JOIN products p ON oi.product_id = p.product_id
+-- WHERE oi.status != 'CANCELLED'
+-- ORDER BY oi.created_at DESC;
+
+-- 5. Cập nhật trạng thái cho TỪNG MÓN CỤ THỂ theo tên món:
+-- 5.1. Chuyển 'Phở Bò Tái' sang '🔥 Đang nấu' (IN_PROGRESS):
+-- UPDATE order_items SET status = 'IN_PROGRESS', updated_at = NOW()
+-- WHERE product_id IN (SELECT product_id FROM products WHERE product_name LIKE '%Phở Bò Tái%') AND status = 'PENDING';
+
+-- 5.2. Chuyển 'Phở Bò Tái' sang '✅ Sẵn sàng phục vụ' (READY_TO_SERVE) + Bắn Thông báo cho Phục vụ:
+-- UPDATE order_items SET status = 'READY_TO_SERVE', updated_at = NOW()
+-- WHERE product_id IN (SELECT product_id FROM products WHERE product_name LIKE '%Phở Bò Tái%') AND status IN ('PENDING', 'IN_PROGRESS');
+
+-- (Nếu test bằng SQL, chạy thêm câu lệnh INSERT bên dưới để hiện Thẻ Thông Báo cho Nhân Viên Phục Vụ):
+-- INSERT INTO notifications (id, version, branch_id, recipient_id, sender_id, title, content, type, status, created_at, updated_at)
+-- VALUES (gen_random_uuid(), 0, 'e0000000-0000-0000-0000-000000000001', NULL, 'f0000000-0000-0000-0000-000000000008', 'Dish Ready to Serve', 'Khu Vực A (Tầng trệt) - Bàn 101: Phở Bò Tái x1 đã sẵn sàng phục vụ!', 'READY_TO_SERVE', 'UNREAD', NOW(), NOW());
+
+-- 5.3. Chuyển 'Phở Bò Tái' sang '🍽️ Đã phục vụ' (SERVED):
+-- UPDATE order_items SET status = 'SERVED', updated_at = NOW()
+-- WHERE product_id IN (SELECT product_id FROM products WHERE product_name LIKE '%Phở Bò Tái%') AND status IN ('PENDING', 'IN_PROGRESS', 'READY_TO_SERVE');
+
+-- 5.4. Hủy 1 món cụ thể theo tên ('Nước Cam Ép'):
+-- UPDATE order_items SET status = 'CANCELLED', updated_at = NOW()
+-- WHERE product_id IN (SELECT product_id FROM products WHERE product_name LIKE '%Nước Cam Ép%') AND status = 'PENDING';
+
+-- 6. Cập nhật trạng thái HÀNG LOẠT CHO TẤT CẢ MÓN CÙNG LÚC:
+-- UPDATE order_items SET status = 'IN_PROGRESS', updated_at = NOW() WHERE status = 'PENDING';
+-- UPDATE order_items SET status = 'READY_TO_SERVE', updated_at = NOW() WHERE status IN ('PENDING', 'IN_PROGRESS');
+-- UPDATE order_items SET status = 'SERVED', updated_at = NOW() WHERE status IN ('PENDING', 'IN_PROGRESS', 'READY_TO_SERVE');
+
+
+
