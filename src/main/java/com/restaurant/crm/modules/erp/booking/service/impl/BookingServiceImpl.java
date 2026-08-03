@@ -29,6 +29,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPoint;
+import com.restaurant.crm.modules.crm.pointwallet.repository.CustomerPointRepository;
+import com.restaurant.crm.modules.erp.table.entity.TableSession;
+import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
+import com.restaurant.crm.modules.erp.table.enums.TableSessionStatus;
+import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -38,6 +45,8 @@ public class BookingServiceImpl implements BookingService {
     CustomerRepository customerRepository;
     OrganizationBranchRepository branchRepository;
     RestaurantTableRepository tableRepository;
+    CustomerPointRepository customerPointRepository;
+    TableSessionRepository tableSessionRepository;
     BookingMapper bookingMapper;
 
     private void validateBranchAccess(String targetBranchId) {
@@ -173,6 +182,52 @@ public class BookingServiceImpl implements BookingService {
         validateBranchAccess(booking.getBranch().getId());
 
         booking.setStatus(request.getStatus());
+
+        if (request.getStatus() == BookingStatus.SEATED) {
+            // 1. Ensure Customer is saved and ACTIVE
+            Customer customer = booking.getCustomer();
+            if (customer != null) {
+                if (customer.getStatus() != CustomerStatus.ACTIVE) {
+                    customer.setStatus(CustomerStatus.ACTIVE);
+                    customerRepository.save(customer);
+                }
+            }
+
+            // 2. Initialize / Register CustomerPoint wallet for this Organization
+            if (customer != null && booking.getBranch() != null && booking.getBranch().getOrganization() != null) {
+                String orgId = booking.getBranch().getOrganization().getId();
+                Customer finalCustomer = customer;
+                customerPointRepository.findByCustomerIdAndOrganizationId(customer.getId(), orgId)
+                        .orElseGet(() -> customerPointRepository.save(CustomerPoint.builder()
+                                .customer(finalCustomer)
+                                .organizationId(orgId)
+                                .currentPoints(0)
+                                .lifetimePoints(0)
+                                .build()));
+            }
+
+            // 3. Update assigned Table to OCCUPIED and open TableSession
+            RestaurantTable table = booking.getTables();
+            if (table != null) {
+                table.setStatus(RestaurantTableStatus.OCCUPIED);
+                tableRepository.save(table);
+
+                if (!tableSessionRepository.existsByTableIdAndStatus(table.getId(), TableSessionStatus.ACTIVE)) {
+                    String guestPhone = (customer != null) ? customer.getPhone() : "N/A";
+                    tableSessionRepository.save(TableSession.builder()
+                            .branchId(booking.getBranch().getId())
+                            .table(table)
+                            .guestName("Khách đặt bàn")
+                            .guestPhone(guestPhone)
+                            .partySize(booking.getGuestCount() != null ? booking.getGuestCount() : 1)
+                            .status(TableSessionStatus.ACTIVE)
+                            .startedAt(java.time.Instant.now())
+                            .note(booking.getNote())
+                            .build());
+                }
+            }
+        }
+
         Booking updatedBooking = bookingRepository.save(booking);
 
         return bookingMapper.toBookingResponse(updatedBooking);

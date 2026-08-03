@@ -10,4 +10,6 @@ import java.util.Optional;
 @Repository
 public interface CustomerPointRepository extends JpaRepository<CustomerPoint, String> {
     Optional<CustomerPoint> findByCustomerIdAndOrganizationId(String customerId, String organizationId);
+    org.springframework.data.domain.Page<CustomerPoint> findByOrganizationId(String organizationId, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<CustomerPoint> findByOrganizationIdAndCustomer_PhoneContaining(String organizationId, String phone, org.springframework.data.domain.Pageable pageable);
 }
