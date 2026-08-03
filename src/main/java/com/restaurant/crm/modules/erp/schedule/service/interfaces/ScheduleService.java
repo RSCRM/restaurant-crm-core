@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.schedule.service.interfaces;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleCreationRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleUpdateRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.response.PersonalScheduleResponse;
+import com.restaurant.crm.modules.erp.schedule.dto.response.ScheduleEmployeeResponse;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,6 +14,8 @@ public interface ScheduleService {
     List<PersonalScheduleResponse> getStaffSchedule(String employeeId, LocalDate from, LocalDate to);
 
     List<PersonalScheduleResponse> getManagedSchedules(LocalDate from, LocalDate to);
+
+    List<ScheduleEmployeeResponse> getManagedEmployees();
 
     PersonalScheduleResponse createSchedule(ScheduleCreationRequest request);
 

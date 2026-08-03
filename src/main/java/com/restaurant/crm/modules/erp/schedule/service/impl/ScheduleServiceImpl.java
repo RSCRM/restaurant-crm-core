@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.schedule.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
@@ -10,6 +11,7 @@ import com.restaurant.crm.modules.erp.schedule.constants.WorkScheduleConstants;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleCreationRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleUpdateRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.response.PersonalScheduleResponse;
+import com.restaurant.crm.modules.erp.schedule.dto.response.ScheduleEmployeeResponse;
 import com.restaurant.crm.modules.erp.schedule.entity.WorkSchedule;
 import com.restaurant.crm.modules.erp.schedule.mapper.WorkScheduleMapper;
 import com.restaurant.crm.modules.erp.schedule.repository.WorkScheduleRepository;
@@ -87,6 +89,23 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleEmployeeResponse> getManagedEmployees() {
+        List<Employee> employees = AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION
+                ? employeeRepository.findByBranch_Organization_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
+                        AuthUtils.getOrganizationId(), EmployeeStatus.ACTIVE, "MANAGER")
+                : employeeRepository.findByBranch_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
+                        AuthUtils.getBranchId(), EmployeeStatus.ACTIVE, "MANAGER");
+        return employees.stream()
+                .map(employee -> ScheduleEmployeeResponse.builder()
+                        .id(employee.getId())
+                        .name(employee.getUser().getUsername())
+                        .branchName(employee.getBranch().getBranchName())
+                        .build())
+                .toList();
+    }
+
+    @Override
     @Transactional
     public PersonalScheduleResponse createSchedule(ScheduleCreationRequest request) {
         Employee employee = getManagedEmployee(request.getEmployeeId());
@@ -140,8 +159,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (employee.getStatus() != EmployeeStatus.ACTIVE) {
             throw new AppException(ErrorCode.EMPLOYEE_NOT_ACTIVE);
         }
-        if (employee.getBranch() == null
-                || !Objects.equals(employee.getBranch().getId(), AuthUtils.getBranchId())) {
+        if (!canManage(employee.getBranch())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
         return employee;
@@ -150,10 +168,21 @@ public class ScheduleServiceImpl implements ScheduleService {
     private WorkSchedule getManagedSchedule(String scheduleId) {
         WorkSchedule schedule = workScheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
-        if (!Objects.equals(schedule.getBranch().getId(), AuthUtils.getBranchId())) {
+        if (!canManage(schedule.getBranch())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
         return schedule;
+    }
+
+    private boolean canManage(OrganizationBranch branch) {
+        if (branch == null) {
+            return false;
+        }
+        if (AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION) {
+            return branch.getOrganization() != null
+                    && Objects.equals(branch.getOrganization().getId(), AuthUtils.getOrganizationId());
+        }
+        return Objects.equals(branch.getId(), AuthUtils.getBranchId());
     }
 
     private void validateTimeRange(java.time.LocalTime startTime, java.time.LocalTime endTime) {
