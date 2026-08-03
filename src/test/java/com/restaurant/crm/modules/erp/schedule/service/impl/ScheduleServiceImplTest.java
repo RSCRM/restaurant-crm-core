@@ -3,7 +3,9 @@ package com.restaurant.crm.modules.erp.schedule.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.schedule.dto.response.PersonalScheduleResponse;
 import com.restaurant.crm.modules.erp.schedule.entity.WorkSchedule;
@@ -118,6 +120,51 @@ class ScheduleServiceImplTest {
                     () -> scheduleService.getPersonalSchedule(date, date)
             );
             assertEquals(ErrorCode.EMPLOYEE_NOT_ACTIVE, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void getStaffSchedule_rejectsEmployeeFromAnotherBranch() {
+        LocalDate date = LocalDate.of(2026, 7, 28);
+        Employee employee = Employee.builder()
+                .id("employee-2")
+                .branch(OrganizationBranch.builder().id("branch-2").build())
+                .status(EmployeeStatus.ACTIVE)
+                .build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            when(employeeRepository.findById("employee-2")).thenReturn(Optional.of(employee));
+
+            AppException exception = assertThrows(
+                    AppException.class,
+                    () -> scheduleService.getStaffSchedule("employee-2", date, date)
+            );
+            assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void getManagedSchedules_usesManagerBranchScope() {
+        LocalDate date = LocalDate.of(2026, 8, 2);
+        Employee manager = Employee.builder().id("manager-1").build();
+        Employee staff = Employee.builder().id("employee-1").build();
+        WorkSchedule managerSchedule = WorkSchedule.builder().id("schedule-manager").employee(manager).build();
+        WorkSchedule staffSchedule = WorkSchedule.builder().id("schedule-1").employee(staff).build();
+        List<WorkSchedule> schedules = List.of(managerSchedule, staffSchedule);
+        List<WorkSchedule> staffSchedules = List.of(staffSchedule);
+        List<PersonalScheduleResponse> expected =
+                List.of(PersonalScheduleResponse.builder().id("schedule-1").build());
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getDataScope).thenReturn(OrgDataScope.BRANCH);
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            authUtils.when(AuthUtils::getEmployeeId).thenReturn("manager-1");
+            when(workScheduleRepository.findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                    "branch-1", date, date)).thenReturn(schedules);
+            when(workScheduleMapper.toResponseList(staffSchedules)).thenReturn(expected);
+
+            assertEquals(expected, scheduleService.getManagedSchedules(date, date));
         }
     }
 }

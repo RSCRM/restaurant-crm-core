@@ -1,24 +1,21 @@
 package com.restaurant.crm.modules.erp.menu.mapper;
 
 import com.restaurant.crm.modules.erp.menu.constants.CustomerMenuConstants;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuComboResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierGroupResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuModifierOptionResponse;
 import com.restaurant.crm.modules.erp.menu.dto.response.MenuProductResponse;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierGroup;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierGroup;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.List;
 
-/**
- * Maps menu entities to customer-facing DTOs (uc-c-04).
- * {@code available} is derived from the String {@code status}; {@code branchId} is never mapped out.
- */
+
 @Mapper(componentModel = "spring")
 public interface CustomerMenuMapper {
 

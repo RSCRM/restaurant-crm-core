@@ -10,6 +10,7 @@ import com.restaurant.crm.modules.identity.dto.request.RoleUpdateRequest;
 import com.restaurant.crm.modules.identity.dto.response.RoleResponse;
 import com.restaurant.crm.modules.identity.entity.Permission;
 import com.restaurant.crm.modules.identity.entity.Role;
+import com.restaurant.crm.modules.identity.enums.SystemDataScope;
 import com.restaurant.crm.modules.identity.mapper.RoleMapper;
 import com.restaurant.crm.modules.identity.repository.PermissionRepository;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
@@ -73,6 +74,10 @@ public class RoleServiceImpl implements RoleService {
         if (request.getRoleName() != null && !request.getRoleName().equals(role.getRoleName())) {
             validateRoleNameNotExisted(request.getRoleName(), roleId);
             role.setRoleName(request.getRoleName());
+        }
+
+        if (request.getDataScope() != null) {
+            role.setDataScope(SystemDataScope.valueOf(request.getDataScope()));
         }
 
         if (request.getPermissionIds() != null) {

@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.organization.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
+import com.restaurant.crm.modules.erp.organization.constants.OrganizationBranchConstants;
 import com.restaurant.crm.modules.erp.organization.constants.OrganizationConstants;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -23,13 +24,12 @@ import lombok.experimental.SuperBuilder;
 @Table(name = OrganizationConstants.TABLE_ORGANIZATION)
 public class Organization extends BaseEntity {
 
-    @NotNull
+    @NotBlank
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = OrganizationConstants.COL_OWNER_ID, nullable = false)
     User owner;
 
     @NotBlank
-    @NotNull
     @Column(name = OrganizationConstants.COL_ORGANIZATION_NAME,
             nullable = false,
             columnDefinition = OrganizationConstants.ORGANIZATION_NAME_DEFINITION)

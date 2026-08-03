@@ -6,9 +6,11 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.utils.PagingUtil;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.dto.request.UserCreationRequest;
 import com.restaurant.crm.modules.identity.dto.request.UserRolesUpdateRequest;
+import com.restaurant.crm.modules.identity.dto.request.UserSearchRequest;
 import com.restaurant.crm.modules.identity.dto.response.UserResponse;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -17,6 +19,8 @@ import com.restaurant.crm.modules.identity.mapper.UserMapper;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.service.interfaces.UserService;
+import com.restaurant.crm.modules.identity.specification.UserSpecification;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import com.restaurant.crm.modules.profile.entity.UserProfile;
 import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
@@ -25,6 +29,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,6 +95,50 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public PagingResponse<UserResponse> searchUsers(UserSearchRequest searchRequest, PagingRequest pagingRequest) {
+        // Resolve data scope from JWT
+        String orgId = null;
+        String branchId = null;
+        String userId = null;
+
+        if (!AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
+            OrgDataScope dataScope = AuthUtils.getDataScope();
+            switch (dataScope) {
+                case ORGANIZATION -> orgId = AuthUtils.getOrganizationId();
+                case BRANCH -> branchId = AuthUtils.getBranchId();
+                case SELF -> userId = AuthUtils.getCurrentUserId();
+            }
+        }
+
+        Specification<User> spec = UserSpecification.build(searchRequest, orgId, branchId, userId);
+
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest)
+        );
+
+        Page<User> userPage = usersRepository.findAll(spec, pageable);
+
+        return PagingResponse.<UserResponse>builder()
+                .currentPage(pagingRequest.getPage())
+                .pageSize(userPage.getSize())
+                .totalPages(userPage.getTotalPages())
+                .totalElement(userPage.getTotalElements())
+                .data(userPage.getContent().stream()
+                        .map(userMapper::toUserResponse)
+                        .toList())
+                .build();
+    }
+
+    @Override
+    public UserResponse getById(String userId) {
+        User user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserResponse(user);
+    }
+
+    @Override
     @Transactional
     public UserResponse updateRoles(String userId, UserRolesUpdateRequest request) {
         User user = usersRepository.findById(userId)
@@ -104,8 +153,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void deleteById(String userId) {
-        usersRepository.deleteById(userId);
+    public void softDeleteById(String userId) {
+        User user = usersRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        user.setStatus(UserStatus.DELETED);
+        usersRepository.save(user);
     }
 
 

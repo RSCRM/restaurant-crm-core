@@ -19,7 +19,7 @@ import java.time.Instant;
 public class CustomerPointResponse {
     String id;
     String customerId;
-    String restaurantId;
+    String organizationId;
     Integer currentPoints;
     Integer lifetimePoints;
     Instant updatedAt;

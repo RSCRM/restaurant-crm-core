@@ -8,6 +8,7 @@ import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
@@ -109,6 +110,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    private void rejectSelfRoleChange(Employee employee) {
+        if (employee.getId().equals(AuthUtils.getEmployeeId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
+
     @Override
     @Transactional
     public EmployeeResponse assignRole(String employeeId, AssignRoleRequest request) {
@@ -116,6 +123,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         validateBranchAccess(employee.getBranch().getId());
+        rejectSelfRoleChange(employee);
 
         OrgRole orgRole = orgRoleRepository.findById(request.getOrgRoleId())
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
@@ -132,6 +140,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         validateBranchAccess(employee.getBranch().getId());
+        rejectSelfRoleChange(employee);
 
         // idempotent: neu da khong co role thi tra ve binh thuong
         employee.setOrgRole(null);
@@ -154,10 +163,25 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
+    public EmployeeResponse setProfileUpdateAccess(
+            String employeeId, ProfileUpdateAccessRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        validateBranchAccess(employee.getBranch().getId());
+        employee.setProfileUpdateEnabled(request.getEnabled());
+        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+    }
+
+    @Override
+    @Transactional
     public EmployeeBranchAssignmentResponse assignToBranch(String branchId, EmployeeBranchAssignmentRequest request) {
         String ownerId = getCurrentOwnerId();
         OrganizationBranch targetBranch = findBranch(branchId, ownerId);
-        Employee branchManager = findManagerEmployee(request.getManagerId());
+        Employee branchManager = findManagerEmployee(
+                request.getManagerId(),
+                targetBranch.getId(),
+                targetBranch.getOrganization().getId()
+        );
 
         validateManagerForBranch(branchManager, targetBranch);
 
@@ -174,11 +198,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeMapper.toEmployeeBranchAssignmentResponse(savedBranch);
     }
 
-    private Employee findManagerEmployee(String managerId) {
+    private Employee findManagerEmployee(String managerId, String branchId, String organizationId) {
         if (!StringUtils.hasText(managerId)) {
             throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_REQUEST);
         }
-        return employeeRepository.findByIdWithUserRoleAndBranch(managerId)
+        return employeeRepository.findByUserIdAndBranchIdAndOrganizationIdWithDetails(
+                        managerId,
+                        branchId,
+                        organizationId
+                )
                 .orElseThrow(() -> new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND));
     }
 

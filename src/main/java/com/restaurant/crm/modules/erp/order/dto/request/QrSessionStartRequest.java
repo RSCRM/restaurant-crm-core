@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-/**
- * Body of {@code POST /public/customer/qr/session} — OWNER opens a session (uc-c-02).
- * Called after uc-c-03's OTP passes; {@code otpTicket} is the proof of that.
- */
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,6 +24,9 @@ public class QrSessionStartRequest {
     @NotBlank(message = "CUSTOMER_PHONE_REQUIRED")
     String customerPhone;
 
-    @NotBlank(message = "TQR_OTP_TICKET_INVALID")
+    /**
+     * Proof of OTP for phones not yet on file. Optional: a returning customer (phone already
+     * exists in {@code Customer}) skips OTP entirely, so this may be null/blank for them.
+     */
     String otpTicket;
 }

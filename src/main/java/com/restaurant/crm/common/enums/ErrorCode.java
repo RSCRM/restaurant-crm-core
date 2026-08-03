@@ -84,6 +84,9 @@ public enum ErrorCode {
             "Schedule date range cannot exceed 31 days",
             HttpStatus.BAD_REQUEST
     ),
+    SCHEDULE_NOT_FOUND("SCHEDULE_1002", "Schedule not found", HttpStatus.NOT_FOUND),
+    SCHEDULE_TIME_RANGE_INVALID("SCHEDULE_1003", "Schedule start time must be before end time", HttpStatus.BAD_REQUEST),
+    SCHEDULE_CONFLICT("SCHEDULE_1004", "Employee already has a schedule at this start time", HttpStatus.CONFLICT),
 
     // ==== ORGANIZATION ERRORS ====
     ORGANIZATION_NOT_FOUND("ORG_1000", "Organization not found", HttpStatus.NOT_FOUND),
@@ -120,6 +123,30 @@ public enum ErrorCode {
     // ==== TABLE ERRORS ====
     TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
     TABLE_SEARCH_CRITERIA_INVALID("TABLE_1001", "Table search criteria are invalid", HttpStatus.BAD_REQUEST),
+
+    // ==== MENU ERRORS ====
+    CATEGORY_NOT_FOUND("MENU_1000", "Category not found", HttpStatus.NOT_FOUND),
+    CATEGORY_NAME_EXISTS("MENU_1001", "Category name already exists in this branch", HttpStatus.BAD_REQUEST),
+    CATEGORY_NAME_REQUIRED("MENU_1002", "Category name is required", HttpStatus.BAD_REQUEST),
+    PRODUCT_NOT_FOUND("MENU_1010", "Product not found", HttpStatus.NOT_FOUND),
+    PRODUCT_NAME_EXISTS("MENU_1011", "Product name already exists in this branch", HttpStatus.BAD_REQUEST),
+    PRODUCT_NAME_REQUIRED("MENU_1012", "Product name is required", HttpStatus.BAD_REQUEST),
+    PRODUCT_BRANCH_REQUIRED("MENU_1013", "Branch id is required", HttpStatus.BAD_REQUEST),
+    MENU_CATEGORY_BRANCH_MISMATCH("MENU_1014", "Category does not belong to this branch", HttpStatus.BAD_REQUEST),
+    MODIFIER_GROUP_NOT_FOUND("MENU_1020", "Modifier group not found", HttpStatus.NOT_FOUND),
+    MODIFIER_GROUP_NAME_EXISTS("MENU_1021", "Group name already exists for this product", HttpStatus.BAD_REQUEST),
+    MODIFIER_GROUP_NAME_REQUIRED("MENU_1022", "Group name is required", HttpStatus.BAD_REQUEST),
+    MODIFIER_OPTION_NOT_FOUND("MENU_1023", "Modifier option not found", HttpStatus.NOT_FOUND),
+    MODIFIER_OPTION_NAME_REQUIRED("MENU_1024", "Option name is required", HttpStatus.BAD_REQUEST),
+    COMBO_NOT_FOUND("MENU_1030", "Combo not found", HttpStatus.NOT_FOUND),
+    COMBO_NAME_EXISTS("MENU_1031", "Combo name already exists in this branch", HttpStatus.BAD_REQUEST),
+    COMBO_NAME_REQUIRED("MENU_1032", "Combo name is required", HttpStatus.BAD_REQUEST),
+    COMBO_BRANCH_REQUIRED("MENU_1033", "Branch id is required", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_NOT_FOUND("MENU_1040", "Combo item not found", HttpStatus.NOT_FOUND),
+    COMBO_ITEM_PRODUCT_EXISTS("MENU_1041", "Product already in this combo", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_PRODUCT_BRANCH_MISMATCH("MENU_1042", "Product does not belong to the combo branch", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_OPTIONS_MISMATCH("MENU_1043", "Must pick exactly one option per modifier group of the product", HttpStatus.BAD_REQUEST),
+    COMBO_ITEM_PRODUCT_REQUIRED("MENU_1044", "Product id is required", HttpStatus.BAD_REQUEST),
     TABLE_AREA_NAME_EXISTS("TABLE_1002", "Area name already exists in this branch", HttpStatus.BAD_REQUEST),
     TABLE_AREA_BRANCH_REQUIRED("TABLE_1003", "Branch id is required", HttpStatus.BAD_REQUEST),
     TABLE_AREA_NAME_REQUIRED("TABLE_1004", "Area name is required", HttpStatus.BAD_REQUEST),
@@ -185,7 +212,7 @@ public enum ErrorCode {
     INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
     INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
     INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
-
+    INVALID_DATE_RANGE("INV_1005", "Invalid date", HttpStatus.BAD_REQUEST),
     // ==== INVENTORY TRANSACTION ERRORS ====
     INVENTORY_TRANSACTION_NOT_FOUND("INV_TX_1000", "Inventory transaction not found", HttpStatus.NOT_FOUND),
     INVENTORY_TRANSACTION_INVALID_QUANTITY("INV_TX_1001", "Transaction quantity must be greater than zero", HttpStatus.BAD_REQUEST),
@@ -266,10 +293,25 @@ public enum ErrorCode {
     OTP_CONTEXT_MISMATCH("OTP_1008", "OTP was requested for a different table", HttpStatus.FORBIDDEN),
     OTP_TICKET_GENERATION_FAILED("OTP_1009", "OTP ticket generation failed", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // ==== GROUP CART ERRORS ====
+    CART_EMPTY("CART_1000", "Cart is empty", HttpStatus.BAD_REQUEST),
+    CART_ITEM_NOT_FOUND("CART_1001", "Cart item not found", HttpStatus.NOT_FOUND),
+    CART_ITEM_UNAVAILABLE("CART_1002", "One or more items are no longer available", HttpStatus.CONFLICT),
+    CART_ITEM_LOCKED("CART_1003", "Another guest is editing this item", HttpStatus.CONFLICT),
+    CART_LOCK_NOT_HELD("CART_1004", "This device does not hold the item lock", HttpStatus.FORBIDDEN),
+    CART_SUBMIT_IN_PROGRESS("CART_1005", "The order is already being submitted", HttpStatus.CONFLICT),
+    CART_MENU_ITEM_NOT_IN_BRANCH("CART_1006", "Menu item does not belong to this branch", HttpStatus.NOT_FOUND),
+    CART_MODIFIER_INVALID("CART_1007", "Modifier option is invalid for this item", HttpStatus.BAD_REQUEST),
+    CART_MEMBER_NOT_FOUND("CART_1008", "Session member not found for this device", HttpStatus.FORBIDDEN),
+    CART_ITEM_REQUEST_INVALID("CART_1009", "Cart item request is invalid", HttpStatus.BAD_REQUEST),
     // ==== CUSTOMER MENU ERRORS ====
     MENU_BRANCH_CONTEXT_MISSING("MENU_1000", "Branch context is missing from the session", HttpStatus.FORBIDDEN),
     MENU_PRODUCT_NOT_FOUND("MENU_1001", "Product not found in this branch", HttpStatus.NOT_FOUND),
     MENU_EMPTY("MENU_1002", "Menu is not configured for this branch", HttpStatus.NOT_FOUND),
+
+    // ==== CUSTOMER ORDER TRACKING ERRORS ====
+    TRACK_NO_ACTIVE_ORDER("TRACK_1000", "No active order for this session yet", HttpStatus.CONFLICT),
+    TRACK_ORDER_NOT_FOUND("TRACK_1001", "The order linked to this session no longer exists", HttpStatus.NOT_FOUND),
     ;
 
     String code;

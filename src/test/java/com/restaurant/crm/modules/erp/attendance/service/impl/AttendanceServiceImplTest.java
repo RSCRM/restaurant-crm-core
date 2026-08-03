@@ -4,6 +4,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.restaurant.crm.common.constant.JwtClaimSetConstant;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.attendance.constants.AttendanceConstants;
 import com.restaurant.crm.modules.erp.attendance.dto.request.AttendanceCheckInRequest;
 import com.restaurant.crm.modules.erp.attendance.dto.response.AttendanceQrResponse;
@@ -23,6 +24,7 @@ import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.identity.entity.User;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,12 +37,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -62,7 +69,11 @@ class AttendanceServiceImplTest {
     @Mock
     OrganizationBranchRepository organizationBranchRepository;
     @Mock
+    UserProfileRepository userProfileRepository;
+    @Mock
     AttendanceMapper attendanceMapper;
+    @Mock
+    SseEmitterService sseEmitterService;
     @InjectMocks
     AttendanceServiceImpl attendanceService;
 
@@ -78,7 +89,7 @@ class AttendanceServiceImplTest {
         try (MockedStatic<AuthUtils> auth = currentContext()) {
             when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(branch));
 
-            AttendanceQrResponse response = attendanceService.getCurrentQr();
+            AttendanceQrResponse response = attendanceService.getCurrentQr(null);
             SignedJWT token = SignedJWT.parse(response.getQrToken());
 
             assertEquals(AttendanceConstants.QR_VALIDITY_SECONDS,
@@ -112,6 +123,9 @@ class AttendanceServiceImplTest {
             assertSame(shift, captor.getValue().getShiftAssignment());
             assertEquals(AttendanceStatus.ON_TIME, captor.getValue().getStatus());
             assertNotNull(captor.getValue().getCheckInAt());
+            verify(sseEmitterService).broadcastToBranch(
+                    "branch-1", "ATTENDANCE_UPDATED", "employee-1",
+                    "ATTENDANCE_BRANCH_READ");
         }
     }
 
@@ -194,7 +208,11 @@ class AttendanceServiceImplTest {
     @Test
     void checkOutClosesOpenAttendance() {
         Employee employee = employee();
-        Attendance attendance = Attendance.builder().checkInAt(Instant.now().minusSeconds(3600)).build();
+        Attendance attendance = Attendance.builder()
+                .shiftAssignment(currentShift(
+                        employee, branch("branch-1", "organization-1")))
+                .checkInAt(Instant.now().minusSeconds(3600))
+                .build();
         AttendanceResponse expected = AttendanceResponse.builder().id("attendance-1").build();
 
         try (MockedStatic<AuthUtils> auth = currentContext()) {
@@ -208,12 +226,104 @@ class AttendanceServiceImplTest {
 
             assertSame(expected, attendanceService.checkOut());
             assertNotNull(attendance.getCheckOutAt());
+            verify(sseEmitterService).broadcastToBranch(
+                    "branch-1", "ATTENDANCE_UPDATED", "employee-1",
+                    "ATTENDANCE_BRANCH_READ");
+        }
+    }
+
+    @Test
+    void getCurrentQrReloadCreatesNewToken() {
+        OrganizationBranch branch = branch("branch-1", "organization-1");
+
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            when(organizationBranchRepository.findById("branch-1"))
+                    .thenReturn(Optional.of(branch));
+
+            AttendanceQrResponse first = attendanceService.getCurrentQr(null);
+            AttendanceQrResponse second = attendanceService.getCurrentQr(null);
+
+            assertNotEquals(first.getQrSessionId(), second.getQrSessionId());
+            assertNotEquals(first.getQrToken(), second.getQrToken());
+        }
+    }
+
+    @Test
+    void ownerCanCreateQrForSelectedOrganizationBranch() {
+        OrganizationBranch branch = branch("branch-1", "organization-1");
+
+        try (MockedStatic<AuthUtils> auth = mockStatic(AuthUtils.class)) {
+            auth.when(AuthUtils::getOrganizationId).thenReturn("organization-1");
+            auth.when(AuthUtils::getBranchId).thenReturn(null);
+            when(organizationBranchRepository.findById("branch-1"))
+                    .thenReturn(Optional.of(branch));
+
+            AttendanceQrResponse response = attendanceService.getCurrentQr("branch-1");
+
+            assertNotNull(response.getQrToken());
+        }
+    }
+
+    @Test
+    void getBranchAttendanceIncludesCheckedInAndNotCheckedInEmployees() {
+        Employee workingEmployee = employee();
+        workingEmployee.getUser().setUsername("waiter");
+        Employee idleEmployee = Employee.builder()
+                .id("employee-2")
+                .user(User.builder().id("user-2").username("chef").build())
+                .status(EmployeeStatus.ACTIVE)
+                .build();
+        ShiftAssignment shift = currentShift(
+                workingEmployee, branch("branch-1", "organization-1"));
+        Attendance attendance = Attendance.builder()
+                .shiftAssignment(shift)
+                .checkInAt(Instant.now())
+                .status(AttendanceStatus.ON_TIME)
+                .build();
+
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            when(organizationBranchRepository.findById("branch-1"))
+                    .thenReturn(Optional.of(branch("branch-1", "organization-1")));
+            when(employeeRepository.findByBranch_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
+                    "branch-1", EmployeeStatus.ACTIVE, "MANAGER"))
+                    .thenReturn(List.of(workingEmployee, idleEmployee));
+            when(attendanceRepository
+                    .findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
+                            "branch-1", LocalDate.now()))
+                    .thenReturn(List.of(attendance));
+            when(userProfileRepository.findByUser_IdIn(any()))
+                    .thenReturn(List.of());
+
+            var result = attendanceService.getBranchAttendance(LocalDate.now(), null);
+
+            assertEquals(2, result.size());
+            assertTrue(result.get(0).isWorking());
+            assertFalse(result.get(1).isWorking());
+            assertEquals("chef", result.get(1).getEmployeeName());
+        }
+    }
+
+    @Test
+    void getEmployeeHistoryRejectsEmployeeOutsideSelectedBranch() {
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            when(organizationBranchRepository.findById("branch-1"))
+                    .thenReturn(Optional.of(branch("branch-1", "organization-1")));
+            when(employeeRepository.findByIdAndBranch_IdAndOrgRole_RoleNameNot(
+                    "employee-2", "branch-1", "MANAGER"))
+                    .thenReturn(Optional.empty());
+
+            AppException exception = assertThrows(AppException.class,
+                    () -> attendanceService.getEmployeeHistory(
+                            "employee-2", LocalDate.now().minusDays(30),
+                            LocalDate.now(), 1, 10, null));
+
+            assertEquals(ErrorCode.EMPLOYEE_NOT_FOUND, exception.getErrorCode());
         }
     }
 
     private String validQr(OrganizationBranch branch) {
         when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(branch));
-        return attendanceService.getCurrentQr().getQrToken();
+        return attendanceService.getCurrentQr(null).getQrToken();
     }
 
     private void stubEmployeeAndShift(Employee employee, ShiftAssignment shift) {

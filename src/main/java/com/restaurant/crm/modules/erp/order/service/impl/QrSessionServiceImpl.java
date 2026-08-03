@@ -2,6 +2,10 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.customeraccount.utils.PhoneNumberUtils;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
@@ -54,6 +58,7 @@ public class QrSessionServiceImpl implements QrSessionService {
     QrSessionRedisRepository sessionRedisRepository;
     OrganizationBranchRepository organizationBranchRepository;
     RestaurantTableRepository restaurantTableRepository;
+    CustomerRepository customerRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -84,9 +89,17 @@ public class QrSessionServiceImpl implements QrSessionService {
         TableQrPayload payload = tableQrTokenService.verify(request.getQrToken());
         TableContext context = validateTableContext(payload);
 
-        // OTP is proven by uc-c-03's ticket; uc-c-02 only consumes it. Fail before any write.
-        // The ticket must be bound to THIS branch+table (from the verified QR), not just the phone.
-        if (!otpTicketVerifier.isValid(request.getCustomerPhone(), payload.branchId(),
+        // Returning customers (phone already on file) skip OTP entirely and go straight to the
+        // menu — a deliberate UX shortcut requested by the team. A LOCKED account is still blocked.
+        // Unknown phones must still prove possession via uc-c-03's OTP ticket, bound to THIS
+        // branch+table (from the verified QR), not just the phone.
+        String normalizedPhone = PhoneNumberUtils.normalize(request.getCustomerPhone());
+        Optional<Customer> existingCustomer = customerRepository.findByPhone(normalizedPhone);
+        if (existingCustomer.isPresent()) {
+            if (existingCustomer.get().getStatus() == CustomerStatus.LOCKED) {
+                throw new AppException(ErrorCode.OTP_CUSTOMER_LOCKED);
+            }
+        } else if (!otpTicketVerifier.isValid(request.getCustomerPhone(), payload.branchId(),
                 payload.tableId(), request.getOtpTicket())) {
             throw new AppException(ErrorCode.TQR_OTP_TICKET_INVALID);
         }

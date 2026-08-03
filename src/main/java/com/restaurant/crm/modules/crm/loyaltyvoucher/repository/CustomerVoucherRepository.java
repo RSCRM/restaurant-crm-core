@@ -14,9 +14,10 @@ import java.util.Optional;
 @Repository
 public interface CustomerVoucherRepository extends JpaRepository<CustomerVoucher, String> {
     Optional<CustomerVoucher> findByVoucherSn(String voucherSn);
-    List<CustomerVoucher> findByCustomerIdAndRestaurantIdAndStatus(String customerId, String restaurantId, CustomerVoucherStatus status);
-    Page<CustomerVoucher> findByCustomerIdAndRestaurantIdAndStatus(String customerId, String restaurantId, CustomerVoucherStatus status, Pageable pageable);
-    Page<CustomerVoucher> findByCustomerIdAndRestaurantId(String customerId, String restaurantId, Pageable pageable);
+    List<CustomerVoucher> findByCustomerIdAndBranchIdAndStatus(String customerId, String branchId, CustomerVoucherStatus status);
+    Page<CustomerVoucher> findByCustomerIdAndBranchIdAndStatus(String customerId, String branchId, CustomerVoucherStatus status, Pageable pageable);
+    Page<CustomerVoucher> findByCustomerIdAndBranchId(String customerId, String branchId, Pageable pageable);
     Optional<CustomerVoucher> findByOrderId(String orderId);
-    List<CustomerVoucher> findByCustomerIdAndRestaurantId(String customerId, String restaurantId);
+    List<CustomerVoucher> findByCustomerIdAndBranchId(String customerId, String branchId);
+    boolean existsByCustomerIdAndVoucherId(String customerId, String voucherId);
 }

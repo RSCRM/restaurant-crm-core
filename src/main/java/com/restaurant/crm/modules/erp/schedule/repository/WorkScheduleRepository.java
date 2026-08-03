@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Repository
@@ -14,6 +15,31 @@ public interface WorkScheduleRepository extends JpaRepository<WorkSchedule, Stri
             String employeeId,
             LocalDate from,
             LocalDate to
+    );
+
+    List<WorkSchedule> findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+            String branchId,
+            LocalDate from,
+            LocalDate to
+    );
+
+    List<WorkSchedule> findByBranchOrganizationIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+            String organizationId,
+            LocalDate from,
+            LocalDate to
+    );
+
+    boolean existsByEmployeeIdAndWorkDateAndStartTime(
+            String employeeId,
+            LocalDate workDate,
+            LocalTime startTime
+    );
+
+    boolean existsByEmployeeIdAndWorkDateAndStartTimeAndIdNot(
+            String employeeId,
+            LocalDate workDate,
+            LocalTime startTime,
+            String id
     );
 }
 

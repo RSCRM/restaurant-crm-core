@@ -25,13 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
-/**
- * Public OTP identification endpoints (uc-c-03). This composition layer verifies the TABLE QR
- * (erp), then delegates the OTP work to the QR-agnostic {@code CustomerOtpService} (crm).
- * Both endpoints are public (no token) — the scanned TABLE QR is the gate.
- */
-@Tag(name = "Customer OTP", description = "uc-c-03 — identify a customer by phone + OTP")
-@RestController
+
+@Tag(name = "Customer OTP", description = "identify a customer by phone + OTP")
+@RestController("erpOrderCustomerOtpController")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomerOtpController {

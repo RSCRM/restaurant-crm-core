@@ -27,4 +27,5 @@ public class EmployeeResponse {
     BigDecimal salary;
     String status;
     LocalDate startDate;
+    boolean profileUpdateEnabled;
 }

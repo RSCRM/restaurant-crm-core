@@ -2,7 +2,7 @@ package com.restaurant.crm.modules.erp.organization.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
-import com.restaurant.crm.modules.identity.constants.role.RoleConstants;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -27,6 +27,10 @@ public class OrgRole extends BaseEntity {
         @Size(min = OrgRoleConstants.MIN_CHARS_ROLE_NAME,
                 max = OrgRoleConstants.MAX_CHARS_ROLE_NAME)
         String roleName;
+
+        @Enumerated(EnumType.STRING)
+        @Column(name = OrgRoleConstants.COL_DATA_SCOPE, nullable = false)
+        OrgDataScope dataScope;
 
         @ManyToMany(fetch = FetchType.LAZY)
         Set<OrgPermission> orgPermissions;

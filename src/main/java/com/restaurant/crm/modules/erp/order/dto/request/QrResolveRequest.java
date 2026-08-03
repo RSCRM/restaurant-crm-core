@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-/** Body of {@code POST /public/customer/qr/resolve} — the scanned TABLE QR (uc-c-02). */
+
 @Getter
 @Setter
 @NoArgsConstructor

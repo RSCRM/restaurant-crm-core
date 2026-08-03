@@ -1,10 +1,13 @@
 package com.restaurant.crm.modules.erp.inventory.service.impl;
 
 import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryRequest;
+import com.restaurant.crm.modules.erp.inventory.dto.request.InventorySearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
 import com.restaurant.crm.modules.erp.inventory.entity.Ingredient;
@@ -14,6 +17,8 @@ import com.restaurant.crm.modules.erp.inventory.mapper.InventoryMapper;
 import com.restaurant.crm.modules.erp.inventory.repository.IngredientRepository;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryService;
+import com.restaurant.crm.modules.erp.inventory.specification.InventorySpecification;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,9 +42,11 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryResponse createInventory(
         CreateInventoryRequest request
     ) {
+        String branchId = AuthUtils.getBranchId();
 
-        if (inventoryRepository.existsByIngredientId(
-            request.getIngredientId()
+        if (inventoryRepository.existsByIngredientIdAndIngredientBranchId(
+            request.getIngredientId(),
+            branchId
         )) {
             throw new AppException(
                 ErrorCode.INVENTORY_EXISTS
@@ -47,13 +54,10 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         Ingredient ingredient =
-            ingredientRepository.findById(
-                    request.getIngredientId()
-                )
+            ingredientRepository
+                .findByIdAndBranchId(request.getIngredientId(), branchId)
                 .orElseThrow(() ->
-                    new AppException(
-                        ErrorCode.INGREDIENT_NOT_FOUND
-                    )
+                    new AppException(ErrorCode.INGREDIENT_NOT_FOUND)
                 );
 
         Inventory inventory =
@@ -77,9 +81,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public InventoryResponse getInventoryById(String id) {
+        String branchId = AuthUtils.getBranchId();
 
         Inventory inventory =
-            inventoryRepository.findById(id)
+            inventoryRepository.findByIdAndIngredientBranchId(id, branchId)
                 .orElseThrow(() ->
                     new AppException(
                         ErrorCode.INVENTORY_NOT_FOUND
@@ -94,9 +99,13 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryResponse getInventoryByIngredientId(
         String ingredientId
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         Inventory inventory =
-            inventoryRepository.findByIngredientId(ingredientId)
+            inventoryRepository.findByIngredientIdAndIngredientBranchId(
+                    ingredientId,
+                    branchId
+                )
                 .orElseThrow(() ->
                     new AppException(
                         ErrorCode.INVENTORY_NOT_FOUND
@@ -109,10 +118,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<InventoryResponse> getInventoriesByBranch(
-        String branchId,
         int page,
         int size
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         Pageable pageable =
             PageRequest.of(
@@ -146,13 +155,13 @@ public class InventoryServiceImpl implements InventoryService {
         String id,
         UpdateInventoryRequest request
     ) {
+        String branchId = AuthUtils.getBranchId();
 
         Inventory inventory =
-            inventoryRepository.findById(id)
+            inventoryRepository
+                .findByIdAndIngredientBranchId(id, branchId)
                 .orElseThrow(() ->
-                    new AppException(
-                        ErrorCode.INVENTORY_NOT_FOUND
-                    )
+                    new AppException(ErrorCode.INVENTORY_NOT_FOUND)
                 );
 
         inventoryMapper.updateInventory(
@@ -191,25 +200,26 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponse<InventoryResponse> getInventoriesByStatus(
-        String branchId,
-        InventoryStatus status,
-        int page,
-        int size
+    public PagingResponse<InventoryResponse> searchInventories(
+        InventorySearchRequest searchRequest,
+        PagingRequest pagingRequest
     ) {
 
-        Pageable pageable =
-            PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
+        Pageable pageable = PageRequest.of(
+            pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+            pagingRequest.getPageSize(),
+            PagingUtil.createSort(pagingRequest)
+        );
 
-        Page<Inventory> inventoryPage =
-            inventoryRepository.findByIngredientBranchIdAndStatus(
-                branchId,
-                status,
-                pageable
-            );
+        String branchId = AuthUtils.getBranchId();
+
+        Page<Inventory> inventoryPage = inventoryRepository.findAll(
+            InventorySpecification.build(branchId, searchRequest),
+            pageable
+        );
 
         return PagingResponse.<InventoryResponse>builder()
-            .currentPage(page)
+            .currentPage(pagingRequest.getPage())
             .pageSize(inventoryPage.getSize())
             .totalPages(inventoryPage.getTotalPages())
             .totalElement(inventoryPage.getTotalElements())

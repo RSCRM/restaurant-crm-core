@@ -9,7 +9,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UserProfileMapper {
 
-    @Mapping(target = "id", source = "user.id")
+    @Mapping(target = "id", source = "profile.id")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "employeeId", ignore = true)
     @Mapping(target = "fullName", source = "profile.fullName")
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "email", source = "user.email")

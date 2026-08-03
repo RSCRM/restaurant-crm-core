@@ -48,7 +48,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     @Transactional
     public VoucherResponse createVoucher(VoucherCreationRequest request) {
-        validateBranchAccess(request.getRestaurantId());
+        validateBranchAccess(request.getBranchId());
 
         Voucher voucher = voucherMapper.toVoucher(request);
         voucher.setIsActive((short) 1); // default
@@ -62,7 +62,7 @@ public class VoucherServiceImpl implements VoucherService {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_FOUND));
 
-        validateBranchAccess(voucher.getRestaurantId());
+        validateBranchAccess(voucher.getBranchId());
 
         voucherMapper.updateVoucher(request, voucher);
         voucher = voucherRepository.save(voucher);
@@ -70,12 +70,12 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
-    public PagingResponse<VoucherResponse> getActiveVouchersByRestaurant(String restaurantId, int page, int size) {
-        validateBranchAccess(restaurantId);
+    public PagingResponse<VoucherResponse> getActiveVouchersByBranch(String branchId, int page, int size) {
+        validateBranchAccess(branchId);
 
         int adjustedPage = Math.max(0, page - 1);
         Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Voucher> voucherPage = voucherRepository.findByRestaurantIdAndIsActive(restaurantId, (short) 1, pageable);
+        Page<Voucher> voucherPage = voucherRepository.findByBranchIdAndIsActive(branchId, (short) 1, pageable);
 
         return PagingResponse.<VoucherResponse>builder()
                 .currentPage(page)

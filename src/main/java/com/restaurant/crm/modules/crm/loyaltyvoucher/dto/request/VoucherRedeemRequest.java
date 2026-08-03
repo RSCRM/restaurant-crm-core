@@ -20,8 +20,8 @@ public class VoucherRedeemRequest {
     @NotBlank(message = "CUSTOMER_NOT_FOUND") // We can use CUSTOMER_NOT_FOUND or CUSTOMER_PHONE_REQUIRED etc., but let's use CUSTOMER_NOT_FOUND
     String customerId;
 
-    @NotBlank(message = "RESTAURANT_ID_REQUIRED")
-    String restaurantId;
+    @NotBlank(message = "BRANCH_ID_REQUIRED")
+    String branchId;
 
     @NotBlank(message = "VOUCHER_NOT_FOUND")
     String voucherId;

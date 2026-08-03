@@ -38,17 +38,15 @@ public class IngredientController {
     }
 
 
-    @GetMapping("/branch/{branchId}")
+    @GetMapping
     @PreAuthorize("hasAuthority('INGREDIENT_VIEW')")
-    public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> getIngredientsByBranch(
-            @PathVariable String branchId,
+    public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> getIngredients(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
 
         PagingResponse<IngredientResponse> response =
                 ingredientService.getIngredientsByBranch(
-                        branchId,
                         page,
                         size
                 );
@@ -81,7 +79,6 @@ public class IngredientController {
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('INGREDIENT_VIEW')")
     public ResponseEntity<ApiResponse<PagingResponse<IngredientResponse>>> searchIngredients(
-            @RequestParam String branchId,
             @RequestParam String ingredientName,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
@@ -89,7 +86,6 @@ public class IngredientController {
 
         PagingResponse<IngredientResponse> response =
                 ingredientService.searchIngredients(
-                        branchId,
                         ingredientName,
                         page,
                         size

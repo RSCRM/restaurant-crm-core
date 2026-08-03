@@ -49,9 +49,9 @@ public class SecurityConfig {
             "/api/v1/public/customer/qr/resolve",
             "/api/v1/public/customer/qr/session",
             "/api/v1/public/customer/qr/session/join",
-            // uc-c-03 — phone + OTP identification
-            "/api/v1/public/customer/otp/request",
-            "/api/v1/public/customer/otp/verify"
+            // uc-c-03 — phone + OTP identification & customer public APIs
+            "/api/v1/public/customer/**"
+
     };
 
     private final String[] PUBLIC_GET_ENDPOINT = {
@@ -65,7 +65,7 @@ public class SecurityConfig {
             "/swagger-ui",
             "/swagger-ui/**",
             "/api/v1/api-docs",
-            "/api/v1/api-docs/**"
+            "/api/v1/api-docs/**",
     };
 
     @NonFinal
@@ -134,7 +134,7 @@ public class SecurityConfig {
                 // Identity Token or legacy: extract scope (roles) + permissions
                 List<String> roles = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_SCOPE);
                 if (roles != null) {
-                    roles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
+                    roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
                 }
 
                 List<String> permissions = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_PERMISSION);

@@ -2,6 +2,9 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
+import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
@@ -60,6 +63,7 @@ class QrSessionServiceImplTest {
     @Mock QrSessionRedisRepository sessionRedisRepository;
     @Mock OrganizationBranchRepository organizationBranchRepository;
     @Mock RestaurantTableRepository restaurantTableRepository;
+    @Mock CustomerRepository customerRepository;
     @InjectMocks QrSessionServiceImpl service;
 
     @BeforeEach
@@ -88,6 +92,36 @@ class QrSessionServiceImplTest {
         assertNull(response.getOrderId());
         assertEquals(1, response.getMemberCount());
         verify(sessionRedisRepository).saveSession(any(QrSessionData.class), anyLong());
+    }
+
+    @Test
+    void startSkipsOtpForReturningActiveCustomer() {
+        stubValidTableContext();
+        when(customerRepository.findByPhone("0900000000")).thenReturn(
+                Optional.of(Customer.builder().phone("0900000000").status(CustomerStatus.ACTIVE).build()));
+        when(sessionRedisRepository.tryReserveTable(eq(BRANCH), eq(TABLE), anyString(), anyLong()))
+                .thenReturn(true);
+        when(groupQrTokenService.generate(any(GroupQrPayload.class), anyLong())).thenReturn("group-qr");
+
+        QrSessionResponse response = service.start(startRequestWithoutOtpTicket());
+
+        assertEquals(SessionMemberRole.OWNER, response.getRole());
+        verify(otpTicketVerifier, never()).isValid(anyString(), anyString(), anyString(), anyString());
+        verify(sessionRedisRepository).saveSession(any(QrSessionData.class), anyLong());
+    }
+
+    @Test
+    void startRejectsLockedReturningCustomerEvenWithoutOtp() {
+        stubValidTableContext();
+        when(customerRepository.findByPhone("0900000000")).thenReturn(
+                Optional.of(Customer.builder().phone("0900000000").status(CustomerStatus.LOCKED).build()));
+
+        AppException exception = assertThrows(
+                AppException.class, () -> service.start(startRequestWithoutOtpTicket()));
+
+        assertEquals(ErrorCode.OTP_CUSTOMER_LOCKED, exception.getErrorCode());
+        verify(sessionRedisRepository, never())
+                .tryReserveTable(anyString(), anyString(), anyString(), anyLong());
     }
 
     @Test
@@ -281,6 +315,11 @@ class QrSessionServiceImplTest {
     private QrSessionStartRequest startRequest() {
         return QrSessionStartRequest.builder()
                 .qrToken("table-qr").customerPhone("0900000000").otpTicket("ticket").build();
+    }
+
+    private QrSessionStartRequest startRequestWithoutOtpTicket() {
+        return QrSessionStartRequest.builder()
+                .qrToken("table-qr").customerPhone("0900000000").otpTicket(null).build();
     }
 
     private QrSessionJoinRequest joinRequest() {

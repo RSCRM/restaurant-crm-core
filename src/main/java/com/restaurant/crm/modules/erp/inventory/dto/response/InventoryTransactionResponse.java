@@ -18,6 +18,7 @@ import java.time.Instant;
 public class InventoryTransactionResponse {
     String id;
     String inventoryId;
+    String ingredientName;
     String employeeId;
     InventoryTransactionType transactionType;
     InventoryTransactionDirection transactionDirection;

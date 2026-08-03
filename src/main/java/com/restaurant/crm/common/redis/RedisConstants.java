@@ -15,5 +15,10 @@ public class RedisConstants {
     public static final String OTP_RESEND_PREFIX = "otp:resend:";
     public static final String OTP_TABLE_PREFIX = "otp:table:";
 
+    // ==== Group cart keys (uc-c-05), built on the qr:session:{sessionId} namespace ====
+    public static final String CART_SUFFIX = ":cart";
+    public static final String CART_LOCK_INFIX = ":cart:lock:";
+    public static final String CART_SUBMIT_SUFFIX = ":cart:submitting";
+
     private RedisConstants() {}
 }

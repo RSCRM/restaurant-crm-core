@@ -19,8 +19,8 @@ import lombok.experimental.FieldDefaults;
 public class EmployeeBranchAssignmentRequest {
 
     @Schema(
-            description = "Employee ID of the manager",
-            example = "f0000000-0000-0000-0000-000000000001"
+            description = "User ID of the manager employee",
+            example = "a0000000-0000-0000-0000-000000000001"
     )
     @NotBlank(message = "BRANCH_MANAGER_INVALID_REQUEST")
     String managerId;

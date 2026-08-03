@@ -3,12 +3,12 @@ package com.restaurant.crm.modules.erp.order.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
-import com.restaurant.crm.modules.erp.menu.combo.entity.Combo;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.entity.ModifierOption;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Combo;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.entity.ModifierOption;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemModifierRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
@@ -201,7 +201,10 @@ public class OrderServiceImpl implements OrderService {
                             .phone(request.getCustomerPhone())
                             .status(com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus.ACTIVE)
                             .build()));
-            pointWalletService.initializeWallet(customer.getId(), branchId);
+            String orgId = organizationBranchRepository.findById(branchId)
+                    .map(b -> b.getOrganization() != null ? b.getOrganization().getId() : branchId)
+                    .orElse(branchId);
+            pointWalletService.initializeWallet(customer.getId(), orgId);
         }
 
         if (table != null) {

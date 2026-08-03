@@ -20,5 +20,6 @@ import java.util.Set;
 public class RoleResponse {
     String id;
     String roleName;
+    String dataScope;
     Set<Permission> permissions;
 }

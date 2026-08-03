@@ -164,8 +164,8 @@ from request params (NFR-07).
 
 # OTP identification (uc-c-03)
 
-Phone + OTP is the gate before opening a session: it produces the `otpTicket` that
-`POST /public/customer/qr/session` (uc-c-02) consumes.
+Phone + OTP is the gate before opening a session for a **new** phone number: it produces the
+`otpTicket` that `POST /public/customer/qr/session` (uc-c-02) consumes.
 
 ```
 Scan TABLE QR
@@ -173,6 +173,17 @@ Scan TABLE QR
   → POST /public/customer/otp/verify   { qrToken, customerPhone, otpCode }   → returns otpTicket
   → POST /public/customer/qr/session   { qrToken, customerPhone, otpTicket } → opens the session (uc-c-02)
 ```
+
+> **Returning-customer shortcut (deliberate, team-approved UX trade-off):** if `customerPhone`
+> already exists in `Customer`, `QrSessionServiceImpl.start()` skips OTP entirely — `otpTicket` is
+> optional in that case. A `LOCKED` account is still rejected (`OTP_CUSTOMER_LOCKED`), but an
+> **active** returning phone opens the session with no proof of possession at all.
+>
+> 🔴 **Known security trade-off:** this means anyone who merely *knows* a registered customer's
+> phone number — not necessarily holds their phone — can open a session and become `OWNER` for
+> a table, with orders/points attributed to that phone. Regular customers are the most exposed,
+> since their number is guaranteed to already be on file. This was an explicit product decision to
+> speed up repeat visits; it is not a gap to "fix" without a matching decision to change it back.
 
 ## Module layout (no cross-module cycle)
 
@@ -243,6 +254,90 @@ testing) and `NoopOtpSender` (`@Profile("!dev") @Primary`, throws `OTP_SEND_FAIL
 
 ---
 
+# Shared group cart & order submission (uc-c-05)
+
+The whole table shares one Redis-backed cart; only the OWNER submits; every item funnels into one
+DB order via the existing `OrderService.create()` (no order logic is re-implemented here).
+
+## Redis schema (all TTL = `SESSION_TTL_SECONDS`, on the `qr:session:{sessionId}` namespace)
+
+| Key | Type | Value |
+| :-- | :-- | :-- |
+| `qr:session:{sessionId}:cart` | Hash | `cartItemId` → JSON(`GroupCartItem`) |
+| `qr:session:{sessionId}:cart:lock:{cartItemId}` | String | `deviceId` (item edit lock, TTL 30s) |
+| `qr:session:{sessionId}:cart:submitting` | String | `deviceId` (submit guard, TTL 30s) |
+
+`GroupCartItem = (cartItemId, productId, comboId, quantity, note, modifierOptionIds, addedByDeviceId, addedAt)`.
+**No price is stored** — display prices are read live from `Product`/`Combo`; the authoritative price
+is resolved by `OrderServiceImpl.resolveUnitPrice()` at submit. Same-item-different-note stays as two
+separate lines (never merged).
+
+## Endpoints (all require a CUSTOMER_SESSION token)
+
+| Method | Path | Who | Purpose |
+| :-- | :-- | :-- | :-- |
+| GET | `/api/v1/customer/cart` | any member | view cart + tentative subtotal |
+| POST | `/api/v1/customer/cart/items` | any member | add item |
+| PUT | `/api/v1/customer/cart/items/{cartItemId}` | any member | edit qty/note/modifiers |
+| DELETE | `/api/v1/customer/cart/items/{cartItemId}` | any member | remove item |
+| POST | `/api/v1/customer/cart/items/{cartItemId}/lock` | any member | hold edit lock |
+| DELETE | `/api/v1/customer/cart/items/{cartItemId}/lock` | lock holder | release lock |
+| POST | `/api/v1/customer/cart/submit` | **OWNER only** | submit → one order |
+| GET | `/api/v1/customer/cart/subscribe` | any member | SSE cart updates |
+
+`branchId`/`tableId`/`sessionId`/`deviceId` always come from the token (NFR-07). OWNER is
+re-checked from the Redis member hash at submit — the token claim is never trusted.
+
+## Item locking (BR-CST-GRP-03)
+
+`SETNX` on the lock key (value = deviceId, TTL 30s). Editing/deleting a line held by another device
+→ `CART_1003`; releasing a lock you don't hold → `CART_1004`. TTL is the self-heal: a device that
+closes mid-edit frees the line automatically.
+
+## Submit flow (duplicate-safe)
+
+1. `SETNX` submit-guard first — else `CART_1005`; released in `finally`.
+2. session OPEN, else `TQR_1008`/`TQR_1006`.
+3. OWNER only (from Redis) — else `TQR_1013`.
+4. empty cart → `CART_1000`.
+5. any line locked by another device → `CART_1003`.
+6. re-validate availability: drop unavailable lines, broadcast `CART_ITEM_REMOVED`, then `CART_1002`.
+7. build `CreateOrderRequestDto` (`orderType = DINE_IN`, `customerPhone = ownerCustomerPhone`, `customerName = null`).
+8. `orderService.create(dto)` → prices, merges into the table's PENDING order (FR-09.1), broadcasts KDS.
+9. `bindOrder(sessionId, orderId)`.
+10. clear cart + all locks; broadcast `CART_SUBMITTED`.
+
+Calling submit again in the same session merges into the **same** `orderId` (the merge branch in
+`create()`), so ordering more rounds during the meal is one order.
+
+## Host handover (BR-CST-GRP-04, lazy)
+
+Checked on every request (no `@Scheduled`): if the OWNER's `lastSeenAt` is older than
+`HOST_IDLE_TIMEOUT_SECONDS` (10 min), the earliest-joined still-active MEMBER becomes OWNER,
+`ownerDeviceId` is moved, and `SESSION_HOST_CHANGED` is broadcast. No active member → left as is.
+
+## SSE events (`GroupCartEventType`, keyed by sessionId)
+
+`CART_UPDATED`, `CART_ITEM_REMOVED`, `CART_ITEM_LOCKED`, `CART_ITEM_UNLOCKED`, `CART_SUBMITTED`,
+`SESSION_HOST_CHANGED`.
+
+## Error codes (`CART_*`)
+
+`CART_1000` empty · `CART_1001` item not found · `CART_1002` unavailable · `CART_1003` locked ·
+`CART_1004` lock not held · `CART_1005` submit in progress · `CART_1006` menu item not in branch ·
+`CART_1007` modifier invalid · `CART_1008` member not found · `CART_1009` cart item request invalid
+(added for Bean-Validation messages, since `GlobalExceptionHandler` maps every validation message
+through `ErrorCode.valueOf`).
+
+## Known gaps (out of uc-c-05 scope)
+
+- **Nobody closes the session/cart on invoice `PAID`** — the payment hook lives in the `invoice`
+  module; today the session just expires via TTL. Needs an `OrderStatus`/invoice listener.
+- **`LOCKED_FOR_PAYMENT` is never set by anyone yet** — `OrderStatus` has no "paying" state, so
+  BR-CST-PAY-01 is only partially wired (the cart honors the status if something sets it).
+- **SSE latency** for item locking; WebSocket would be better but `pom.xml` has none.
+- `customerName` submitted as `null` (Customer has only phone + status); order `note` is null (notes
+  are per line).
 # Browse digital menu (uc-c-04)
 
 Once a session exists, a seated customer browses the digital menu of **their own branch**.
@@ -295,3 +390,64 @@ The menu uses an in-memory `ConcurrentMapCacheManager` (explicit, so Redis auto-
 running server). It does **not** enforce `CACHE_TTL_SECONDS` — entries persist until app restart. Once
 uc-m-* ships menu-edit endpoints they must `@CacheEvict`, or the cache should move to a TTL-capable
 manager (Caffeine/Redis, needs a dependency + NFR-03 multi-instance decision).
+
+---
+
+# Track cooking progress (uc-c-06)
+
+After the OWNER submits, any member watches their order cook in real time — via a REST snapshot and
+an SSE stream. The order id always comes from the session (`QrSessionData.orderId`), never the client.
+
+## Customer stage mapping
+
+| `OrderItemStatus` | `customerStage` | `stageOrder` |
+| :-- | :-- | --: |
+| `PENDING` | `RECEIVED` | 1 |
+| `IN_PROGRESS` | `COOKING` | 2 |
+| `READY_TO_SERVE` | `READY_TO_SERVE` | 3 |
+| `SERVED` | `SERVED` | 4 |
+| `CANCELLED` | `CANCELLED` | 0 |
+
+`CustomerOrderStage.from(OrderItemStatus)` is the single source of truth (exhaustive switch — adding
+a status fails compilation until the mapping is updated). Cancelled lines stay in `items` with
+`stageOrder = 0`; the FE draws the progress bar from `stageOrder` without hardcoding the order.
+
+## Endpoints (require a CUSTOMER_SESSION token)
+
+| Method | Path | Purpose |
+| :-- | :-- | :-- |
+| GET | `/api/v1/customer/orders/current/cooking-status` | snapshot of the session's order |
+| GET | `/api/v1/customer/orders/current/cooking-status/subscribe` | SSE stream (`text/event-stream`) |
+
+Snapshot payload `CustomerOrderTrackingResponse`: `hasActiveOrder`, `orderId`, `orderCode`, `tableId`,
+`orderStatus`, `subtotal`, `discountAmount`, `totalAmount`, `summary` (per-stage counts), `items[]`
+(`orderItemId, itemName, quantity, note, status, customerStage, stageOrder, updatedAt`), `updatedAt`.
+
+- No `customerPhone` (the owner's phone) and no kitchen `cancelReason` are ever returned.
+- No order yet → `hasActiveOrder = false`, `items = []` (not an error).
+- Order's `tableId` must match the session's table, else `TQR_CONTEXT_MISMATCH` (branch isolation;
+  the cooking-status DTO exposes `tableId`, not `branchId`, and a table maps to one branch).
+- The service reuses `OrderService.getOrderCookingStatus()` — it does not query orders directly.
+
+## SSE reuses the order-keyed channel
+
+`subscribe` resolves `orderId` from the session (else `TRACK_NO_ACTIVE_ORDER`) and returns
+`customerSseService.createEmitter(orderId)`. This is deliberate: `OrderServiceImpl` /
+`OrderItemServiceImpl` broadcast on `CustomerSseService` **by orderId** when the kitchen changes a
+status. A session-keyed emitter would stay open but silent.
+
+## Error codes (`TRACK_*`)
+
+`TRACK_1000` no active order yet (409) · `TRACK_1001` linked order no longer exists (404).
+Reuses `TQR_SESSION_NOT_FOUND`, `TQR_SESSION_EXPIRED`, `TQR_CONTEXT_MISMATCH`.
+
+## Known gaps (out of uc-c-06 scope)
+
+1. **The SSE stream still broadcasts the full `OrderCookingStatusResponse` (which contains
+   `customerPhone`)** because `OrderServiceImpl` calls `broadcastOrderUpdate` with that object. The
+   uc-c-06 REST endpoint strips the phone, but the stream does not — the order-module owner must
+   filter the broadcast payload. (uc-c-06 must not modify `OrderServiceImpl`/`CustomerSseServiceImpl`.)
+2. **`/api/v1/orders/*/cooking-status` and `/api/v1/orders/*/bill` remain public** — anyone who knows
+   an `orderId` can read them without a token.
+3. **`CustomerSseServiceImpl` holds emitters in an in-memory map** → multiple instances lose events
+   (violates NFR-03); needs a shared broker (Redis pub/sub / WebSocket) to scale out.

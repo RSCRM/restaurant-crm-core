@@ -11,9 +11,9 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
-import com.restaurant.crm.modules.erp.menu.combo.repository.ComboRepository;
-import com.restaurant.crm.modules.erp.menu.modifier.repository.ModifierOptionRepository;
-import com.restaurant.crm.modules.erp.menu.product.repository.ProductRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ComboRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
+import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderRequestDto;
 import com.restaurant.crm.modules.erp.order.dto.response.CreateOrderResponse;
 import com.restaurant.crm.modules.erp.order.entity.Order;
@@ -31,7 +31,7 @@ import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.common.sse.service.interfaces.SseEmitterService;
 import com.restaurant.crm.modules.erp.order.dto.request.CreateOrderItemRequestDto;
 import com.restaurant.crm.modules.erp.order.entity.OrderItem;
-import com.restaurant.crm.modules.erp.menu.product.entity.Product;
+import com.restaurant.crm.modules.erp.menu.entity.Product;
 import com.restaurant.crm.common.enums.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -119,7 +119,7 @@ public class OrderVoucherTests {
         testCustomerVoucher = CustomerVoucher.builder()
                 .id("cv000000-0000-0000-0000-000000000001")
                 .customer(testCustomer)
-                .restaurantId("e0000000-0000-0000-0000-000000000001")
+                .branchId("e0000000-0000-0000-0000-000000000001")
                 .voucher(voucher)
                 .voucherSn("VSN-TEST001")
                 .build();

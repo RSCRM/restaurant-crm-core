@@ -15,11 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-/**
- * The only gateway to the OTP keyspace in Redis (uc-c-03). Services never touch
- * {@code StringRedisTemplate} directly. Counting uses atomic {@code HINCRBY}/{@code INCR}
- * (never read-modify-write). Keys are built via {@code RedisKeyGenerator}.
- */
+
 @Repository
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

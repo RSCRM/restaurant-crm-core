@@ -32,8 +32,8 @@ import java.math.BigDecimal;
 public class Voucher extends BaseEntity {
 
     @NotNull
-    @Column(name = VoucherConstants.COL_RESTAURANT_ID, nullable = false)
-    String restaurantId;
+    @Column(name = VoucherConstants.COL_BRANCH_ID, nullable = false)
+    String branchId;
 
     @NotBlank
     @NotNull

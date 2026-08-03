@@ -12,10 +12,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A combo in the customer menu (uc-c-04). Returned flat: {@code items} is always empty for now
- * because there is no Combo↔Product join table yet (TODO uc-c-04).
- */
+
 @Getter
 @Setter
 @NoArgsConstructor

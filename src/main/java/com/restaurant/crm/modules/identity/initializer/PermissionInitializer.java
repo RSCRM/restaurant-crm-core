@@ -69,50 +69,6 @@ public class PermissionInitializer implements ApplicationRunner {
                         .build(),
                 Permission.builder()
                         .permissionName(StartDefinedPermission.USER_DELETE)
-                        .build(),
-
-                // ===== ORGANIZATION =====
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.ORGANIZATION_VIEW)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.ORGANIZATION_MANAGE)
-                        .build(),
-
-                // ===== ORGANIZATION BRANCH =====
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.ORGANIZATION_BRANCH_VIEW)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.ORGANIZATION_BRANCH_MANAGE)
-                        .build(),
-
-                // ===== INGREDIENT CATEGORY =====
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INGREDIENT_CATEGORY_VIEW)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INGREDIENT_CATEGORY_MANAGE)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INGREDIENT_VIEW)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INGREDIENT_MANAGE)
-                        .build(),
-
-                // ===== INVENTORY =====
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INVENTORY_VIEW)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INVENTORY_MANAGE)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INVENTORY_TRANSACTION_VIEW)
-                        .build(),
-                Permission.builder()
-                        .permissionName(StartDefinedPermission.INVENTORY_TRANSACTION_MANAGE)
                         .build()
         );
     }

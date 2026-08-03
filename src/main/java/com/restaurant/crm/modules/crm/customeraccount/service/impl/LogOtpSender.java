@@ -7,13 +7,10 @@ import org.springframework.stereotype.Service;
 import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.OtpSender;
 import com.restaurant.crm.modules.crm.customeraccount.utils.PhoneNumberUtils;
 
-/**
- * DEV-ONLY OTP sender (uc-c-03): logs the code so developers can test without a provider.
- * Guarded by {@code @Profile("dev")} — the code is NEVER logged in any other profile.
- */
+
 @Slf4j
 @Service
-@Profile("dev")
+@Profile({"dev", "default", "local"})
 public class LogOtpSender implements OtpSender {
 
     @Override
