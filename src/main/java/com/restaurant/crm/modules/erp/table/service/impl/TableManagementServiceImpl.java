@@ -214,7 +214,7 @@ public class TableManagementServiceImpl implements TableManagementService {
                 .table(table)
                 .guestName("Khách đặt bàn")
                 .guestPhone(booking.getCustomer().getPhone())
-                .partySize(booking.getGuestCount())
+                .partySize(booking.getGuestCount() != null ? booking.getGuestCount() : 1)
                 .status(TableSessionStatus.ACTIVE)
                 .startedAt(Instant.now())
                 .note(booking.getNote() == null ? null

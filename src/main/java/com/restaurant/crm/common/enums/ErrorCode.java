@@ -235,6 +235,9 @@ public enum ErrorCode {
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
     CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_STARTED_YET("LOY_1016", "Voucher has not started yet", HttpStatus.BAD_REQUEST),
+    VOUCHER_CODE_REQUIRED("LOY_1017", "Voucher code is required for code-based vouchers", HttpStatus.BAD_REQUEST),
+    VOUCHER_LIMIT_EXCEEDED("LOY_1018", "Voucher usage limit has been exceeded", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),

@@ -26,5 +26,9 @@ public class VoucherResponse {
     Integer pointsRequired;
     Short isActive;
     Instant expiredAt;
+    Instant startAt;
+    Instant endAt;
+    String voucherCode;
+    Integer usageLimit;
     Instant createdAt;
 }

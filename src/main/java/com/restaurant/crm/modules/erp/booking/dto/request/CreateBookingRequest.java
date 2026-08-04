@@ -38,8 +38,6 @@ public class CreateBookingRequest {
     @Future(message = "BOOKING_TIME_MUST_BE_FUTURE")
     Instant bookingTime;
 
-    @NotNull(message = "GUEST_COUNT_REQUIRED")
-    @Min(value = BookingConstants.MIN_GUEST_COUNT, message = "MIN_GUEST_COUNT_INVALID")
     Integer guestCount;
 
     @Size(max = BookingConstants.MAX_NOTE_LENGTH, message = "NOTE_EXCEEDS_MAX_LENGTH")

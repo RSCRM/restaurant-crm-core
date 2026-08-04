@@ -10,5 +10,16 @@ public interface PointWalletService {
     PagingResponse<CustomerPointHistoryResponse> getHistory(String customerId, String organizationId, int page, int size);
     CustomerPointResponse earnPoints(String customerId, String organizationId, int points, String orderId);
     CustomerPointResponse deductPoints(String customerId, String organizationId, int points, String referenceId);
-    PagingResponse<CustomerPointResponse> getOrganizationCustomers(String organizationId, String searchPhone, int page, int size);
+    PagingResponse<CustomerPointResponse> getOrganizationCustomers(
+            String organizationId,
+            String searchPhone,
+            Integer minPoints,
+            Integer maxPoints,
+            Integer minLifetimePoints,
+            Integer maxLifetimePoints,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection
+    );
 }
