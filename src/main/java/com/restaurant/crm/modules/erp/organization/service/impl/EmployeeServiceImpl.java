@@ -4,13 +4,13 @@ import com.restaurant.crm.common.constant.GlobalVariableConstant;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
@@ -30,6 +30,8 @@ import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,9 +44,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,6 +62,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     OrgRoleRepository orgRoleRepository;
+    UserProfileRepository userProfileRepository;
     PasswordEncoder passwordEncoder;
 
     @Override
@@ -91,7 +97,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .pageSize(employeePage.getSize())
                 .totalPages(employeePage.getTotalPages())
                 .totalElement(employeePage.getTotalElements())
-                .data(employeePage.getContent().stream().map(employeeMapper::toEmployeeResponse).toList())
+                .data(toEmployeeResponses(employeePage.getContent()))
                 .build();
     }
 
@@ -99,49 +105,58 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     public EmployeeResponse getEmployee(String employeeId) {
         Employee employee = findEmployeeForCurrentContext(employeeId);
-        return employeeMapper.toEmployeeResponse(employee);
+        return toEmployeeResponse(employee);
     }
 
     @Override
     @Transactional
     public EmployeeResponse addEmployee(CreateEmployeeRequest request) {
-        validateBranchAccess(request.getBranchId());
+        OrganizationBranch branch = resolveBranchForCreateOrUpdate(request.getBranchId());
+        OrgRole orgRole = findOrgRole(request.getOrgRoleId());
+        validateProfilePhoneAvailable(request.getPhone(), null);
 
-        if (userRepository.existsByUsername(request.getUsername())) {
+        String username = cleanRequired(request.getUsername(), ErrorCode.EMPLOYEE_USERNAME_REQUIRED);
+        String email = cleanRequired(request.getEmail(), ErrorCode.EMPLOYEE_EMAIL_REQUIRED);
+        String password = cleanRequired(request.getPassword(), ErrorCode.USER_PASSWORD_INVALID);
+        String phone = cleanRequired(request.getPhone(), ErrorCode.EMPLOYEE_PHONE_REQUIRED);
+        String firstName = cleanRequired(request.getFirstName(), ErrorCode.USER_FULL_NAME_INVALID);
+        String lastName = cleanRequired(request.getLastName(), ErrorCode.USER_FULL_NAME_INVALID);
+
+        if (userRepository.existsByUsername(username)) {
             throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(email)) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
-
-        OrganizationBranch branch = branchRepository.findById(request.getBranchId())
-                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
-
-        OrgRole orgRole = null;
-        if (request.getOrgRoleId() != null && !request.getOrgRoleId().isBlank()) {
-            orgRole = orgRoleRepository.findById(request.getOrgRoleId())
-                    .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
         }
 
         Role userRole = roleRepository.findByRoleName(PredefinedRole.USER_ROLE)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(EmployeeAccountConstants.DEFAULT_PASSWORD))
+                .username(username)
+                .email(email)
+                .password(passwordEncoder.encode(password))
                 .status(UserStatus.ACTIVE)
                 .enabled(true)
                 .roles(Set.of(userRole))
                 .build();
         user = userRepository.save(user);
 
+        UserProfile profile = UserProfile.builder()
+                .user(user)
+                .fullName(buildFullName(firstName, lastName))
+                .phone(phone)
+                .build();
+        profile = userProfileRepository.save(profile);
+
         Employee employee = Employee.builder()
                 .user(user)
                 .branch(branch)
                 .orgRole(orgRole)
-                .email(request.getEmail())
-                .phone(request.getPhone())
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .phone(phone)
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .salary(request.getSalary())
@@ -149,37 +164,45 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
         employee = employeeRepository.save(employee);
 
-        return employeeMapper.toEmployeeResponse(employee);
+        return toEmployeeResponse(employee, profile);
     }
 
     @Override
     @Transactional
-    public EmployeeResponse updateEmployee(String employeeId, CreateEmployeeRequest request) {
+    public EmployeeResponse updateEmployee(String employeeId, UpdateEmployeeRequest request) {
         Employee employee = findEmployeeForCurrentContext(employeeId);
+        OrganizationBranch branch = resolveBranchForCreateOrUpdate(request.getBranchId());
+        OrgRole orgRole = findOrgRole(request.getOrgRoleId());
 
-        if (!employee.getUser().getUsername().equals(request.getUsername())
-                && userRepository.existsByUsername(request.getUsername())) {
+        UserProfile profile = userProfileRepository.findByUser_Id(employee.getUser().getId())
+                .orElseGet(() -> UserProfile.builder().user(employee.getUser()).build());
+        validateProfilePhoneAvailable(request.getPhone(), profile.getId());
+
+        String username = cleanRequired(request.getUsername(), ErrorCode.EMPLOYEE_USERNAME_REQUIRED);
+        String email = cleanRequired(request.getEmail(), ErrorCode.EMPLOYEE_EMAIL_REQUIRED);
+        String phone = cleanRequired(request.getPhone(), ErrorCode.EMPLOYEE_PHONE_REQUIRED);
+        String firstName = cleanRequired(request.getFirstName(), ErrorCode.USER_FULL_NAME_INVALID);
+        String lastName = cleanRequired(request.getLastName(), ErrorCode.USER_FULL_NAME_INVALID);
+
+        if (!employee.getUser().getUsername().equals(username)
+                && userRepository.existsByUsername(username)) {
             throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
-        if (!employee.getUser().getEmail().equals(request.getEmail())
-                && userRepository.existsByEmail(request.getEmail())) {
+        if (!employee.getUser().getEmail().equals(email)
+                && userRepository.existsByEmail(email)) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        OrganizationBranch branch = branchRepository.findById(request.getBranchId())
-                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
-        validateBranchAccess(branch.getId());
-
-        OrgRole orgRole = null;
-        if (StringUtils.hasText(request.getOrgRoleId())) {
-            orgRole = orgRoleRepository.findById(request.getOrgRoleId())
-                    .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
+        if (StringUtils.hasText(request.getPassword())) {
+            employee.getUser().setPassword(passwordEncoder.encode(request.getPassword().trim()));
         }
 
-        employee.getUser().setUsername(request.getUsername());
-        employee.getUser().setEmail(request.getEmail());
-        employee.setEmail(request.getEmail());
-        employee.setPhone(request.getPhone());
+        employee.getUser().setUsername(username);
+        employee.getUser().setEmail(email);
+        employee.setFirstName(firstName);
+        employee.setLastName(lastName);
+        employee.setEmail(email);
+        employee.setPhone(phone);
         employee.setBranch(branch);
         employee.setOrgRole(orgRole);
         employee.setStartDate(request.getStartDate());
@@ -190,7 +213,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         userRepository.save(employee.getUser());
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        profile.setFullName(buildFullName(firstName, lastName));
+        profile.setPhone(phone);
+        profile = userProfileRepository.save(profile);
+        return toEmployeeResponse(employeeRepository.save(employee), profile);
     }
 
     @Override
@@ -205,7 +231,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             userRepository.save(employee.getUser());
         }
         clearManagerFromOtherBranch(employee.getId(), null);
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        return toEmployeeResponse(employeeRepository.save(employee));
     }
 
     @Override
@@ -216,7 +242,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.getUser().setStatus(UserStatus.ACTIVE);
         employee.setStatus(EmployeeStatus.ACTIVE);
         userRepository.save(employee.getUser());
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        return toEmployeeResponse(employeeRepository.save(employee));
     }
 
     @Override
@@ -230,11 +256,67 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         clearManagerFromOtherBranch(employee.getId(), null);
         userRepository.save(employee.getUser());
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        return toEmployeeResponse(employeeRepository.save(employee));
     }
 
     private void validateBranchAccess(String targetBranchId) {
         findBranchForCurrentContext(targetBranchId);
+    }
+
+    private OrganizationBranch resolveBranchForCreateOrUpdate(String requestedBranchId) {
+        OrgDataScope dataScope = AuthUtils.getDataScope();
+        if (OrgDataScope.BRANCH.equals(dataScope)) {
+            String contextBranchId = AuthUtils.getBranchId();
+            if (!StringUtils.hasText(contextBranchId)) {
+                throw new AppException(ErrorCode.EMPLOYEE_BRANCH_REQUIRED);
+            }
+            if (StringUtils.hasText(requestedBranchId) && !contextBranchId.equals(requestedBranchId)) {
+                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+            }
+            return findBranchForCurrentContext(contextBranchId);
+        }
+
+        if (!StringUtils.hasText(requestedBranchId)) {
+            throw new AppException(ErrorCode.EMPLOYEE_BRANCH_REQUIRED);
+        }
+
+        return findBranchForCurrentContext(requestedBranchId);
+    }
+
+    private OrgRole findOrgRole(String orgRoleId) {
+        if (!StringUtils.hasText(orgRoleId)) {
+            throw new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_REQUIRED);
+        }
+        return orgRoleRepository.findById(orgRoleId.trim())
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
+    }
+
+    private void validateProfilePhoneAvailable(String phone, String currentProfileId) {
+        if (!StringUtils.hasText(phone)) {
+            throw new AppException(ErrorCode.EMPLOYEE_PHONE_REQUIRED);
+        }
+        if (!userProfileRepository.existsByPhone(phone.trim())) {
+            return;
+        }
+        if (!StringUtils.hasText(currentProfileId)) {
+            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
+        }
+        UserProfile profile = userProfileRepository.findById(currentProfileId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (!phone.trim().equals(profile.getPhone())) {
+            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
+        }
+    }
+
+    private String cleanRequired(String value, ErrorCode errorCode) {
+        if (!StringUtils.hasText(value)) {
+            throw new AppException(errorCode);
+        }
+        return value.trim();
+    }
+
+    private String buildFullName(String firstName, String lastName) {
+        return (firstName.trim() + " " + lastName.trim()).trim();
     }
 
     private void rejectSelfRoleChange(Employee employee) {
@@ -257,7 +339,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employee.setOrgRole(orgRole);
         employee = employeeRepository.save(employee);
-        return employeeMapper.toEmployeeResponse(employee);
+        return toEmployeeResponse(employee);
     }
 
     @Override
@@ -272,7 +354,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         // idempotent: neu da khong co role thi tra ve binh thuong
         employee.setOrgRole(null);
         employee = employeeRepository.save(employee);
-        return employeeMapper.toEmployeeResponse(employee);
+        return toEmployeeResponse(employee);
     }
 
     @Override
@@ -285,7 +367,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employee.setSalary(request.getSalary());
         employee = employeeRepository.save(employee);
-        return employeeMapper.toEmployeeResponse(employee);
+        return toEmployeeResponse(employee);
     }
 
     @Override
@@ -296,7 +378,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
         validateBranchAccess(employee.getBranch().getId());
         employee.setProfileUpdateEnabled(request.getEnabled());
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        return toEmployeeResponse(employeeRepository.save(employee));
     }
 
     @Override
@@ -382,6 +464,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private OrganizationBranch findBranchForCurrentContext(String branchId) {
+        if (!StringUtils.hasText(branchId)) {
+            throw new AppException(ErrorCode.EMPLOYEE_BRANCH_REQUIRED);
+        }
         String currentUserId = AuthUtils.getCurrentUserId();
         if (StringUtils.hasText(currentUserId)) {
             Optional<OrganizationBranch> ownerBranch =
@@ -514,5 +599,69 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private String normalizeFilter(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private List<EmployeeResponse> toEmployeeResponses(Collection<Employee> employees) {
+        List<String> userIds = employees.stream()
+                .map(Employee::getUser)
+                .filter(user -> user != null && StringUtils.hasText(user.getId()))
+                .map(User::getId)
+                .toList();
+        Map<String, UserProfile> profilesByUserId = userIds.isEmpty()
+                ? Map.of()
+                : userProfileRepository.findByUser_IdIn(userIds).stream()
+                        .collect(Collectors.toMap(
+                                profile -> profile.getUser().getId(),
+                                profile -> profile,
+                                (first, ignored) -> first));
+
+        return employees.stream()
+                .map(employee -> toEmployeeResponse(
+                        employee,
+                        employee.getUser() == null ? null : profilesByUserId.get(employee.getUser().getId())))
+                .toList();
+    }
+
+    private EmployeeResponse toEmployeeResponse(Employee employee) {
+        UserProfile profile = employee.getUser() == null
+                ? null
+                : userProfileRepository.findByUser_Id(employee.getUser().getId()).orElse(null);
+        return toEmployeeResponse(employee, profile);
+    }
+
+    private EmployeeResponse toEmployeeResponse(Employee employee, UserProfile profile) {
+        EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
+        if (StringUtils.hasText(employee.getFirstName())) {
+            response.setFirstName(employee.getFirstName().trim());
+        }
+        if (StringUtils.hasText(employee.getLastName())) {
+            response.setLastName(employee.getLastName().trim());
+        }
+        if (StringUtils.hasText(response.getFirstName()) || StringUtils.hasText(response.getLastName())) {
+            response.setFullName(buildOptionalFullName(response.getFirstName(), response.getLastName()));
+        }
+        if (profile == null || !StringUtils.hasText(profile.getFullName())) {
+            return response;
+        }
+        String fullName = profile.getFullName().trim();
+        if (!StringUtils.hasText(response.getFullName())) {
+            response.setFullName(fullName);
+        }
+        if (!StringUtils.hasText(response.getFirstName()) && !StringUtils.hasText(response.getLastName())) {
+            String[] nameParts = fullName.split("\\s+", 2);
+            response.setFirstName(nameParts[0]);
+            response.setLastName(nameParts.length > 1 ? nameParts[1] : "");
+        }
+        if (!StringUtils.hasText(response.getPhone())) {
+            response.setPhone(profile.getPhone());
+        }
+        return response;
+    }
+
+    private String buildOptionalFullName(String firstName, String lastName) {
+        return List.of(firstName, lastName).stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .collect(Collectors.joining(" "));
     }
 }

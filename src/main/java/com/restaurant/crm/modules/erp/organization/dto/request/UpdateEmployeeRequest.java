@@ -24,7 +24,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreateEmployeeRequest {
+public class UpdateEmployeeRequest {
 
     @NotBlank(message = "USER_FULL_NAME_INVALID")
     String firstName;
@@ -40,7 +40,6 @@ public class CreateEmployeeRequest {
     )
     String username;
 
-    @NotBlank(message = "USER_PASSWORD_INVALID")
     @Size(
             min = UserConstants.MIN_CHARS_PASSWORD,
             max = UserConstants.MAX_CHARS_PASSWORD,

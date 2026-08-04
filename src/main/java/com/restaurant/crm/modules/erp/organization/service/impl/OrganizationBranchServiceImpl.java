@@ -17,6 +17,7 @@ import com.restaurant.crm.modules.erp.organization.repository.OrganizationReposi
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationBranchService;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -157,7 +158,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
 
         Page<OrganizationBranch> organizationBranchPage;
         if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)
-                || AuthUtils.getDataScope() == com.restaurant.crm.modules.erp.organization.enums.OrgDataScope.ORGANIZATION) {
+                || AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION) {
             organizationBranchPage = organizationBranchRepository.findByOrganizationId(
                     organizationId,
                     pageable
@@ -275,7 +276,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
         validateOrganizationAccess(branch.getOrganization().getId());
 
         if (!AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)
-                && AuthUtils.getDataScope() == com.restaurant.crm.modules.erp.organization.enums.OrgDataScope.BRANCH
+                && AuthUtils.getDataScope() == OrgDataScope.BRANCH
                 && !branch.getId().equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }

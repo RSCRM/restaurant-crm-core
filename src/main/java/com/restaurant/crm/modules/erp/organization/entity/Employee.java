@@ -55,6 +55,14 @@ public class Employee extends BaseEntity {
     @Column(name = EmployeeConstants.COL_STATUS, nullable = false)
     EmployeeStatus status = EmployeeStatus.ACTIVE;
 
+    @Column(name = EmployeeConstants.COL_FIRST_NAME)
+    @Size(max = EmployeeConstants.MAX_CHARS_NAME)
+    String firstName;
+
+    @Column(name = EmployeeConstants.COL_LAST_NAME)
+    @Size(max = EmployeeConstants.MAX_CHARS_NAME)
+    String lastName;
+
     @NotNull
     @Column(name = EmployeeConstants.COL_EMAIL,
             nullable = false,

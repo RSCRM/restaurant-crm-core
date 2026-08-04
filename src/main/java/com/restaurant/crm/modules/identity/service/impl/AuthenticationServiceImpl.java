@@ -80,7 +80,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional(readOnly = true)
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        String login = request.getEmail().trim();
+        User user = userRepository.findByEmail(login)
+                .or(() -> userRepository.findByUsername(login))
                 .orElseThrow(() -> new AppException(ErrorCode.USER_USERNAME_NOT_FOUND));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());

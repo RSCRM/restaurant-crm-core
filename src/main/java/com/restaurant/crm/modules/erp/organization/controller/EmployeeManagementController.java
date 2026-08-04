@@ -5,6 +5,7 @@ import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.EmployeeService;
 import jakarta.validation.Valid;
@@ -88,7 +89,7 @@ public class EmployeeManagementController {
     @PreAuthorize("@employeeAccessChecker.canManage('" + EmployeeConstants.EMPLOYEE_UPDATE + "')")
     public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
             @PathVariable String id,
-            @Valid @RequestBody CreateEmployeeRequest request
+            @Valid @RequestBody UpdateEmployeeRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.<EmployeeResponse>builder()
                 .success(ApiConstant.SUCCESS)

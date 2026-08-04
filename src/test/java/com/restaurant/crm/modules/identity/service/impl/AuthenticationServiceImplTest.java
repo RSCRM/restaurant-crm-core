@@ -107,4 +107,35 @@ class AuthenticationServiceImplTest {
                 .toList()));
         verify(organizationRepository).findAllByOwnerId("owner-1");
     }
+
+    @Test
+    void authenticate_acceptsUsernameAsLoginIdentifier() {
+        ReflectionTestUtils.setField(authenticationService, "SIGNER_KEY",
+                "0123456789012345678901234567890123456789012345678901234567890123");
+
+        User employeeUser = User.builder()
+                .id("user-employee-1")
+                .username("employee.user")
+                .email("employee@example.com")
+                .password("encoded-password")
+                .build();
+
+        when(userRepository.findByEmail("employee.user")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("employee.user")).thenReturn(Optional.of(employeeUser));
+        when(passwordEncoder.matches("Password@123", "encoded-password")).thenReturn(true);
+        when(employeeRepository.findByUserIdAndStatus("user-employee-1", EmployeeStatus.ACTIVE))
+                .thenReturn(List.of());
+        when(organizationRepository.findAllByOwnerId("user-employee-1"))
+                .thenReturn(List.of());
+
+        AuthenticationResponse response = authenticationService.authenticate(
+                AuthenticationRequest.builder()
+                        .email("employee.user")
+                        .password("Password@123")
+                        .build()
+        );
+
+        assertEquals(0, response.getContexts().size());
+        verify(userRepository).findByUsername("employee.user");
+    }
 }
