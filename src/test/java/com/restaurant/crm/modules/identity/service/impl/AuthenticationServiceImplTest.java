@@ -8,6 +8,7 @@ import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrgRoleRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.identity.dto.request.AuthenticationRequest;
@@ -38,6 +39,7 @@ class AuthenticationServiceImplTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock EmployeeRepository employeeRepository;
     @Mock OrganizationRepository organizationRepository;
+    @Mock OrganizationBranchRepository organizationBranchRepository;
     @Mock OrgRoleRepository orgRoleRepository;
     @Mock RoleRepository roleRepository;
     @Mock RedisBlacklistRepository redisBlacklistRepository;
@@ -57,9 +59,11 @@ class AuthenticationServiceImplTest {
                 "0123456789012345678901234567890123456789012345678901234567890123");
 
         String token = ReflectionTestUtils.invokeMethod(
-                authenticationService, "generateOwnerContextToken", "owner-1", "org-1");
+                authenticationService, "generateOwnerContextToken", "owner-1", "org-1", "branch-1");
         SignedJWT jwt = SignedJWT.parse(token);
 
+        assertEquals("branch-1", jwt.getJWTClaimsSet()
+                .getStringClaim(JwtClaimSetConstant.CLAIM_BRANCH_ID));
         assertEquals(
                 Set.of("PROFILE_VIEW"),
                 Set.copyOf(jwt.getJWTClaimsSet()

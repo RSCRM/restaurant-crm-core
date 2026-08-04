@@ -20,4 +20,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
 
     List<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
             String branchId, LocalDate workDate);
+
+    Page<Attendance> findByShiftAssignmentBranchId(String branchId, Pageable pageable);
+
+    Page<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeId(
+            String branchId, String employeeId, Pageable pageable);
+
+    Page<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
+            String branchId, LocalDate workDate, Pageable pageable);
+
+    Page<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDate(
+            String branchId, String employeeId, LocalDate workDate, Pageable pageable);
 }

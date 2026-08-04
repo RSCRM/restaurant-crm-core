@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/admin/licenses")
 @RequiredArgsConstructor
@@ -178,6 +180,21 @@ public class LicenseController {
         ApiResponse<LicenseDetailResponse> response = ApiResponse.<LicenseDetailResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(detailResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/organization/{organizationId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<LicenseResponse>>> getLicensesByOrganizationId(
+            @PathVariable String organizationId
+    ) {
+        List<LicenseResponse> licenses = licenseService.getLicensesByOrganizationId(organizationId);
+
+        ApiResponse<List<LicenseResponse>> response = ApiResponse.<List<LicenseResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(licenses)
                 .build();
 
         return ResponseEntity.ok(response);

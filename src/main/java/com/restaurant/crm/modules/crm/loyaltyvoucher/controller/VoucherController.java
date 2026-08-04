@@ -65,4 +65,18 @@ public class VoucherController {
                 .data(response)
                 .build());
     }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('VOUCHER_READ')")
+    public ResponseEntity<ApiResponse<PagingResponse<VoucherResponse>>> getVouchers(
+            @RequestParam String branchId,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+    ) {
+        PagingResponse<VoucherResponse> response = voucherService.getVouchersByBranch(branchId, page, size);
+        return ResponseEntity.ok(ApiResponse.<PagingResponse<VoucherResponse>>builder()
+                .success(true)
+                .data(response)
+                .build());
+    }
 }

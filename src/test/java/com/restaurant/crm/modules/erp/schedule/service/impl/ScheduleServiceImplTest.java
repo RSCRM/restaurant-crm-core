@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.schedule.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
@@ -12,6 +13,7 @@ import com.restaurant.crm.modules.erp.schedule.entity.WorkSchedule;
 import com.restaurant.crm.modules.erp.schedule.mapper.WorkScheduleMapper;
 import com.restaurant.crm.modules.erp.schedule.repository.WorkScheduleRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.identity.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -165,6 +167,53 @@ class ScheduleServiceImplTest {
             when(workScheduleMapper.toResponseList(staffSchedules)).thenReturn(expected);
 
             assertEquals(expected, scheduleService.getManagedSchedules(date, date));
+        }
+    }
+
+    @Test
+    void getStaffSchedule_allowsEmployeeInOwnersOrganization() {
+        LocalDate date = LocalDate.of(2026, 8, 21);
+        Organization organization = Organization.builder().id("organization-1").build();
+        Employee employee = Employee.builder()
+                .id("employee-2")
+                .branch(OrganizationBranch.builder().id("branch-2").organization(organization).build())
+                .status(EmployeeStatus.ACTIVE)
+                .build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getDataScope).thenReturn(OrgDataScope.ORGANIZATION);
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("organization-1");
+            when(employeeRepository.findById("employee-2")).thenReturn(Optional.of(employee));
+            when(workScheduleRepository.findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                    "employee-2", date, date)).thenReturn(List.of());
+            when(workScheduleMapper.toResponseList(List.of())).thenReturn(List.of());
+
+            assertEquals(List.of(), scheduleService.getStaffSchedule("employee-2", date, date));
+        }
+    }
+
+    @Test
+    void getManagedEmployees_returnsActiveNonManagerStaffInBranch() {
+        User user = User.builder().username("chef_q1").build();
+        OrganizationBranch branch = OrganizationBranch.builder()
+                .id("branch-1")
+                .branchName("Phở Việt Q1")
+                .build();
+        Employee employee = Employee.builder()
+                .id("employee-1")
+                .user(user)
+                .branch(branch)
+                .status(EmployeeStatus.ACTIVE)
+                .build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getDataScope).thenReturn(OrgDataScope.BRANCH);
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            when(employeeRepository.findByBranch_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
+                    "branch-1", EmployeeStatus.ACTIVE, "MANAGER"))
+                    .thenReturn(List.of(employee));
+
+            assertEquals("chef_q1", scheduleService.getManagedEmployees().getFirst().getName());
         }
     }
 }

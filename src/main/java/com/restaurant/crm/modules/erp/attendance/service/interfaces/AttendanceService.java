@@ -17,12 +17,18 @@ public interface AttendanceService {
 
     AttendanceResponse checkOut();
 
+    AttendanceResponse checkOutWithQr(AttendanceCheckInRequest request);
+
     PagingResponse<AttendanceResponse> getMyHistory(LocalDate from, LocalDate to, int page, int size);
 
     List<EmployeeAttendanceResponse> getBranchAttendance(LocalDate workDate, String branchId);
 
     PagingResponse<AttendanceResponse> getEmployeeHistory(
             String employeeId, LocalDate from, LocalDate to,
+            int page, int size, String branchId);
+
+    PagingResponse<AttendanceResponse> getBranchHistory(
+            String employeeId, LocalDate workDate,
             int page, int size, String branchId);
 
     SseEmitter subscribe(String branchId);

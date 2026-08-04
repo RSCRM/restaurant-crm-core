@@ -25,5 +25,6 @@ public class VoucherResponse {
     BigDecimal minBillAmount;
     Integer pointsRequired;
     Short isActive;
+    Instant expiredAt;
     Instant createdAt;
 }

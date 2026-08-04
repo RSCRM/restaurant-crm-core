@@ -1,8 +1,13 @@
 package com.restaurant.crm.modules.erp.menu.service.impl;
 
+import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.erp.menu.dto.request.ComboItemRequest;
+import com.restaurant.crm.modules.erp.menu.dto.request.ComboSearchRequest;
 import com.restaurant.crm.modules.erp.menu.dto.request.CreateComboRequest;
 import com.restaurant.crm.modules.erp.menu.dto.request.UpdateComboRequest;
 import com.restaurant.crm.modules.erp.menu.dto.response.ComboItemResponse;
@@ -22,11 +27,18 @@ import com.restaurant.crm.modules.erp.menu.repository.ModifierOptionRepository;
 import com.restaurant.crm.modules.erp.menu.repository.ProductRepository;
 import com.restaurant.crm.modules.erp.menu.security.MenuBranchGuard;
 import com.restaurant.crm.modules.erp.menu.service.interfaces.ComboManagementService;
+import com.restaurant.crm.modules.erp.menu.specification.ComboSpecification;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
+import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,6 +119,39 @@ public class ComboManagementServiceImpl implements ComboManagementService {
         Combo combo = loadCombo(id);
         branchGuard.validateBranchAccess(combo.getBranch().getId());
         return toComboResponse(combo);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<ComboResponse> searchCombos(ComboSearchRequest searchRequest, PagingRequest pagingRequest) {
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest)
+        );
+
+        // Resolve data scope
+        String dataScopeOrgId = null;
+        String dataScopeBranchId = null;
+        if (!AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
+            OrgDataScope dataScope = AuthUtils.getDataScope();
+            switch (dataScope) {
+                case BRANCH, SELF -> dataScopeBranchId = AuthUtils.getBranchId();
+                case ORGANIZATION -> dataScopeOrgId = AuthUtils.getOrganizationId();
+            }
+        }
+
+        Page<Combo> comboPage = comboRepository.findAll(
+                ComboSpecification.build(searchRequest, dataScopeOrgId, dataScopeBranchId), pageable);
+        return PagingResponse.<ComboResponse>builder()
+                .currentPage(pagingRequest.getPage())
+                .pageSize(comboPage.getSize())
+                .totalPages(comboPage.getTotalPages())
+                .totalElement(comboPage.getTotalElements())
+                .data(comboPage.getContent().stream()
+                        .map(this::toComboResponse)
+                        .toList())
+                .build();
     }
 
     @Override

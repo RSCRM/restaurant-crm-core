@@ -1,7 +1,5 @@
-package com.restaurant.crm.modules.identity.dto.request;
+package com.restaurant.crm.modules.erp.menu.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,19 +8,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ContextSelectionRequest {
-    String employeeId;
-    String branchId;
+public class ComboSearchRequest {
+    // Search
+    String comboName;
 
-    @NotNull
-    @NotBlank
-    String organizationId;
-
-    String role;
+    // Filter - Price range
+    BigDecimal priceFrom;
+    BigDecimal priceTo;
 }

@@ -12,6 +12,7 @@ import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPointHistory;
 public interface CustomerPointMapper {
 
     @Mapping(source = "customer.id", target = "customerId")
+    @Mapping(source = "customer.phone", target = "customerPhone")
     CustomerPointResponse toCustomerPointResponse(CustomerPoint customerPoint);
 
     @Mapping(source = "customer.id", target = "customerId")
