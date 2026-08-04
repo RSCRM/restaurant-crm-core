@@ -22,8 +22,6 @@ public class EmployeeResponse {
     String id;
     String employeeId;
     String userId;
-    String firstName;
-    String lastName;
     String fullName;
     String username;
     String email;

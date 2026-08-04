@@ -119,8 +119,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         String email = cleanRequired(request.getEmail(), ErrorCode.EMPLOYEE_EMAIL_REQUIRED);
         String password = cleanRequired(request.getPassword(), ErrorCode.USER_PASSWORD_INVALID);
         String phone = cleanRequired(request.getPhone(), ErrorCode.EMPLOYEE_PHONE_REQUIRED);
-        String firstName = cleanRequired(request.getFirstName(), ErrorCode.USER_FULL_NAME_INVALID);
-        String lastName = cleanRequired(request.getLastName(), ErrorCode.USER_FULL_NAME_INVALID);
+        String fullName = cleanRequired(request.getFullName(), ErrorCode.USER_FULL_NAME_INVALID);
 
         if (userRepository.existsByUsername(username)) {
             throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
@@ -144,7 +143,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         UserProfile profile = UserProfile.builder()
                 .user(user)
-                .fullName(buildFullName(firstName, lastName))
+                .fullName(fullName)
                 .phone(phone)
                 .build();
         profile = userProfileRepository.save(profile);
@@ -153,8 +152,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .user(user)
                 .branch(branch)
                 .orgRole(orgRole)
-                .firstName(firstName)
-                .lastName(lastName)
                 .email(email)
                 .phone(phone)
                 .startDate(request.getStartDate())
@@ -181,8 +178,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         String username = cleanRequired(request.getUsername(), ErrorCode.EMPLOYEE_USERNAME_REQUIRED);
         String email = cleanRequired(request.getEmail(), ErrorCode.EMPLOYEE_EMAIL_REQUIRED);
         String phone = cleanRequired(request.getPhone(), ErrorCode.EMPLOYEE_PHONE_REQUIRED);
-        String firstName = cleanRequired(request.getFirstName(), ErrorCode.USER_FULL_NAME_INVALID);
-        String lastName = cleanRequired(request.getLastName(), ErrorCode.USER_FULL_NAME_INVALID);
+        String fullName = cleanRequired(request.getFullName(), ErrorCode.USER_FULL_NAME_INVALID);
 
         if (!employee.getUser().getUsername().equals(username)
                 && userRepository.existsByUsername(username)) {
@@ -199,8 +195,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employee.getUser().setUsername(username);
         employee.getUser().setEmail(email);
-        employee.setFirstName(firstName);
-        employee.setLastName(lastName);
         employee.setEmail(email);
         employee.setPhone(phone);
         employee.setBranch(branch);
@@ -213,7 +207,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         userRepository.save(employee.getUser());
-        profile.setFullName(buildFullName(firstName, lastName));
+        profile.setFullName(fullName);
         profile.setPhone(phone);
         profile = userProfileRepository.save(profile);
         return toEmployeeResponse(employeeRepository.save(employee), profile);
@@ -315,10 +309,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return value.trim();
     }
 
-    private String buildFullName(String firstName, String lastName) {
-        return (firstName.trim() + " " + lastName.trim()).trim();
-    }
-
     private void rejectSelfRoleChange(Employee employee) {
         if (employee.getId().equals(AuthUtils.getEmployeeId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
@@ -395,7 +385,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         String managerEmployeeId = branchManager.getId();
         if (managerEmployeeId.equals(targetBranch.getManagerId())) {
-            return employeeMapper.toEmployeeBranchAssignmentResponse(targetBranch, branchManager);
+            return toBranchAssignmentResponse(targetBranch, branchManager);
         }
 
         clearManagerFromOtherBranch(managerEmployeeId, targetBranch.getId());
@@ -403,7 +393,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         targetBranch.setManagerId(managerEmployeeId);
 
         OrganizationBranch savedBranch = branchRepository.saveAndFlush(targetBranch);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(savedBranch, branchManager);
+        return toBranchAssignmentResponse(savedBranch, branchManager);
     }
 
     @Override
@@ -414,7 +404,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (manager == null) {
             throw new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND);
         }
-        return employeeMapper.toEmployeeBranchAssignmentResponse(branch, manager);
+        return toBranchAssignmentResponse(branch, manager);
     }
 
     @Override
@@ -427,7 +417,24 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         branch.setManagerId(null);
         OrganizationBranch savedBranch = branchRepository.saveAndFlush(branch);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(savedBranch, manager);
+        return toBranchAssignmentResponse(savedBranch, manager);
+    }
+
+    private EmployeeBranchAssignmentResponse toBranchAssignmentResponse(
+            OrganizationBranch branch,
+            Employee manager
+    ) {
+        EmployeeBranchAssignmentResponse response = employeeMapper.toEmployeeBranchAssignmentResponse(branch, manager);
+        if (manager.getUser() == null) {
+            return response;
+        }
+        Optional.ofNullable(userProfileRepository.findByUser_Id(manager.getUser().getId()))
+                .orElse(Optional.empty())
+                .map(UserProfile::getFullName)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .ifPresent(response::setManagerName);
+        return response;
     }
 
     private Employee findManagerEmployee(String managerId, String branchId, String organizationId) {
@@ -631,37 +638,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private EmployeeResponse toEmployeeResponse(Employee employee, UserProfile profile) {
         EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
-        if (StringUtils.hasText(employee.getFirstName())) {
-            response.setFirstName(employee.getFirstName().trim());
-        }
-        if (StringUtils.hasText(employee.getLastName())) {
-            response.setLastName(employee.getLastName().trim());
-        }
-        if (StringUtils.hasText(response.getFirstName()) || StringUtils.hasText(response.getLastName())) {
-            response.setFullName(buildOptionalFullName(response.getFirstName(), response.getLastName()));
-        }
         if (profile == null || !StringUtils.hasText(profile.getFullName())) {
             return response;
         }
         String fullName = profile.getFullName().trim();
-        if (!StringUtils.hasText(response.getFullName())) {
-            response.setFullName(fullName);
-        }
-        if (!StringUtils.hasText(response.getFirstName()) && !StringUtils.hasText(response.getLastName())) {
-            String[] nameParts = fullName.split("\\s+", 2);
-            response.setFirstName(nameParts[0]);
-            response.setLastName(nameParts.length > 1 ? nameParts[1] : "");
-        }
+        response.setFullName(fullName);
         if (!StringUtils.hasText(response.getPhone())) {
             response.setPhone(profile.getPhone());
         }
         return response;
-    }
-
-    private String buildOptionalFullName(String firstName, String lastName) {
-        return List.of(firstName, lastName).stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .collect(Collectors.joining(" "));
     }
 }

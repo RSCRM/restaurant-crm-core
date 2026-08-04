@@ -21,8 +21,6 @@ public class EmployeeConstants {
     public static final String COL_ORG_ROLE_ID = "org_role_id";
     public static final String COL_BRANCH_ID = "branch_id";
     public static final String COL_STATUS = "status";
-    public static final String COL_FIRST_NAME = "first_name";
-    public static final String COL_LAST_NAME = "last_name";
     public static final String COL_EMAIL = "email";
     public static final String COL_PHONE = "phone";
     public static final String COL_START_DATE = "start_date";
@@ -35,7 +33,6 @@ public class EmployeeConstants {
     public static final String PHONE_DEFINITION = "VARCHAR(20)";
 
     //======= Employee validation values limit ========
-    public static final int MAX_CHARS_NAME = 120;
     public static final int MAX_CHARS_EMAIL = 100;
     public static final int MAX_CHARS_PHONE = 20;
 }
