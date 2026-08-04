@@ -12,12 +12,10 @@ import java.time.Instant;
 @Setter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class IngredientResponse {
+public class InventoryCategoryResponse {
     String id;
     String branchId;
-    String ingredientCategoryId;
-    String ingredientName;
-    String unit;
+    String categoryName;
     String description;
     Instant createdAt;
     Instant updatedAt;

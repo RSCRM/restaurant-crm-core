@@ -46,7 +46,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         String branchId = AuthUtils.getBranchId();
 
         Inventory inventory =
-            inventoryRepository.findByIdAndIngredientBranchId(
+            inventoryRepository.findByIdAndBranchId(
                     request.getInventoryId(),
                     branchId
                 )
@@ -106,6 +106,8 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                 inventory.getMinimumQuantity()
             )
         );
+
+        inventoryRepository.save(inventory);
     }
 
     private InventoryStatus calculateStatus(
@@ -130,7 +132,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     ) {
         String branchId = AuthUtils.getBranchId();
 
-        return transactionRepository.findByIdAndInventoryIngredientBranchId(
+        return transactionRepository.findByIdAndInventoryBranchId(
                 id,
                 branchId
             )
@@ -157,7 +159,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             );
 
         Page<InventoryTransaction> result =
-            transactionRepository.findByInventoryIngredientBranchId(
+            transactionRepository.findByInventoryBranchId(
                 branchId,
                 pageable
             );

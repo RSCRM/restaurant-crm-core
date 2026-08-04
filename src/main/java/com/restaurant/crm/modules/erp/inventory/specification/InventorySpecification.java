@@ -6,7 +6,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class InventorySpecification {
 
-    private InventorySpecification() {}
+    private InventorySpecification() {
+    }
 
     public static Specification<Inventory> build(
         String branchId,
@@ -16,9 +17,7 @@ public class InventorySpecification {
         Specification<Inventory> spec =
             (root, query, cb) ->
                 cb.equal(
-                    root.get("ingredient")
-                        .get("branch")
-                        .get("id"),
+                    root.get("branch").get("id"),
                     branchId
                 );
 
@@ -26,67 +25,83 @@ public class InventorySpecification {
             return spec;
         }
 
-        if (request.getIngredientName() != null
-            && !request.getIngredientName().isBlank()) {
+        if (request.getInventoryName() != null
+            && !request.getInventoryName().isBlank()) {
 
             String pattern =
-                "%" + request.getIngredientName().trim().toLowerCase() + "%";
+                "%" + request.getInventoryName().trim().toLowerCase() + "%";
 
             spec = spec.and((root, query, cb) ->
                 cb.like(
-                    cb.lower(
-                        root.get("ingredient")
-                            .get("ingredientName")
-                    ),
+                    cb.lower(root.get("inventoryName")),
                     pattern
+                ));
+        }
+
+        if (request.getInventoryCategoryId() != null
+            && !request.getInventoryCategoryId().isBlank()) {
+
+            spec = spec.and((root, query, cb) ->
+                cb.equal(
+                    root.get("inventoryCategory").get("id"),
+                    request.getInventoryCategoryId()
                 ));
         }
 
         if (request.getStatus() != null) {
             spec = spec.and((root, query, cb) ->
-                cb.equal(root.get("status"), request.getStatus()));
+                cb.equal(
+                    root.get("status"),
+                    request.getStatus()
+                ));
         }
 
         if (request.getQuantityFrom() != null) {
             spec = spec.and((root, query, cb) ->
                 cb.greaterThanOrEqualTo(
                     root.get("quantity"),
-                    request.getQuantityFrom()));
+                    request.getQuantityFrom()
+                ));
         }
 
         if (request.getQuantityTo() != null) {
             spec = spec.and((root, query, cb) ->
                 cb.lessThanOrEqualTo(
                     root.get("quantity"),
-                    request.getQuantityTo()));
+                    request.getQuantityTo()
+                ));
         }
 
         if (request.getMinimumQuantityFrom() != null) {
             spec = spec.and((root, query, cb) ->
                 cb.greaterThanOrEqualTo(
                     root.get("minimumQuantity"),
-                    request.getMinimumQuantityFrom()));
+                    request.getMinimumQuantityFrom()
+                ));
         }
 
         if (request.getMinimumQuantityTo() != null) {
             spec = spec.and((root, query, cb) ->
                 cb.lessThanOrEqualTo(
                     root.get("minimumQuantity"),
-                    request.getMinimumQuantityTo()));
+                    request.getMinimumQuantityTo()
+                ));
         }
 
         if (request.getCreatedAtFrom() != null) {
             spec = spec.and((root, query, cb) ->
                 cb.greaterThanOrEqualTo(
                     root.get("createdAt"),
-                    request.getCreatedAtFrom()));
+                    request.getCreatedAtFrom()
+                ));
         }
 
         if (request.getCreatedAtTo() != null) {
             spec = spec.and((root, query, cb) ->
                 cb.lessThanOrEqualTo(
                     root.get("createdAt"),
-                    request.getCreatedAtTo()));
+                    request.getCreatedAtTo()
+                ));
         }
 
         return spec;

@@ -1,5 +1,7 @@
 package com.restaurant.crm.modules.erp.inventory.dto.request;
-import com.restaurant.crm.modules.erp.inventory.constants.IngredientCategoryConstants;
+
+import com.restaurant.crm.modules.erp.inventory.constants.InventoryCategoryConstants;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,11 +11,12 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UpdateIngredientCategoryRequest {
+public class CreateInventoryCategoryRequest {
 
-    @Size(max = IngredientCategoryConstants.MAX_CHARS_CATEGORY_NAME)
+    @NotBlank
+    @Size(max = InventoryCategoryConstants.MAX_CHARS_CATEGORY_NAME)
     String categoryName;
 
-    @Size(max = IngredientCategoryConstants.MAX_CHARS_DESCRIPTION)
+    @Size(max = InventoryCategoryConstants.MAX_CHARS_DESCRIPTION)
     String description;
 }
