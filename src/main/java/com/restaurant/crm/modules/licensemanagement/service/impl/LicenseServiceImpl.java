@@ -212,7 +212,7 @@ public class LicenseServiceImpl implements LicenseService {
                                     .name("Unknown")
                                     .build());
 
-                    SubscriptionResponse subResponse = licenseSubscriptionMapper.toSubscriptionResponse(sub);
+                    SubscriptionResponse subResponse = licenseSubscriptionMapper.toSubscriptionResponse(sub, license);
 
                     return OrganizationSubscriptionResponse.builder()
                             .organization(orgSummary)
