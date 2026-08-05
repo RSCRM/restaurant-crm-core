@@ -67,6 +67,14 @@ public enum ErrorCode {
     EMPLOYEE_START_DATE_REQUIRED("EMP_1010", "Start date is required", HttpStatus.BAD_REQUEST),
     EMPLOYEE_ORG_ROLE_REQUIRED("EMP_1011", "Org role id is required", HttpStatus.BAD_REQUEST),
 
+    // ==== ORG ROLE ERRORS ====
+    ORG_ROLE_NOT_FOUND("ORGROLE_1000", "Org role not found", HttpStatus.NOT_FOUND),
+    ORG_ROLE_NAME_EXISTS("ORGROLE_1001", "Role name already exists in this organization", HttpStatus.BAD_REQUEST),
+    ORG_ROLE_NAME_REQUIRED("ORGROLE_1002", "Role name is required", HttpStatus.BAD_REQUEST),
+    ORG_ROLE_ORGANIZATION_REQUIRED("ORGROLE_1003", "Organization id is required", HttpStatus.BAD_REQUEST),
+    ORG_ROLE_DATA_SCOPE_REQUIRED("ORGROLE_1004", "Data scope is required", HttpStatus.BAD_REQUEST),
+    ORG_PERMISSION_NOT_FOUND("ORGROLE_1005", "Org permission not found", HttpStatus.NOT_FOUND),
+
     // ==== ATTENDANCE ERRORS ====
     ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),
     ATTENDANCE_ALREADY_CHECKED_IN("ATT_1001", "Shift already checked in", HttpStatus.CONFLICT),
