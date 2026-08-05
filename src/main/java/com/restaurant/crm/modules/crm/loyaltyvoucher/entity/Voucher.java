@@ -62,4 +62,16 @@ public class Voucher extends BaseEntity {
 
     @Column(name = VoucherConstants.COL_EXPIRED_AT)
     java.time.Instant expiredAt;
+
+    @Column(name = VoucherConstants.COL_START_AT)
+    java.time.Instant startAt;
+
+    @Column(name = VoucherConstants.COL_END_AT)
+    java.time.Instant endAt;
+
+    @Column(name = VoucherConstants.COL_VOUCHER_CODE)
+    String voucherCode;
+
+    @Column(name = VoucherConstants.COL_USAGE_LIMIT)
+    Integer usageLimit;
 }

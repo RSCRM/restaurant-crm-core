@@ -25,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -172,18 +174,48 @@ public class PointWalletServiceImpl implements PointWalletService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponse<CustomerPointResponse> getOrganizationCustomers(String organizationId, String searchPhone, int page, int size) {
+    public PagingResponse<CustomerPointResponse> getOrganizationCustomers(
+            String organizationId,
+            String searchPhone,
+            Integer minPoints,
+            Integer maxPoints,
+            Integer minLifetimePoints,
+            Integer maxLifetimePoints,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection
+    ) {
         validateOrganizationAccess(organizationId);
 
         int adjustedPage = Math.max(0, page - 1);
-        Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        Sort.Direction direction = "ASC".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortField = sortBy != null && !sortBy.trim().isEmpty() ? sortBy.trim() : "updatedAt";
+        Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by(direction, sortField));
 
-        Page<CustomerPoint> customerPointPage;
-        if (searchPhone != null && !searchPhone.trim().isEmpty()) {
-            customerPointPage = customerPointRepository.findByOrganizationIdAndCustomer_PhoneContaining(organizationId, searchPhone.trim(), pageable);
-        } else {
-            customerPointPage = customerPointRepository.findByOrganizationId(organizationId, pageable);
-        }
+        Specification<CustomerPoint> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            predicates.add(cb.equal(root.get("organizationId"), organizationId));
+            
+            if (searchPhone != null && !searchPhone.trim().isEmpty()) {
+                predicates.add(cb.like(root.join("customer").get("phone"), "%" + searchPhone.trim() + "%"));
+            }
+            if (minPoints != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("currentPoints"), minPoints));
+            }
+            if (maxPoints != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("currentPoints"), maxPoints));
+            }
+            if (minLifetimePoints != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("lifetimePoints"), minLifetimePoints));
+            }
+            if (maxLifetimePoints != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("lifetimePoints"), maxLifetimePoints));
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        Page<CustomerPoint> customerPointPage = customerPointRepository.findAll(spec, pageable);
 
         return PagingResponse.<CustomerPointResponse>builder()
                 .currentPage(page)

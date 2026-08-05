@@ -13,13 +13,8 @@ public interface InventoryTransactionMapper {
 
     // Set manually in service
     @Mapping(target = "inventory", ignore = true)
-
     @Mapping(target = "employee", ignore = true)
-
-    @Mapping(
-        target = "transactionTime",
-        ignore = true
-    )
+    @Mapping(target = "transactionTime", ignore = true)
 
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
@@ -39,8 +34,10 @@ public interface InventoryTransactionMapper {
         target = "employeeId"
     )
     @Mapping(
-        source = "inventory.ingredient.ingredientName",
-        target = "ingredientName")
+        source = "inventory.inventoryName",
+        target = "inventoryName"
+    )
+    @Mapping(source = "employee.user.username", target = "employeeName")
     InventoryTransactionResponse toInventoryTransactionResponse(
         InventoryTransaction transaction
     );

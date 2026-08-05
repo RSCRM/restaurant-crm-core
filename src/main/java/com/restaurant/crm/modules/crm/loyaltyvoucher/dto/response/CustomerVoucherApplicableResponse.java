@@ -26,6 +26,8 @@ public class CustomerVoucherApplicableResponse {
     Integer pointsRequired;
     String status;
     Instant expiredAt;
+    Instant startAt;
+    Instant endAt;
     Boolean isApplicable;
     String reason;
 }

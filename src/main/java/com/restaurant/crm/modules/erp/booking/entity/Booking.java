@@ -58,9 +58,7 @@ public class Booking extends BaseEntity {
     @Column(name = BookingConstants.COL_BOOKING_TIME, nullable = false)
     Instant bookingTime;
 
-    @NotNull
-    @Min(BookingConstants.MIN_GUEST_COUNT)
-    @Column(name = BookingConstants.COL_GUEST_COUNT, nullable = false)
+    @Column(name = BookingConstants.COL_GUEST_COUNT)
     Integer guestCount;
 
     @Builder.Default

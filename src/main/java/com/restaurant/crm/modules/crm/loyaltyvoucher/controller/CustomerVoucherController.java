@@ -53,6 +53,19 @@ public class CustomerVoucherController {
                 .build());
     }
 
+    @PostMapping("/bulk-give")
+    @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_GIVE')")
+    public ResponseEntity<ApiResponse<Void>> giveVoucherBulk(
+            @RequestParam java.util.List<String> customerIds,
+            @RequestParam String branchId,
+            @RequestParam String voucherId
+    ) {
+        customerVoucherService.giveVoucherBulk(customerIds, branchId, voucherId);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .build());
+    }
+
     @PostMapping("/use/{id}")
     @PreAuthorize("hasAuthority('CUSTOMER_VOUCHER_USE')")
     public ResponseEntity<ApiResponse<CustomerVoucherResponse>> useVoucher(

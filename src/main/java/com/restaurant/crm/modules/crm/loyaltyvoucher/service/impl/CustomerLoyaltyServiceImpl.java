@@ -88,7 +88,9 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
 
         // Load active and unexpired vouchers for this branch (catalog should NEVER show expired vouchers)
         List<Voucher> vouchers = voucherRepository.findByBranchIdAndIsActive(branchId, (short) 1).stream()
-                .filter(v -> v.getExpiredAt() == null || Instant.now().isBefore(v.getExpiredAt()))
+                .filter(v -> (v.getStartAt() == null || !Instant.now().isBefore(v.getStartAt()))
+                        && (v.getEndAt() == null || Instant.now().isBefore(v.getEndAt()))
+                        && (v.getExpiredAt() == null || Instant.now().isBefore(v.getExpiredAt())))
                 .toList();
 
         // Load vouchers already owned by this customer
@@ -149,6 +151,12 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
         }
 
         // Check expiry
+        if (voucher.getStartAt() != null && Instant.now().isBefore(voucher.getStartAt())) {
+            throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+        }
+        if (voucher.getEndAt() != null && Instant.now().isAfter(voucher.getEndAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
         if (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt())) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
         }
@@ -201,13 +209,19 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
         BigDecimal finalSubtotal = subtotal;
         return customerVouchers.stream().map(cv -> {
             Voucher voucher = cv.getVoucher();
-            boolean isExpired = voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt());
+            boolean notStarted = voucher.getStartAt() != null && Instant.now().isBefore(voucher.getStartAt());
+            boolean isExpired = (voucher.getEndAt() != null && Instant.now().isAfter(voucher.getEndAt()))
+                    || (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt()));
 
             boolean isApplicable = true;
             String reason = null;
             String status = cv.getStatus().name();
 
-            if (isExpired) {
+            if (notStarted) {
+                isApplicable = false;
+                reason = "Voucher chưa đến ngày áp dụng";
+                status = "NOT_STARTED";
+            } else if (isExpired) {
                 isApplicable = false;
                 reason = "Voucher đã hết hạn sử dụng";
                 status = "EXPIRED";
@@ -263,6 +277,12 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
         }
 
         Voucher voucher = cv.getVoucher();
+        if (voucher.getStartAt() != null && Instant.now().isBefore(voucher.getStartAt())) {
+            throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+        }
+        if (voucher.getEndAt() != null && Instant.now().isAfter(voucher.getEndAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
         if (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt())) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
         }

@@ -196,18 +196,14 @@ public enum ErrorCode {
     ),
     TABLE_SESSION_UNPAID_ORDER("TABLE_SESSION_1007", "Table session has an unpaid order", HttpStatus.CONFLICT),
 
-    // ==== INGREDIENT ERRORS ====
-    INGREDIENT_CATEGORY_NOT_FOUND("INGREDIENT_CATEGORY_1000", "Ingredient category not found", HttpStatus.NOT_FOUND),
-    INGREDIENT_CATEGORY_EXISTS("INGREDIENT_CATEGORY_1001", "Ingredient category already exists in this branch", HttpStatus.CONFLICT),
-    INGREDIENT_NOT_FOUND("INGREDIENT_1000", "Ingredient not found", HttpStatus.NOT_FOUND),
-    INGREDIENT_EXISTS("INGREDIENT_1001", "Ingredient already exists in this branch", HttpStatus.CONFLICT),
-
     // ==== INVENTORY ERRORS ====
+    INVENTORY_CATEGORY_NOT_FOUND("INVENTORY_CATEGORY_1000", "Inventory category not found", HttpStatus.NOT_FOUND),
+    INVENTORY_CATEGORY_EXISTS("INVENTORY_CATEGORY_1001", "Inventory category already exists in this branch", HttpStatus.CONFLICT),
     INVENTORY_NOT_FOUND("INV_1000", "Inventory not found", HttpStatus.NOT_FOUND),
-    INVENTORY_EXISTS("INV_1001", "Inventory already exists for this ingredient", HttpStatus.CONFLICT),
-    INVENTORY_INVALID_QUANTITY("INV_1002", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
-    INVENTORY_INSUFFICIENT_STOCK("INV_1003", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
-    INVENTORY_OUT_OF_STOCK("INV_1004", "Ingredient is out of stock", HttpStatus.BAD_REQUEST),
+    INVENTORY_INVALID_QUANTITY("INV_1001", "Inventory quantity must be greater than or equal to zero", HttpStatus.BAD_REQUEST),
+    INVENTORY_INSUFFICIENT_STOCK("INV_1002", "Insufficient inventory quantity", HttpStatus.BAD_REQUEST),
+    INVENTORY_OUT_OF_STOCK("INV_1003", "Inventory is out of stock", HttpStatus.BAD_REQUEST),
+    INVENTORY_EXISTS("INV_1004", "Inventory already exists", HttpStatus.BAD_REQUEST),
     INVALID_DATE_RANGE("INV_1005", "Invalid date", HttpStatus.BAD_REQUEST),
     // ==== INVENTORY TRANSACTION ERRORS ====
     INVENTORY_TRANSACTION_NOT_FOUND("INV_TX_1000", "Inventory transaction not found", HttpStatus.NOT_FOUND),
@@ -235,6 +231,9 @@ public enum ErrorCode {
     VOUCHER_POINTS_INVALID("LOY_1013", "Voucher points required cannot be negative", HttpStatus.BAD_REQUEST),
     VOUCHER_ACTIVE_REQUIRED("LOY_1014", "Voucher status is required", HttpStatus.BAD_REQUEST),
     CUSTOMER_VOUCHER_EXPIRED("LOY_1015", "Voucher has expired", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_STARTED_YET("LOY_1016", "Voucher has not started yet", HttpStatus.BAD_REQUEST),
+    VOUCHER_CODE_REQUIRED("LOY_1017", "Voucher code is required for code-based vouchers", HttpStatus.BAD_REQUEST),
+    VOUCHER_LIMIT_EXCEEDED("LOY_1018", "Voucher usage limit has been exceeded", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),

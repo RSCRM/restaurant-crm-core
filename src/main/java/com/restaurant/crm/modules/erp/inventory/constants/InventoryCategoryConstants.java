@@ -1,10 +1,10 @@
 package com.restaurant.crm.modules.erp.inventory.constants;
 
-public final class IngredientCategoryConstants {
+public final class InventoryCategoryConstants {
 
-    private IngredientCategoryConstants() {}
+    private InventoryCategoryConstants() {}
 
-    public static final String TABLE_INGREDIENT_CATEGORY = "ingredient_categories";
+    public static final String TABLE_INVENTORY_CATEGORY = "inventory_categories";
 
     public static final String COL_BRANCH_ID = "branch_id";
     public static final String COL_CATEGORY_NAME = "category_name";

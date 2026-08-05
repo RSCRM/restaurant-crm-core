@@ -36,9 +36,8 @@ import java.time.Instant;
 @Table(name = CustomerVoucherConstants.TABLE_CUSTOMER_VOUCHER)
 public class CustomerVoucher extends BaseEntity {
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = CustomerVoucherConstants.COL_CUSTOMER_ID, nullable = false)
+    @JoinColumn(name = CustomerVoucherConstants.COL_CUSTOMER_ID, nullable = true)
     Customer customer;
 
     @NotNull
