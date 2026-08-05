@@ -99,14 +99,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(this::buildContextResponse)
                 .toList());
 
-        // Load owner context (user is owner of an organization)
-        organizationRepository.findByOwnerId(user.getId())
-                .ifPresent(organization -> contexts.addAll(
-                        organizationBranchRepository
-                                .findByOrganizationIdAndStatus(organization.getId(), OrganizationBranchStatus.ACTIVE)
-                                .stream()
-                                .map(branch -> buildOwnerContextResponse(organization, branch))
-                                .toList()));
+        // Load owner contexts (user may own multiple organizations)
+        organizationRepository.findAllByOwnerId(user.getId())
+                .forEach(organization -> contexts.add(buildOwnerContextResponse(organization)));
 
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
@@ -137,16 +132,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Owner path: no employeeId, just organizationId
         if (request.getEmployeeId() == null) {
-            if (request.getBranchId() == null || request.getBranchId().isBlank()) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            OrganizationBranch branch = organizationBranchRepository
-                    .findByIdAndOrganization_OwnerId(request.getBranchId(), userId)
+            Organization organization = organizationRepository
+                    .findByIdAndOwnerId(request.getOrganizationId(), userId)
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-            if (!branch.getOrganization().getId().equals(request.getOrganizationId())) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            String contextToken = generateOwnerContextToken(userId, request.getOrganizationId(), branch.getId());
+            String contextToken = generateOwnerContextToken(userId, organization.getId());
             return ContextSelectionResponse.builder()
                     .contextToken(contextToken)
                     .build();
@@ -285,7 +274,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return signToken(jwsHeader, claimsBuilder.build());
     }
 
-    private String generateOwnerContextToken(String userId, String organizationId, String branchId) {
+    private String generateOwnerContextToken(String userId, String organizationId) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         Set<String> permissions = orgRoleRepository.findByRoleName(OWNER_ROLE)
                 .map(this::buildOrgPermissions)
@@ -299,7 +288,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .claim(JwtClaimSetConstant.CLAIM_USER_ID, userId)
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_CONTEXT)
                 .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, organizationId)
-                .claim(JwtClaimSetConstant.CLAIM_BRANCH_ID, branchId)
                 .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, OWNER_ROLE)
                 .claim(JwtClaimSetConstant.CLAIM_DATA_SCOPE, OrgDataScope.ORGANIZATION.name())
                 .claim(JwtClaimSetConstant.CLAIM_PERMISSION, permissions)
@@ -369,15 +357,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
-    private ContextResponse buildOwnerContextResponse(
-            Organization organization,
-            OrganizationBranch branch) {
+    private ContextResponse buildOwnerContextResponse(Organization organization) {
         return ContextResponse.builder()
                 .employeeId(null)
                 .organizationId(organization.getId())
                 .organizationName(organization.getOrganizationName())
-                .branchId(branch.getId())
-                .branchName(branch.getBranchName())
                 .role("OWNER")
                 .build();
     }
