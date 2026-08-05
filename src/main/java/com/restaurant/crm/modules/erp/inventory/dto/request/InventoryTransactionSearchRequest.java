@@ -17,7 +17,8 @@ import java.time.Instant;
 public class InventoryTransactionSearchRequest {
 
     // Search
-    String ingredientName;
+    String inventoryName;
+    String employeeName;
 
     // Filter
     InventoryTransactionType transactionType;

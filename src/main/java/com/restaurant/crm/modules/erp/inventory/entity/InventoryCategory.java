@@ -1,7 +1,7 @@
 package com.restaurant.crm.modules.erp.inventory.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
-import com.restaurant.crm.modules.erp.inventory.constants.IngredientConstants;
+import com.restaurant.crm.modules.erp.inventory.constants.InventoryCategoryConstants;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,47 +27,30 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = IngredientConstants.TABLE_INGREDIENT)
-public class Ingredient extends BaseEntity {
+@Table(name = InventoryCategoryConstants.TABLE_INVENTORY_CATEGORY)
+public class InventoryCategory extends BaseEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name = IngredientConstants.COL_BRANCH_ID,
+            name = InventoryCategoryConstants.COL_BRANCH_ID,
             nullable = false
     )
     OrganizationBranch branch;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = IngredientConstants.COL_INGREDIENT_CATEGORY_ID,
-            nullable = false
-    )
-    IngredientCategory ingredientCategory;
-
     @NotBlank
-    @Size(max = IngredientConstants.MAX_CHARS_INGREDIENT_NAME)
+    @Size(max = InventoryCategoryConstants.MAX_CHARS_CATEGORY_NAME)
     @Column(
-            name = IngredientConstants.COL_INGREDIENT_NAME,
+            name = InventoryCategoryConstants.COL_CATEGORY_NAME,
             nullable = false,
-            columnDefinition = IngredientConstants.INGREDIENT_NAME_DEFINITION
+            columnDefinition = InventoryCategoryConstants.CATEGORY_NAME_DEFINITION
     )
-    String ingredientName;
+    String categoryName;
 
-    @NotBlank
-    @Size(max = IngredientConstants.MAX_CHARS_UNIT)
+    @Size(max = InventoryCategoryConstants.MAX_CHARS_DESCRIPTION)
     @Column(
-            name = IngredientConstants.COL_UNIT,
-            nullable = false,
-            columnDefinition = IngredientConstants.UNIT_DEFINITION
-    )
-    String unit;
-
-    @Size(max = IngredientConstants.MAX_CHARS_DESCRIPTION)
-    @Column(
-            name = IngredientConstants.COL_DESCRIPTION,
-            columnDefinition = IngredientConstants.DESCRIPTION_DEFINITION
+            name = InventoryCategoryConstants.COL_DESCRIPTION,
+            columnDefinition = InventoryCategoryConstants.DESCRIPTION_DEFINITION
     )
     String description;
 }
