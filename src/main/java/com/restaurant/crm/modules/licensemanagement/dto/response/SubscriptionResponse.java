@@ -22,7 +22,7 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SubscriptionResponse {
     String id;
-    String licenseId;
+    LicenseInfo license;
     String organizationId;
     LocalDate startDate;
     LocalDate endDate;
