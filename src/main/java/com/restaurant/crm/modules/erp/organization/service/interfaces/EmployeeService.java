@@ -5,6 +5,7 @@ import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeReq
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 
@@ -20,4 +21,6 @@ public interface EmployeeService {
     EmployeeResponse configSalary(String employeeId, SalaryConfigRequest request);
 
     EmployeeResponse setProfileUpdateAccess(String employeeId, ProfileUpdateAccessRequest request);
+
+    EmployeeResponse updateEmployee(String employeeId, UpdateEmployeeRequest request);
 }

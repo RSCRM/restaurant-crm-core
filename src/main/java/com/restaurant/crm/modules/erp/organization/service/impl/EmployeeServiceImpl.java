@@ -8,6 +8,7 @@ import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeReq
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
@@ -48,6 +49,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     RoleRepository roleRepository;
     OrgRoleRepository orgRoleRepository;
     PasswordEncoder passwordEncoder;
+
+    @Override
+    @Transactional
+    public EmployeeResponse updateEmployee(String employeeId, UpdateEmployeeRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        validateBranchAccess(employee.getBranch().getId());
+        employee.setEmail(request.getEmail());
+        employee.setPhone(request.getPhone());
+        if (request.getStatus() != null) {
+            employee.setStatus(request.getStatus());
+        }
+        employee.setStartDate(request.getStartDate());
+        employee.setEndDate(request.getEndDate());
+        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+    }
 
     @Override
     @Transactional

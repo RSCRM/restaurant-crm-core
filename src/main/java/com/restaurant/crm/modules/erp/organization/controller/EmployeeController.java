@@ -8,6 +8,7 @@ import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeReq
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.EmployeeService;
@@ -115,6 +116,18 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.<EmployeeResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(employeeService.setProfileUpdateAccess(id, request))
+                .build());
+    }
+
+    @PutMapping("/employees/{id}")
+    @PreAuthorize("@employeeAccessChecker.canManage('" + EmployeeConstants.EMPLOYEE_UPDATE + "')")
+    public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployee(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateEmployeeRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.<EmployeeResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(employeeService.updateEmployee(id, request))
                 .build());
     }
 }
