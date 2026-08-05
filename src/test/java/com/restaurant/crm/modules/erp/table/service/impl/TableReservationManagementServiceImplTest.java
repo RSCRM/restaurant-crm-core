@@ -1,5 +1,7 @@
 package com.restaurant.crm.modules.erp.table.service.impl;
 
+import com.restaurant.crm.common.enums.ErrorCode;
+import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.booking.entity.Booking;
 import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
 import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -54,7 +57,7 @@ class TableReservationManagementServiceImplTest {
         RestaurantTable table = RestaurantTable.builder()
                 .id("table-1")
                 .area(TableArea.builder().branchId("branch-1").build())
-                .status(RestaurantTableStatus.RESERVED)
+                .status(RestaurantTableStatus.AVAILABLE)
                 .build();
         Booking booking = Booking.builder()
                 .id("booking-1")
@@ -109,5 +112,27 @@ class TableReservationManagementServiceImplTest {
         assertEquals(RestaurantTableStatus.AVAILABLE, table.getStatus());
         verify(bookingRepository).save(booking);
         verify(restaurantTableRepository).save(table);
+    }
+
+    @Test
+    void confirmReservationRequiresTransferWhenTableIsOccupied() {
+        RestaurantTable table = RestaurantTable.builder()
+                .id("table-1")
+                .area(TableArea.builder().branchId("branch-1").build())
+                .status(RestaurantTableStatus.OCCUPIED)
+                .build();
+
+        when(restaurantTableRepository.findById("table-1")).thenReturn(Optional.of(table));
+
+        try (MockedStatic<AuthUtils> auth = mockStatic(AuthUtils.class)) {
+            auth.when(AuthUtils::getCurrentUserId).thenReturn("user-1");
+            auth.when(AuthUtils::getEmployeeId).thenReturn("employee-1");
+            auth.when(AuthUtils::getBranchId).thenReturn("branch-1");
+
+            AppException exception = assertThrows(
+                    AppException.class,
+                    () -> tableManagementService.confirmReservation("table-1"));
+            assertEquals(ErrorCode.TABLE_SESSION_ACTIVE_EXISTS, exception.getErrorCode());
+        }
     }
 }

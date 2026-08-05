@@ -68,9 +68,9 @@ public class TableSearchServiceImpl implements TableSearchService {
         validateBranchAccess(activeBranchId);
 
         Specification<RestaurantTable> specification =
-                (root, query, criteriaBuilder) -> criteriaBuilder.equal(
-                        root.join("area", JoinType.INNER).get("branchId"),
-                        activeBranchId
+                (root, query, criteriaBuilder) -> criteriaBuilder.and(
+                        criteriaBuilder.equal(root.join("area", JoinType.INNER).get("branchId"), branchId),
+                        criteriaBuilder.notEqual(root.get("status"), RestaurantTableStatus.DELETED)
                 );
         if (keyword != null && !keyword.isBlank()) {
             String pattern = "%" + keyword.trim().toLowerCase() + "%";

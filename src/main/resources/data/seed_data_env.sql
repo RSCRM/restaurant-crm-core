@@ -245,10 +245,7 @@ VALUES
      'Khu A', 'Khu vực trong nhà', 1, NOW(), NOW()),
     ('a0000000-0000-0000-0000-000000000002', 0,
      'e0000000-0000-0000-0000-000000000001',
-     'Sân vườn', 'Khu vực ngoài trời', 2, NOW(), NOW()),
-    ('a0000000-0000-0000-0000-000000000003', 0,
-     'e0000000-0000-0000-0000-000000000003',
-     'Khu A - Sushi Tokyo', 'Khu vực quầy sushi', 1, NOW(), NOW())
+     'Sân vườn', 'Khu vực ngoài trời', 2, NOW(), NOW())
 ON CONFLICT (area_id) DO UPDATE
 SET branch_id = EXCLUDED.branch_id,
     area_name = EXCLUDED.area_name,
@@ -286,13 +283,7 @@ VALUES
      'Bàn 08', 6, 'RESERVED', 3, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000009', 0,
      'a0000000-0000-0000-0000-000000000002',
-     'Bàn 09', 8, 'RESERVED', 4, 0, NOW(), NOW()),
-    ('t0000000-0000-0000-0000-000000000301', 0,
-     'a0000000-0000-0000-0000-000000000003',
-     'Bàn 301', 4, 'AVAILABLE', 0, 0, NOW(), NOW()),
-    ('t0000000-0000-0000-0000-000000000302', 0,
-     'a0000000-0000-0000-0000-000000000003',
-     'Bàn 302', 2, 'AVAILABLE', 1, 0, NOW(), NOW())
+     'Bàn 09', 8, 'RESERVED', 4, 0, NOW(), NOW())
 ON CONFLICT (table_id) DO UPDATE
 SET area_id = EXCLUDED.area_id,
     table_number = EXCLUDED.table_number,
