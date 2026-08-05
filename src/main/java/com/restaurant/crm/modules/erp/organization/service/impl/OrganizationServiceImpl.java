@@ -215,6 +215,51 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<OrganizationResponse> searchOrganizationsWithoutActiveSubscription(
+            OrganizationSearchRequest searchRequest, PagingRequest pagingRequest) {
+
+        // Resolve data scope from JWT
+        String orgId = null;
+        String branchId = null;
+        String userId = null;
+
+        if (!AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
+            try {
+                OrgDataScope dataScope = AuthUtils.getDataScope();
+                switch (dataScope) {
+                    case ORGANIZATION -> orgId = AuthUtils.getOrganizationId();
+                    case BRANCH -> branchId = AuthUtils.getBranchId();
+                    case SELF -> userId = AuthUtils.getCurrentUserId();
+                }
+            } catch (AppException e) {
+                // Identity Token without context claims — no data scope filtering
+            }
+        }
+
+        Specification<Organization> spec =
+                OrganizationSpecification.buildWithoutActiveSubscription(searchRequest, orgId, branchId, userId);
+
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest)
+        );
+
+        Page<Organization> organizationPage = organizationRepository.findAll(spec, pageable);
+
+        return PagingResponse.<OrganizationResponse>builder()
+                .currentPage(pagingRequest.getPage())
+                .pageSize(organizationPage.getSize())
+                .totalPages(organizationPage.getTotalPages())
+                .totalElement(organizationPage.getTotalElements())
+                .data(organizationPage.getContent().stream()
+                        .map(organizationMapper::toOrganizationResponse)
+                        .toList())
+                .build();
+    }
+
+    @Override
     @Transactional
     public OrganizationResponse updateOrganization(
             String id,
