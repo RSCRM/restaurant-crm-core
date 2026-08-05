@@ -10,6 +10,7 @@ import com.restaurant.crm.modules.erp.table.dto.response.TableMapResponse;
 import com.restaurant.crm.modules.erp.table.dto.response.TableStatusResponse;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.entity.TableArea;
+import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.mapper.TableMapMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableAreaRepository;
@@ -59,6 +60,11 @@ class TableMapServiceImplTest {
         OrganizationBranch branch = activeBranch();
         TableArea indoor = TableArea.builder().id("area-1").branchId("branch-1").build();
         RestaurantTable table = RestaurantTable.builder().id("table-1").area(indoor).build();
+        RestaurantTable deletedTable = RestaurantTable.builder()
+                .id("table-2")
+                .area(indoor)
+                .status(RestaurantTableStatus.DELETED)
+                .build();
         TableAreaMapResponse areaResponse = TableAreaMapResponse.builder().id("area-1").build();
         TableStatusResponse tableResponse = TableStatusResponse.builder().id("table-1").build();
 
@@ -69,7 +75,7 @@ class TableMapServiceImplTest {
                     .thenReturn(List.of(indoor));
             when(restaurantTableRepository
                     .findByAreaBranchIdOrderByAreaAreaNameAscTableNumberAsc("branch-1"))
-                    .thenReturn(List.of(table));
+                    .thenReturn(List.of(table, deletedTable));
             when(tableMapMapper.toAreaResponse(indoor)).thenReturn(areaResponse);
             when(tableMapMapper.toTableResponse(table)).thenReturn(tableResponse);
 
