@@ -1,11 +1,5 @@
 -- UC-CM-05 and UC-CM-06 local test data. Run after seed_data.sql.
 
-ALTER TABLE restaurant_tables
-    DROP CONSTRAINT IF EXISTS restaurant_tables_status_check;
-ALTER TABLE restaurant_tables
-    ADD CONSTRAINT restaurant_tables_status_check
-        CHECK (status IN ('AVAILABLE', 'OCCUPIED', 'RESERVED', 'DELETED'));
-
 UPDATE users
 SET password = '$2a$10$CsRk2L1Tt5h8.MgskpXgyuwwmFD22yqhq1QPwunLYXAcBMlqGt.ga'
 WHERE username IN ('owner_a', 'owner_b', 'manager', 'chef_q1', 'chef_q2', 'waiter_q1');
@@ -191,16 +185,6 @@ ON CONFLICT DO NOTHING;
 DELETE FROM work_schedules
 WHERE employee_id = 'f0000000-0000-0000-0000-000000000001';
 
-DELETE FROM work_schedules
-WHERE id IN (
-    '77000000-0000-0000-0000-000000000002',
-    '77000000-0000-0000-0000-000000000003',
-    '77000000-0000-0000-0000-000000000004'
-)
-OR (employee_id = 'f0000000-0000-0000-0000-000000000008' AND work_date = CURRENT_DATE AND start_time = '08:00')
-OR (employee_id = 'f0000000-0000-0000-0000-000000000009' AND work_date = CURRENT_DATE AND start_time = '14:00')
-OR (employee_id = 'f0000000-0000-0000-0000-000000000010' AND work_date = CURRENT_DATE + 1 AND start_time = '09:00');
-
 INSERT INTO work_schedules
     (id, version, employee_id, branch_id, work_date, start_time, end_time, note, created_at, updated_at)
 VALUES
@@ -231,14 +215,7 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
 VALUES
     ('p0000000-0000-0000-0000-000000000101', 0, 'TABLE_MAP_READ', NOW(), NOW()),
     ('p0000000-0000-0000-0000-000000000102', 0, 'TABLE_SEARCH_READ', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000103', 0, 'TABLE_SESSION_CREATE', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000008', 0, 'TABLE_MANAGE', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000104', 0, 'TABLE_AREA_ADD', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000105', 0, 'TABLE_AREA_UPDATE', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000106', 0, 'TABLE_AREA_DELETE', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000107', 0, 'RESTAURANT_TABLE_ADD', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000108', 0, 'RESTAURANT_TABLE_UPDATE', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000109', 0, 'RESTAURANT_TABLE_DELETE', NOW(), NOW())
+    ('p0000000-0000-0000-0000-000000000103', 0, 'TABLE_SESSION_CREATE', NOW(), NOW())
 ON CONFLICT (permission_name) DO NOTHING;
 
 INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
@@ -249,19 +226,6 @@ WHERE (role.role_name IN ('OWNER', 'MANAGER', 'CASHIER', 'WAITER', 'CHEF')
        AND permission.permission_name IN ('TABLE_MAP_READ', 'TABLE_SEARCH_READ'))
    OR (role.role_name IN ('OWNER', 'MANAGER', 'CASHIER', 'WAITER')
        AND permission.permission_name = 'TABLE_SESSION_CREATE')
-ON CONFLICT DO NOTHING;
-
--- Owner/manager can fully manage table areas, tables and table sessions.
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT role.id, permission.id
-FROM org_roles role
-CROSS JOIN org_permissions permission
-WHERE role.role_name IN ('OWNER', 'MANAGER')
-  AND permission.permission_name IN (
-      'TABLE_MAP_READ', 'TABLE_SEARCH_READ', 'TABLE_SESSION_CREATE', 'TABLE_MANAGE',
-      'TABLE_AREA_ADD', 'TABLE_AREA_UPDATE', 'TABLE_AREA_DELETE',
-      'RESTAURANT_TABLE_ADD', 'RESTAURANT_TABLE_UPDATE', 'RESTAURANT_TABLE_DELETE'
-  )
 ON CONFLICT DO NOTHING;
 
 -- Owner/manager handle reservations from the table-management screen.
@@ -301,7 +265,7 @@ VALUES
      'Bàn 02', 4, 'OCCUPIED', 1, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000003', 0,
      'a0000000-0000-0000-0000-000000000001',
-     'Bàn 03', 6, 'AVAILABLE', 2, 0, NOW(), NOW()),
+     'Bàn 03', 6, 'RESERVED', 2, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000004', 0,
      'a0000000-0000-0000-0000-000000000002',
      'Bàn 04', 2, 'AVAILABLE', 0, 0, NOW(), NOW()),
@@ -313,13 +277,13 @@ VALUES
      'Bàn 06', 8, 'AVAILABLE', 2, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000007', 0,
      'a0000000-0000-0000-0000-000000000001',
-     'Bàn 07', 4, 'AVAILABLE', 3, 0, NOW(), NOW()),
+     'Bàn 07', 4, 'RESERVED', 3, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000008', 0,
      'a0000000-0000-0000-0000-000000000002',
-     'Bàn 08', 6, 'AVAILABLE', 3, 0, NOW(), NOW()),
+     'Bàn 08', 6, 'RESERVED', 3, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000009', 0,
      'a0000000-0000-0000-0000-000000000002',
-     'Bàn 09', 8, 'AVAILABLE', 4, 0, NOW(), NOW())
+     'Bàn 09', 8, 'RESERVED', 4, 0, NOW(), NOW())
 ON CONFLICT (table_id) DO UPDATE
 SET area_id = EXCLUDED.area_id,
     table_number = EXCLUDED.table_number,
@@ -334,8 +298,7 @@ VALUES
     ('d1000000-0000-0000-0000-000000000003', 0, '0905000013', 'ACTIVE', NOW(), NOW()),
     ('d1000000-0000-0000-0000-000000000007', 0, '0905000017', 'ACTIVE', NOW(), NOW()),
     ('d1000000-0000-0000-0000-000000000008', 0, '0905000018', 'ACTIVE', NOW(), NOW()),
-    ('d1000000-0000-0000-0000-000000000009', 0, '0905000019', 'ACTIVE', NOW(), NOW()),
-    ('d1000000-0000-0000-0000-000000000005', 0, '0905000025', 'ACTIVE', NOW(), NOW())
+    ('d1000000-0000-0000-0000-000000000009', 0, '0905000019', 'ACTIVE', NOW(), NOW())
 ON CONFLICT (phone) DO NOTHING;
 
 INSERT INTO bookings
@@ -346,27 +309,22 @@ VALUES
      'e0000000-0000-0000-0000-000000000001',
      't0000000-0000-0000-0000-000000000003',
      (SELECT id FROM customers WHERE phone = '0905000013'),
-     NOW() + INTERVAL '2 minutes', 4, 'PENDING', 'Demo đặt bàn sắp tới - bàn 03', NOW(), NOW()),
+     NOW() + INTERVAL '2 hours', 4, 'PENDING', 'Test reservation - table 03', NOW(), NOW()),
     ('b1000000-0000-0000-0000-000000000007', 0,
      'e0000000-0000-0000-0000-000000000001',
      't0000000-0000-0000-0000-000000000007',
      (SELECT id FROM customers WHERE phone = '0905000017'),
-     NOW() + INTERVAL '6 minutes', 3, 'PENDING', 'Demo đặt bàn sắp tới - bàn 07', NOW(), NOW()),
+     NOW() + INTERVAL '3 hours', 3, 'PENDING', 'Test reservation - table 07', NOW(), NOW()),
     ('b1000000-0000-0000-0000-000000000008', 0,
      'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000004',
+     't0000000-0000-0000-0000-000000000008',
      (SELECT id FROM customers WHERE phone = '0905000018'),
-     NOW() + INTERVAL '10 minutes', 2, 'PENDING', 'Demo đặt bàn sắp tới - bàn 04', NOW(), NOW()),
+     NOW() + INTERVAL '4 hours', 5, 'PENDING', 'Test reservation - table 08', NOW(), NOW()),
     ('b1000000-0000-0000-0000-000000000009', 0,
      'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000001',
+     't0000000-0000-0000-0000-000000000009',
      (SELECT id FROM customers WHERE phone = '0905000019'),
-     NOW() + INTERVAL '14 minutes', 4, 'PENDING', 'Demo đặt bàn sắp tới - bàn 01', NOW(), NOW()),
-    ('b1000000-0000-0000-0000-000000000005', 0,
-     'e0000000-0000-0000-0000-000000000001',
-     't0000000-0000-0000-0000-000000000005',
-     (SELECT id FROM customers WHERE phone = '0905000025'),
-     NOW() - INTERVAL '1 minute', 4, 'PENDING', 'Demo bàn đang phục vụ trùng giờ đặt', NOW(), NOW())
+     NOW() + INTERVAL '5 hours', 6, 'PENDING', 'Test reservation - table 09', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET branch_id = EXCLUDED.branch_id,
     table_id = EXCLUDED.table_id,
@@ -378,14 +336,13 @@ SET branch_id = EXCLUDED.branch_id,
     updated_at = NOW();
 
 UPDATE restaurant_tables table_data
-SET status = 'AVAILABLE',
+SET status = 'RESERVED',
     updated_at = NOW()
 WHERE table_data.table_id IN (
     SELECT booking.table_id
     FROM bookings booking
     WHERE booking.status IN ('PENDING', 'CONFIRMED')
 )
-AND table_data.status <> 'DELETED'
 AND NOT EXISTS (
     SELECT 1
     FROM table_sessions session

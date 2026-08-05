@@ -234,6 +234,7 @@ public enum ErrorCode {
     VOUCHER_NOT_STARTED_YET("LOY_1016", "Voucher has not started yet", HttpStatus.BAD_REQUEST),
     VOUCHER_CODE_REQUIRED("LOY_1017", "Voucher code is required for code-based vouchers", HttpStatus.BAD_REQUEST),
     VOUCHER_LIMIT_EXCEEDED("LOY_1018", "Voucher usage limit has been exceeded", HttpStatus.BAD_REQUEST),
+    VOUCHER_DATE_RANGE_INVALID("LOY_1019", "End date must be after or equal to start date", HttpStatus.BAD_REQUEST),
 
     // ==== LICENSE ERRORS ====
     LICENSE_NOT_FOUND("LICENSE_1000", "License not found", HttpStatus.NOT_FOUND),

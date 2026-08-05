@@ -22,6 +22,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -51,6 +53,8 @@ public class VoucherServiceImpl implements VoucherService {
         validateBranchAccess(request.getBranchId());
 
         Voucher voucher = voucherMapper.toVoucher(request);
+        validateDateRange(voucher.getStartAt(), voucher.getEndAt());
+
         voucher.setIsActive((short) 1); // default
         if (voucher.getEndAt() != null) {
             voucher.setExpiredAt(voucher.getEndAt());
@@ -68,11 +72,19 @@ public class VoucherServiceImpl implements VoucherService {
         validateBranchAccess(voucher.getBranchId());
 
         voucherMapper.updateVoucher(request, voucher);
+        validateDateRange(voucher.getStartAt(), voucher.getEndAt());
+
         if (voucher.getEndAt() != null) {
             voucher.setExpiredAt(voucher.getEndAt());
         }
         voucher = voucherRepository.save(voucher);
         return voucherMapper.toVoucherResponse(voucher);
+    }
+
+    private void validateDateRange(Instant startAt, Instant endAt) {
+        if (startAt != null && endAt != null && startAt.isAfter(endAt)) {
+            throw new AppException(ErrorCode.VOUCHER_DATE_RANGE_INVALID);
+        }
     }
 
     @Override

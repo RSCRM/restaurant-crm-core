@@ -28,6 +28,7 @@ public class CustomerVoucherApplicableResponse {
     Instant expiredAt;
     Instant startAt;
     Instant endAt;
+    String voucherCode;
     Boolean isApplicable;
     String reason;
 }
