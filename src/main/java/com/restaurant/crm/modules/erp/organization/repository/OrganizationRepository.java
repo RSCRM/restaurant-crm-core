@@ -17,8 +17,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
     Optional<Organization> findByOwnerId(String ownerId);
     Optional<Organization> findByIdAndOwnerId(String id, String ownerId);
 
-    boolean existsByOwnerId(String ownerId);
-
     List<Organization> findByStatus(OrganizationStatus status);
 
     Page<Organization> findByStatus(

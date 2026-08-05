@@ -19,6 +19,8 @@ import com.restaurant.crm.modules.erp.organization.repository.OrganizationReposi
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationService;
 import com.restaurant.crm.modules.erp.organization.specification.OrganizationSpecification;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
+import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -41,22 +43,23 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrganizationRepository organizationRepository;
     OrganizationBranchRepository organizationBranchRepository;
     OrganizationMapper organizationMapper;
+    UserRepository userRepository;
 
     @Override
     @Transactional
     public OrganizationResponse createOrganization(CreateOrganizationRequest request) {
-
-        if (organizationRepository.existsByOwnerId(request.getOwnerId())) {
-            throw new AppException(ErrorCode.ORGANIZATION_EXISTS);
-        }
 
         if (request.getTaxCode() != null
                 && organizationRepository.existsByTaxCode(request.getTaxCode())) {
             throw new AppException(ErrorCode.ORGANIZATION_TAX_CODE_EXISTS);
         }
 
-        Organization organization =
-                organizationMapper.toOrganization(request);
+        Organization organization = organizationMapper.toOrganization(request);
+
+        User owner = userRepository.findById(request.getOwnerId())
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        organization.setOwner(owner);
 
         organization = organizationRepository.save(organization);
 
