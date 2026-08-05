@@ -99,9 +99,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(this::buildContextResponse)
                 .toList());
 
-        // Load owner context (user is owner of an organization)
-        organizationRepository.findByOwnerId(user.getId())
-                .ifPresent(organization -> contexts.add(buildOwnerContextResponse(organization)));
+        // Load owner contexts (user may own multiple organizations)
+        organizationRepository.findAllByOwnerId(user.getId())
+                .forEach(organization -> contexts.add(buildOwnerContextResponse(organization)));
 
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
