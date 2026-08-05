@@ -61,6 +61,11 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         organization.setOwner(owner);
 
+        User owner = userRepository.findById(request.getOwnerId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        organization.setOwner(owner);
+
         organization = organizationRepository.save(organization);
 
         return organizationMapper.toOrganizationResponse(organization);
