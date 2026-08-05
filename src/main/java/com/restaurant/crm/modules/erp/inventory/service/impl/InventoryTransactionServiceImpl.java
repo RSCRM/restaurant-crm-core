@@ -19,6 +19,8 @@ import com.restaurant.crm.modules.erp.inventory.repository.InventoryRepository;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryTransactionRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryTransactionService;
 import com.restaurant.crm.modules.erp.inventory.specification.InventoryTransactionSpecification;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     InventoryTransactionRepository transactionRepository;
     InventoryRepository inventoryRepository;
     InventoryTransactionMapper transactionMapper;
+    EmployeeRepository employeeRepository;
 
     @Override
     @Transactional
@@ -44,9 +47,13 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     ) {
 
         String branchId = AuthUtils.getBranchId();
+        String employeeId = AuthUtils.getEmployeeId();
+
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         Inventory inventory =
-            inventoryRepository.findByIdAndIngredientBranchId(
+            inventoryRepository.findByIdAndBranchId(
                     request.getInventoryId(),
                     branchId
                 )
@@ -58,7 +65,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             transactionMapper.toInventoryTransaction(request);
 
         transaction.setInventory(inventory);
-
+        transaction.setEmployee(employee);
         transaction.setTransactionTime(
             Instant.now()
         );
@@ -106,6 +113,8 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                 inventory.getMinimumQuantity()
             )
         );
+
+        inventoryRepository.save(inventory);
     }
 
     private InventoryStatus calculateStatus(
@@ -130,7 +139,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     ) {
         String branchId = AuthUtils.getBranchId();
 
-        return transactionRepository.findByIdAndInventoryIngredientBranchId(
+        return transactionRepository.findByIdAndInventoryBranchId(
                 id,
                 branchId
             )
@@ -157,7 +166,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             );
 
         Page<InventoryTransaction> result =
-            transactionRepository.findByInventoryIngredientBranchId(
+            transactionRepository.findByInventoryBranchId(
                 branchId,
                 pageable
             );
@@ -184,11 +193,12 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     ) {
 
         String branchId = AuthUtils.getBranchId();
+        Sort sort = Sort.by(Sort.Direction.DESC, "transactionTime");
 
         Pageable pageable = PageRequest.of(
             pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
             pagingRequest.getPageSize(),
-            PagingUtil.createSort(pagingRequest)
+            sort
         );
 
         Page<InventoryTransaction> transactionPage =

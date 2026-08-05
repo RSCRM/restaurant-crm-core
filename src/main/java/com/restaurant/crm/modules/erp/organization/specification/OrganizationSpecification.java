@@ -4,6 +4,8 @@ import com.restaurant.crm.modules.erp.organization.dto.request.OrganizationSearc
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
+import com.restaurant.crm.modules.licensemanagement.entity.LicenseSubscription;
+import com.restaurant.crm.modules.licensemanagement.enums.SubscriptionStatus;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -86,5 +88,22 @@ public class OrganizationSpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    /**
+     * Same as {@link #build} but excludes organizations that have an active subscription.
+     */
+    public static Specification<Organization> buildWithoutActiveSubscription(OrganizationSearchRequest request,
+            String dataScopeOrgId, String dataScopeBranchId, String currentUserId) {
+
+        Specification<Organization> base = build(request, dataScopeOrgId, dataScopeBranchId, currentUserId);
+
+        return base.and((root, query, cb) -> {
+            Subquery<String> subquery = query.subquery(String.class);
+            Root<LicenseSubscription> lsRoot = subquery.from(LicenseSubscription.class);
+            subquery.select(lsRoot.get("organizationId"))
+                    .where(cb.equal(lsRoot.get("status"), SubscriptionStatus.ACTIVE));
+            return cb.not(root.get("id").in(subquery));
+        });
     }
 }

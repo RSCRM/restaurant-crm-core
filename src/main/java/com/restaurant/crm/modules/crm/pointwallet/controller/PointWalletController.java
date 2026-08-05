@@ -62,10 +62,19 @@ public class PointWalletController {
     public ResponseEntity<ApiResponse<PagingResponse<CustomerPointResponse>>> getOrganizationCustomers(
             @PathVariable String organizationId,
             @RequestParam(value = "searchPhone", required = false) String searchPhone,
+            @RequestParam(value = "minPoints", required = false) Integer minPoints,
+            @RequestParam(value = "maxPoints", required = false) Integer maxPoints,
+            @RequestParam(value = "minLifetimePoints", required = false) Integer minLifetimePoints,
+            @RequestParam(value = "maxLifetimePoints", required = false) Integer maxLifetimePoints,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = "sortBy", required = false, defaultValue = "updatedAt") String sortBy,
+            @RequestParam(value = "sortDirection", required = false, defaultValue = "DESC") String sortDirection
     ) {
-        PagingResponse<CustomerPointResponse> response = pointWalletService.getOrganizationCustomers(organizationId, searchPhone, page, size);
+        PagingResponse<CustomerPointResponse> response = pointWalletService.getOrganizationCustomers(
+                organizationId, searchPhone, minPoints, maxPoints, minLifetimePoints, maxLifetimePoints,
+                page, size, sortBy, sortDirection
+        );
         return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerPointResponse>>builder()
                 .success(true)
                 .data(response)

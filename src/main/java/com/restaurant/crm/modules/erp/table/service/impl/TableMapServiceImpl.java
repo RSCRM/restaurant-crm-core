@@ -9,6 +9,7 @@ import com.restaurant.crm.modules.erp.table.dto.response.TableAreaMapResponse;
 import com.restaurant.crm.modules.erp.table.dto.response.TableMapResponse;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
 import com.restaurant.crm.modules.erp.table.entity.TableArea;
+import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.mapper.TableMapMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableAreaRepository;
@@ -54,6 +55,7 @@ public class TableMapServiceImpl implements TableMapService {
         }
 
         Map<String, List<RestaurantTable>> tablesByArea = tables.stream()
+                .filter(table -> table.getStatus() != RestaurantTableStatus.DELETED)
                 .collect(Collectors.groupingBy(table -> table.getArea().getId()));
         List<TableAreaMapResponse> areaResponses = areas.stream()
                 .map(area -> toAreaResponse(area, tablesByArea.getOrDefault(area.getId(), List.of())))

@@ -12,6 +12,10 @@ public class VoucherConstants {
     public static final String COL_POINTS_REQUIRED = "points_required";
     public static final String COL_IS_ACTIVE = "is_active";
     public static final String COL_EXPIRED_AT = "expired_at";
+    public static final String COL_START_AT = "start_at";
+    public static final String COL_END_AT = "end_at";
+    public static final String COL_VOUCHER_CODE = "voucher_code";
+    public static final String COL_USAGE_LIMIT = "usage_limit";
 
     public static final String TITLE_DEFINITION = "VARCHAR(255)";
     public static final String MIN_BILL_AMOUNT_DEFINITION = "DECIMAL(15,2)";

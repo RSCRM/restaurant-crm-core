@@ -42,4 +42,9 @@ public class VoucherCreationRequest {
     @NotNull(message = "VOUCHER_POINTS_REQUIRED")
     @Min(value = 0, message = "VOUCHER_POINTS_INVALID")
     Integer pointsRequired;
+
+    java.time.Instant startAt;
+    java.time.Instant endAt;
+    String voucherCode;
+    Integer usageLimit;
 }

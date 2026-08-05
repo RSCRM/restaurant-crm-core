@@ -64,6 +64,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     CustomerRepository customerRepository;
     PointWalletService pointWalletService;
     InvoiceMapper invoiceMapper;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository voucherRepository;
+    com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherRepository customerVoucherRepository;
 
     @Override
     @Transactional
@@ -76,6 +78,71 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         validateContext(order.getBranchId());
+
+        // Apply voucher code if provided
+        if (StringUtils.hasText(request.getVoucherCode())) {
+            com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher voucher = voucherRepository.findByBranchIdAndVoucherCodeIgnoreCaseAndIsActive(order.getBranchId(), request.getVoucherCode().trim(), (short) 1)
+                    .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_FOUND));
+
+            if (voucher.getStartAt() != null && Instant.now().isBefore(voucher.getStartAt())) {
+                throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+            }
+            if (voucher.getEndAt() != null && Instant.now().isAfter(voucher.getEndAt())) {
+                throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+            }
+            if (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt())) {
+                throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+            }
+
+            if (order.getSubtotal().compareTo(voucher.getMinBillAmount()) < 0) {
+                throw new AppException(ErrorCode.CUSTOMER_VOUCHER_MIN_BILL_NOT_MET);
+            }
+
+            if (voucher.getUsageLimit() != null) {
+                long usedCount = customerVoucherRepository.countByVoucherIdAndStatus(voucher.getId(), com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus.USED);
+                if (usedCount >= voucher.getUsageLimit()) {
+                    throw new AppException(ErrorCode.VOUCHER_LIMIT_EXCEEDED);
+                }
+            }
+
+            // Release any existing voucher first
+            customerVoucherRepository.findByOrderId(order.getId()).ifPresent(existingCv -> {
+                if (existingCv.getVoucher().getVoucherCode() != null) {
+                    customerVoucherRepository.delete(existingCv);
+                } else {
+                    existingCv.setStatus(com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus.AVAILABLE);
+                    existingCv.setUsedAt(null);
+                    existingCv.setOrderId(null);
+                    customerVoucherRepository.save(existingCv);
+                }
+            });
+
+            // Calculate discount
+            BigDecimal discountAmount = order.getSubtotal().multiply(BigDecimal.valueOf(voucher.getDiscountPercent()))
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            order.setDiscountAmount(discountAmount);
+            order.setTotalAmount(order.getSubtotal().subtract(discountAmount));
+            orderRepository.save(order);
+
+            // Save CustomerVoucher record
+            com.restaurant.crm.modules.crm.customeraccount.entity.Customer customer = null;
+            if (StringUtils.hasText(order.getCustomerPhone())) {
+                customer = customerRepository.findByPhone(order.getCustomerPhone()).orElse(null);
+            }
+
+            String voucherSn = "VCODE" + UUID.randomUUID().toString().replace("-", "").substring(0, 11).toUpperCase();
+
+            com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher customerVoucher = com.restaurant.crm.modules.crm.loyaltyvoucher.entity.CustomerVoucher.builder()
+                    .customer(customer)
+                    .branchId(order.getBranchId())
+                    .voucher(voucher)
+                    .voucherSn(voucherSn)
+                    .status(com.restaurant.crm.modules.crm.loyaltyvoucher.enums.CustomerVoucherStatus.USED)
+                    .usedAt(Instant.now())
+                    .orderId(order.getId())
+                    .build();
+            customerVoucherRepository.save(customerVoucher);
+        }
 
         // Update order status
         order.setStatus(OrderStatus.PAID);

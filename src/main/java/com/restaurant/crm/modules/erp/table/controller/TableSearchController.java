@@ -27,6 +27,7 @@ public class TableSearchController {
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.TABLE_SEARCH_READ + "')")
     public ResponseEntity<ApiResponse<PagingResponse<TableSearchResponse>>> searchTables(
+            @RequestParam(required = false) String branchId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String areaId,
             @RequestParam(required = false) RestaurantTableStatus status,
@@ -36,6 +37,7 @@ public class TableSearchController {
             @RequestParam(defaultValue = "10") int size
     ) {
         PagingResponse<TableSearchResponse> response = tableSearchService.searchTables(
+                branchId,
                 keyword,
                 areaId,
                 status,
