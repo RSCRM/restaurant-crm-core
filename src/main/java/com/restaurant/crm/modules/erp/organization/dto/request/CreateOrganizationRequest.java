@@ -18,7 +18,6 @@ public class CreateOrganizationRequest {
     String ownerId;
 
 
-    @NotBlank
     @Size(
             max = OrganizationConstants.MAX_CHARS_ORGANIZATION_NAME
     )
