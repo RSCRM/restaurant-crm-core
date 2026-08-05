@@ -226,6 +226,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
                     .expiredAt(voucher.getExpiredAt())
                     .startAt(voucher.getStartAt())
                     .endAt(voucher.getEndAt())
+                    .voucherCode(voucher.getVoucherCode())
                     .isApplicable(isApplicable)
                     .reason(reason)
                     .build();

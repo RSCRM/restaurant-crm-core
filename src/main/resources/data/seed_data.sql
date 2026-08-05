@@ -384,12 +384,20 @@ WHERE permission_name IN (
 -- =========================================================================
 
 
+-- 16.1. Table Areas
+INSERT INTO table_areas (area_id, branch_id, area_name, version) VALUES
+    ('a0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Khu Vực A (Tầng trệt)', 0),
+    ('a0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'Khu A - Sushi Tokyo', 0)
+    ON CONFLICT (area_id) DO NOTHING;
+
 -- 16.2. Restaurant Tables
 INSERT INTO restaurant_tables (table_id, area_id, table_number, capacity, status, version) VALUES
                                                                                                ('t0000000-0000-0000-0000-000000000101', 'a0000000-0000-0000-0000-000000000001', '101', 2, 'AVAILABLE', 0),
                                                                                                ('t0000000-0000-0000-0000-000000000102', 'a0000000-0000-0000-0000-000000000001', '102', 4, 'AVAILABLE', 0),
                                                                                                ('t0000000-0000-0000-0000-000000000103', 'a0000000-0000-0000-0000-000000000001', '103', 6, 'AVAILABLE', 0),
-                                                                                               ('t0000000-0000-0000-0000-000000000104', 'a0000000-0000-0000-0000-000000000001', '104', 8, 'AVAILABLE', 0)
+                                                                                               ('t0000000-0000-0000-0000-000000000104', 'a0000000-0000-0000-0000-000000000001', '104', 8, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000301', 'a0000000-0000-0000-0000-000000000003', '301', 4, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000302', 'a0000000-0000-0000-0000-000000000003', '302', 2, 'AVAILABLE', 0)
     ON CONFLICT (area_id, table_number) DO NOTHING;
 
 -- 16.3. Test Customers
@@ -450,7 +458,10 @@ INSERT INTO customer_point_history (id, version, customer_id, organization_id, t
 INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_amount, points_required, is_active, expired_at, created_at, updated_at) VALUES
                                                                                                                                                             ('v0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', '🎁 Voucher Giảm 10% Chào Mới (Miễn phí 0 Điểm)', 10, 0.00, 0, 1, NOW() + INTERVAL '30 days', NOW(), NOW()),
                                                                                                                                                             ('v0000000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', '👑 Voucher VIP Giảm 30% (Yêu cầu 100 Điểm)', 30, 50000.00, 100, 1, NOW() + INTERVAL '60 days', NOW(), NOW()),
-                                                                                                                                                            ('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', '💎 Voucher Kim Cương Giảm 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW())
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', '💎 Voucher Kim Cương Giảm 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000003', '🎁 Voucher Sushi 10% Chào Mới (Miễn phí 0 Điểm)', 10, 0.00, 0, 1, NOW() + INTERVAL '30 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000005', 0, 'e0000000-0000-0000-0000-000000000003', '👑 Voucher Sushi VIP 30% (Yêu cầu 100 Điểm)', 30, 50000.00, 100, 1, NOW() + INTERVAL '60 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000006', 0, 'e0000000-0000-0000-0000-000000000003', '💎 Voucher Sushi Kim Cương 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW())
     ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
                             discount_percent = EXCLUDED.discount_percent,
@@ -482,6 +493,16 @@ SELECT
 FROM customers c
 WHERE NOT EXISTS (
     SELECT 1 FROM customer_vouchers cv WHERE cv.customer_id = c.id AND cv.voucher_id = 'v0000000-0000-0000-0000-000000000001'
+);
+
+INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, created_at, updated_at)
+SELECT
+    gen_random_uuid(), 0, c.id, 'e0000000-0000-0000-0000-000000000003',
+    'v0000000-0000-0000-0000-000000000004', 'VSUSHI' || substring(gen_random_uuid()::text, 1, 8),
+    'AVAILABLE', NOW(), NOW()
+FROM customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM customer_vouchers cv WHERE cv.customer_id = c.id AND cv.voucher_id = 'v0000000-0000-0000-0000-000000000004'
 );
 
 -- ============================================================================
