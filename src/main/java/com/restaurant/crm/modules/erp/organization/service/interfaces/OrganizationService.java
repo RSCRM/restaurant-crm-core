@@ -20,6 +20,9 @@ public interface OrganizationService {
     PagingResponse<OrganizationResponse> searchOrganizations(
             OrganizationSearchRequest searchRequest, PagingRequest pagingRequest);
 
+    PagingResponse<OrganizationResponse> searchOrganizationsWithoutActiveSubscription(
+            OrganizationSearchRequest searchRequest, PagingRequest pagingRequest);
+
     OrganizationResponse updateOrganization(
             String id,
             UpdateOrganizationRequest request
