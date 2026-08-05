@@ -52,6 +52,9 @@ public class VoucherServiceImpl implements VoucherService {
 
         Voucher voucher = voucherMapper.toVoucher(request);
         voucher.setIsActive((short) 1); // default
+        if (voucher.getEndAt() != null) {
+            voucher.setExpiredAt(voucher.getEndAt());
+        }
         voucher = voucherRepository.save(voucher);
         return voucherMapper.toVoucherResponse(voucher);
     }
@@ -65,6 +68,9 @@ public class VoucherServiceImpl implements VoucherService {
         validateBranchAccess(voucher.getBranchId());
 
         voucherMapper.updateVoucher(request, voucher);
+        if (voucher.getEndAt() != null) {
+            voucher.setExpiredAt(voucher.getEndAt());
+        }
         voucher = voucherRepository.save(voucher);
         return voucherMapper.toVoucherResponse(voucher);
     }

@@ -114,6 +114,16 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
             throw new AppException(ErrorCode.VOUCHER_INACTIVE);
         }
 
+        if (voucher.getStartAt() != null && java.time.Instant.now().isBefore(voucher.getStartAt())) {
+            throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+        }
+        if (voucher.getEndAt() != null && java.time.Instant.now().isAfter(voucher.getEndAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+        if (voucher.getExpiredAt() != null && java.time.Instant.now().isAfter(voucher.getExpiredAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+
         // 2. Load Customer
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
@@ -150,6 +160,12 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
         // Check if voucher has expired
         Voucher voucher = customerVoucher.getVoucher();
+        if (voucher.getStartAt() != null && java.time.Instant.now().isBefore(voucher.getStartAt())) {
+            throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+        }
+        if (voucher.getEndAt() != null && java.time.Instant.now().isAfter(voucher.getEndAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
         if (voucher.getExpiredAt() != null && java.time.Instant.now().isAfter(voucher.getExpiredAt())) {
             throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
         }
@@ -176,13 +192,19 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndBranchId(customerId, branchId);
         return customerVouchers.stream().map(cv -> {
             Voucher voucher = cv.getVoucher();
-            boolean isExpired = voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt());
+            boolean notStarted = voucher.getStartAt() != null && Instant.now().isBefore(voucher.getStartAt());
+            boolean isExpired = (voucher.getEndAt() != null && Instant.now().isAfter(voucher.getEndAt()))
+                    || (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt()));
             
             boolean isApplicable = true;
             String reason = null;
             String status = cv.getStatus().name();
 
-            if (isExpired) {
+            if (notStarted) {
+                isApplicable = false;
+                reason = "Voucher chưa đến ngày áp dụng";
+                status = "NOT_STARTED";
+            } else if (isExpired) {
                 isApplicable = false;
                 reason = "Voucher đã hết hạn sử dụng";
                 status = "EXPIRED";
@@ -202,6 +224,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
                     .minBillAmount(voucher.getMinBillAmount())
                     .status(status)
                     .expiredAt(voucher.getExpiredAt())
+                    .startAt(voucher.getStartAt())
+                    .endAt(voucher.getEndAt())
                     .isApplicable(isApplicable)
                     .reason(reason)
                     .build();
@@ -212,15 +236,57 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     @Transactional
     public void releaseVoucher(String orderId) {
         customerVoucherRepository.findByOrderId(orderId).ifPresent(cv -> {
-            // Internal operation, no direct HTTP access, but let's check branch if needed.
-            // Since it's triggered internally on order cancel, we can trust it or validate if actor is present.
-            if (cv.getStatus() == CustomerVoucherStatus.USED) {
-                cv.setStatus(CustomerVoucherStatus.AVAILABLE);
-                cv.setUsedAt(null);
-                cv.setOrderId(null);
-                customerVoucherRepository.save(cv);
+            if (cv.getVoucher().getVoucherCode() != null) {
+                customerVoucherRepository.delete(cv);
+            } else {
+                if (cv.getStatus() == CustomerVoucherStatus.USED) {
+                    cv.setStatus(CustomerVoucherStatus.AVAILABLE);
+                    cv.setUsedAt(null);
+                    cv.setOrderId(null);
+                    customerVoucherRepository.save(cv);
+                }
             }
         });
+    }
+
+    @Override
+    @Transactional
+    public void giveVoucherBulk(List<String> customerIds, String branchId, String voucherId) {
+        validateBranchAccess(branchId);
+
+        Voucher voucher = voucherRepository.findById(voucherId)
+                .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_NOT_FOUND));
+
+        if (voucher.getIsActive() != 1) {
+            throw new AppException(ErrorCode.VOUCHER_INACTIVE);
+        }
+
+        if (voucher.getStartAt() != null && java.time.Instant.now().isBefore(voucher.getStartAt())) {
+            throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+        }
+        if (voucher.getEndAt() != null && java.time.Instant.now().isAfter(voucher.getEndAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+        if (voucher.getExpiredAt() != null && java.time.Instant.now().isAfter(voucher.getExpiredAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+
+        for (String customerId : customerIds) {
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+
+            String voucherSn = generateUniqueVoucherSn();
+
+            CustomerVoucher customerVoucher = CustomerVoucher.builder()
+                    .customer(customer)
+                    .branchId(branchId)
+                    .voucher(voucher)
+                    .voucherSn(voucherSn)
+                    .status(CustomerVoucherStatus.AVAILABLE)
+                    .build();
+
+            customerVoucherRepository.save(customerVoucher);
+        }
     }
 
     @Override
