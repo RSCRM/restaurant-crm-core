@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.organization.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -53,7 +54,7 @@ public class Employee extends BaseEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = EmployeeConstants.COL_STATUS, nullable = false)
-    EmployeeStatus status = EmployeeStatus.ACTIVE;
+    EmployeeStatus status = EmployeeAccountConstants.DEFAULT_STATUS;
 
     @NotNull
     @Column(name = EmployeeConstants.COL_EMAIL,

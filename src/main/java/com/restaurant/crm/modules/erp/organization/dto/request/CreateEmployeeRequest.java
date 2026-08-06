@@ -1,9 +1,11 @@
 package com.restaurant.crm.modules.erp.organization.dto.request;
 
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,13 +32,14 @@ public class CreateEmployeeRequest {
     @Email(message = "EMPLOYEE_EMAIL_INVALID")
     String email;
 
-    @NotBlank(message = "EMPLOYEE_PHONE_REQUIRED")
-    String phone;
+    @NotBlank(message = "EMPLOYEE_FULL_NAME_REQUIRED")
+    @Size(min = UserProfileConstants.MIN_CHARS_FULL_NAME,
+            max = UserProfileConstants.MAX_CHARS_FULL_NAME,
+            message = "EMPLOYEE_FULL_NAME_INVALID")
+    String fullName;
 
     @NotBlank(message = "EMPLOYEE_BRANCH_REQUIRED")
     String branchId;
-
-    String orgRoleId;
 
     @NotNull(message = "EMPLOYEE_START_DATE_REQUIRED")
     LocalDate startDate;

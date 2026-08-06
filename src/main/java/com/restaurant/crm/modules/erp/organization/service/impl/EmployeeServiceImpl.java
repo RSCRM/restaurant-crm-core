@@ -7,7 +7,6 @@ import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
-import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
@@ -15,11 +14,15 @@ import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.mapper.EmployeeMapper;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrgRoleRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.security.EmployeeBranchGuard;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.EmployeeService;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -35,7 +38,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,27 +55,85 @@ public class EmployeeServiceImpl implements EmployeeService {
     RoleRepository roleRepository;
     OrgRoleRepository orgRoleRepository;
     PasswordEncoder passwordEncoder;
+    EmployeeBranchGuard employeeBranchGuard;
+    UserProfileRepository userProfileRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmployeeResponse> listEmployees() {
+        OrgDataScope scope = AuthUtils.getDataScope();
+        List<Employee> employees = (scope == OrgDataScope.ORGANIZATION)
+                ? employeeRepository.findByBranch_Organization_Id(AuthUtils.getOrganizationId())
+                : employeeRepository.findByBranch_Id(AuthUtils.getBranchId());
+        String currentEmployeeId = AuthUtils.getEmployeeId();
+
+        List<Employee> visible = employees.stream()
+                .filter(employee -> !employee.getId().equals(currentEmployeeId))
+                .toList();
+
+        List<String> userIds = visible.stream()
+                .map(employee -> employee.getUser().getId())
+                .toList();
+        Map<String, String> fullNameByUserId = userProfileRepository.findByUser_IdIn(userIds).stream()
+                .filter(profile -> profile.getFullName() != null)
+                .collect(Collectors.toMap(
+                        profile -> profile.getUser().getId(),
+                        UserProfile::getFullName,
+                        (existing, ignored) -> existing));
+
+        return visible.stream()
+                .map(employee -> {
+                    EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
+                    response.setFullName(fullNameByUserId.get(employee.getUser().getId()));
+                    return response;
+                })
+                .toList();
+    }
 
     @Override
     @Transactional
     public EmployeeResponse updateEmployee(String employeeId, UpdateEmployeeRequest request) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
-        validateBranchAccess(employee.getBranch().getId());
-        employee.setEmail(request.getEmail());
-        employee.setPhone(request.getPhone());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
+
+        User user = employee.getUser();
+        UserProfile profile = userProfileRepository.findByUser_Id(user.getId())
+                .orElseGet(() -> UserProfile.builder().user(user).build());
+
+        if (request.getFullName() != null) {
+            profile.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null) {
+            if (!request.getPhone().equals(profile.getPhone())
+                    && userProfileRepository.existsByPhone(request.getPhone())) {
+                throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
+            }
+            profile.setPhone(request.getPhone());
+            employee.setPhone(request.getPhone());
+        }
         if (request.getStatus() != null) {
+            // Chi activate duoc khi da co org role, neu khong selectContext se fail sau do
+            if (request.getStatus() == EmployeeStatus.ACTIVE && employee.getOrgRole() == null) {
+                throw new AppException(ErrorCode.EMPLOYEE_ACTIVATE_REQUIRES_ORG_ROLE);
+            }
             employee.setStatus(request.getStatus());
         }
-        employee.setStartDate(request.getStartDate());
-        employee.setEndDate(request.getEndDate());
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        if (request.getStartDate() != null) {
+            employee.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            employee.setEndDate(request.getEndDate());
+        }
+
+        userProfileRepository.save(profile);
+        return toResponse(employeeRepository.save(employee));
     }
 
     @Override
     @Transactional
     public EmployeeResponse addEmployee(CreateEmployeeRequest request) {
-        validateBranchAccess(request.getBranchId());
+        employeeBranchGuard.validateBranchAccess(request.getBranchId());
 
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
@@ -80,12 +144,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         OrganizationBranch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
-
-        OrgRole orgRole = null;
-        if (request.getOrgRoleId() != null && !request.getOrgRoleId().isBlank()) {
-            orgRole = orgRoleRepository.findById(request.getOrgRoleId())
-                    .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
-        }
 
         Role userRole = roleRepository.findByRoleName(PredefinedRole.USER_ROLE)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
@@ -100,29 +158,30 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
         user = userRepository.save(user);
 
+        userProfileRepository.save(UserProfile.builder()
+                .user(user)
+                .fullName(request.getFullName())
+                .build());
+
+        // Gan role di duong rieng (assignRole), sau do moi activate qua updateEmployee.
         Employee employee = Employee.builder()
                 .user(user)
                 .branch(branch)
-                .orgRole(orgRole)
                 .email(request.getEmail())
-                .phone(request.getPhone())
                 .startDate(request.getStartDate())
                 .salary(request.getSalary())
-                .status(EmployeeStatus.ACTIVE)
+                .status(EmployeeAccountConstants.DEFAULT_STATUS)
                 .build();
         employee = employeeRepository.save(employee);
 
-        return employeeMapper.toEmployeeResponse(employee);
+        return toResponse(employee);
     }
 
-    private void validateBranchAccess(String targetBranchId) {
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
-                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-        } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
-            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-        }
+    private EmployeeResponse toResponse(Employee employee) {
+        EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
+        userProfileRepository.findByUser_Id(employee.getUser().getId())
+                .ifPresent(profile -> response.setFullName(profile.getFullName()));
+        return response;
     }
 
     private void rejectSelfRoleChange(Employee employee) {
@@ -137,7 +196,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        validateBranchAccess(employee.getBranch().getId());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
         rejectSelfRoleChange(employee);
 
         OrgRole orgRole = orgRoleRepository.findById(request.getOrgRoleId())
@@ -145,7 +204,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employee.setOrgRole(orgRole);
         employee = employeeRepository.save(employee);
-        return employeeMapper.toEmployeeResponse(employee);
+        return toResponse(employee);
     }
 
     @Override
@@ -154,13 +213,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        validateBranchAccess(employee.getBranch().getId());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
         rejectSelfRoleChange(employee);
 
         // idempotent: neu da khong co role thi tra ve binh thuong
         employee.setOrgRole(null);
+        // ACTIVE luon phai di kem org role, go role thi ha xuong INACTIVE.
+        // TERMINATED giu nguyen vi day la trang thai cuoi, khong ha xuong INACTIVE.
+        if (employee.getStatus() == EmployeeStatus.ACTIVE) {
+            employee.setStatus(EmployeeStatus.INACTIVE);
+        }
         employee = employeeRepository.save(employee);
-        return employeeMapper.toEmployeeResponse(employee);
+        return toResponse(employee);
     }
 
     @Override
@@ -169,22 +233,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        validateBranchAccess(employee.getBranch().getId());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
 
         employee.setSalary(request.getSalary());
         employee = employeeRepository.save(employee);
-        return employeeMapper.toEmployeeResponse(employee);
-    }
-
-    @Override
-    @Transactional
-    public EmployeeResponse setProfileUpdateAccess(
-            String employeeId, ProfileUpdateAccessRequest request) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
-        validateBranchAccess(employee.getBranch().getId());
-        employee.setProfileUpdateEnabled(request.getEnabled());
-        return employeeMapper.toEmployeeResponse(employeeRepository.save(employee));
+        return toResponse(employee);
     }
 
     @Override

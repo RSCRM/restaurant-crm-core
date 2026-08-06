@@ -1,8 +1,8 @@
 package com.restaurant.crm.modules.erp.organization.dto.request;
 
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
+import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -21,14 +21,17 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateEmployeeRequest {
-    @NotNull(message = "EMPLOYEE_EMAIL_REQUIRED")
-    @Email(message = "EMPLOYEE_EMAIL_INVALID")
-    @Size(max = 100)
-    String email;
-    @Size(max = 20)
+    @Size(min = UserProfileConstants.MIN_CHARS_FULL_NAME,
+            max = UserProfileConstants.MAX_CHARS_FULL_NAME,
+            message = "EMPLOYEE_FULL_NAME_INVALID")
+    String fullName;
+
+    @Pattern(regexp = UserProfileConstants.PHONE_PATTERN, message = "EMPLOYEE_PHONE_INVALID")
     String phone;
+
     EmployeeStatus status;
-    @NotNull(message = "EMPLOYEE_START_DATE_REQUIRED")
+
     LocalDate startDate;
+
     LocalDate endDate;
 }

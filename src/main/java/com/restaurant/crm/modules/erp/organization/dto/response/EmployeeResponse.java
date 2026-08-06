@@ -22,10 +22,10 @@ public class EmployeeResponse {
     String username;
     String email;
     String phone;
+    String fullName;
     String branchId;
     String orgRoleName;
     BigDecimal salary;
     String status;
     LocalDate startDate;
-    boolean profileUpdateEnabled;
 }

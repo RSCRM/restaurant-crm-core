@@ -28,6 +28,7 @@ public class StartDefinedOrgPermission {
     public static final String STAFF_MANAGE = "STAFF_MANAGE";
     public static final String BRANCH_MANAGE = "BRANCH_MANAGE";
     public static final String ORG_MANAGE = "ORG_MANAGE";
+    public static final String ORG_ROLE_MANAGE = "ORG_ROLE_MANAGE";
 
     // ===== ORGANIZATION =====
     public static final String ORGANIZATION_VIEW = "ORGANIZATION_VIEW";

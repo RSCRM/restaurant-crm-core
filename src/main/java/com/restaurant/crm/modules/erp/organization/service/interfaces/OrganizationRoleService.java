@@ -10,7 +10,7 @@ import java.util.List;
 public interface OrganizationRoleService {
     OrgRoleResponse create(CreateOrgRoleRequest request);
     OrgRoleResponse update(String id, UpdateOrgRoleRequest request);
-    List<OrgRoleResponse> listByOrganization(String organizationId);
+    List<OrgRoleResponse> listOrgRoles();
     OrgRoleResponse get(String id);
     List<OrgPermissionResponse> listPermissions();
 }

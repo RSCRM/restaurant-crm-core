@@ -66,6 +66,10 @@ public enum ErrorCode {
     EMPLOYEE_BRANCH_REQUIRED("EMP_1009", "Branch id is required", HttpStatus.BAD_REQUEST),
     EMPLOYEE_START_DATE_REQUIRED("EMP_1010", "Start date is required", HttpStatus.BAD_REQUEST),
     EMPLOYEE_ORG_ROLE_REQUIRED("EMP_1011", "Org role id is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_FULL_NAME_REQUIRED("EMP_1012", "Full name is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_FULL_NAME_INVALID("EMP_1013", "Full name is not valid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_PHONE_INVALID("EMP_1014", "Phone is not valid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ACTIVATE_REQUIRES_ORG_ROLE("EMP_1015", "Employee must be assigned an org role before activation", HttpStatus.BAD_REQUEST),
 
     // ==== ORG ROLE ERRORS ====
     ORG_ROLE_NOT_FOUND("ORGROLE_1000", "Org role not found", HttpStatus.NOT_FOUND),
