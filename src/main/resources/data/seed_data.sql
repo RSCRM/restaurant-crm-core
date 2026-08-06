@@ -1,5 +1,3 @@
-
-
 -- =============================================================================
 -- 1. IDENTITY MODULE: PERMISSIONS
 -- =============================================================================
@@ -120,7 +118,13 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
                                                                                        ('p0000000-0000-0000-0000-000000000017', 0, 'EMPLOYEE_ROLE_ASSIGN', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000018', 0, 'EMPLOYEE_ROLE_REVOKE', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000101', 0, 'TABLE_MAP_READ',   NOW(), NOW()),
-                                                                                       ('p0000000-0000-0000-0000-000000000102', 0, 'TABLE_SEARCH_READ', NOW(), NOW())
+                                                                                       ('p0000000-0000-0000-0000-000000000102', 0, 'TABLE_SEARCH_READ', NOW(), NOW()),
+																					   ('p0000000-0000-0000-0000-000000000201', 0, 'INVENTORY_CATEGORY_VIEW',   NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000202', 0, 'INVENTORY_CATEGORY_MANAGE', NOW(), NOW()),
+																					   ('p0000000-0000-0000-0000-000000000203', 0, 'INVENTORY_VIEW',   NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000204', 0, 'INVENTORY_MANAGE', NOW(), NOW()),
+																					   ('p0000000-0000-0000-0000-000000000205', 0, 'INVENTORY_TRANSACTION_VIEW',   NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000206', 0, 'INVENTORY_TRANSACTION_MANAGE', NOW(), NOW())
     ON CONFLICT (permission_name) DO NOTHING;
 
 
@@ -174,7 +178,13 @@ INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
                                                                             ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000017'),
                                                                             ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000018'),
                                                                             ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000102')
+                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000102'),
+																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000201'),
+																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000202'),
+																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000203'),
+																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000204'),
+																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000205'),
+																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000206')
     ON CONFLICT DO NOTHING;
 
 
@@ -382,14 +392,42 @@ WHERE permission_name IN (
 -- =========================================================================
 -- 16. BUSINESS TEST DATA: WBS 69 & WBS 70
 -- =========================================================================
+-- 16.1. Table Areas
+INSERT INTO table_areas (
+    area_id,
+    version,
+    branch_id,
+    area_name,
+    description,
+    display_order,
+    created_at,
+    updated_at
+)
+VALUES (
+    'a0000000-0000-0000-0000-000000000001',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    'Main Area',
+    'Default dining area',
+    1,
+    NOW(),
+    NOW()
+);
 
+-- 16.1. Table Areas
+INSERT INTO table_areas (area_id, branch_id, area_name, version) VALUES
+    ('a0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Khu Vực A (Tầng trệt)', 0),
+    ('a0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'Khu A - Sushi Tokyo', 0)
+    ON CONFLICT (area_id) DO NOTHING;
 
 -- 16.2. Restaurant Tables
 INSERT INTO restaurant_tables (table_id, area_id, table_number, capacity, status, version) VALUES
                                                                                                ('t0000000-0000-0000-0000-000000000101', 'a0000000-0000-0000-0000-000000000001', '101', 2, 'AVAILABLE', 0),
                                                                                                ('t0000000-0000-0000-0000-000000000102', 'a0000000-0000-0000-0000-000000000001', '102', 4, 'AVAILABLE', 0),
                                                                                                ('t0000000-0000-0000-0000-000000000103', 'a0000000-0000-0000-0000-000000000001', '103', 6, 'AVAILABLE', 0),
-                                                                                               ('t0000000-0000-0000-0000-000000000104', 'a0000000-0000-0000-0000-000000000001', '104', 8, 'AVAILABLE', 0)
+                                                                                               ('t0000000-0000-0000-0000-000000000104', 'a0000000-0000-0000-0000-000000000001', '104', 8, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000301', 'a0000000-0000-0000-0000-000000000003', '301', 4, 'AVAILABLE', 0),
+                                                                                               ('t0000000-0000-0000-0000-000000000302', 'a0000000-0000-0000-0000-000000000003', '302', 2, 'AVAILABLE', 0)
     ON CONFLICT (area_id, table_number) DO NOTHING;
 
 -- 16.3. Test Customers
@@ -450,7 +488,10 @@ INSERT INTO customer_point_history (id, version, customer_id, organization_id, t
 INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_amount, points_required, is_active, expired_at, created_at, updated_at) VALUES
                                                                                                                                                             ('v0000000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', '🎁 Voucher Giảm 10% Chào Mới (Miễn phí 0 Điểm)', 10, 0.00, 0, 1, NOW() + INTERVAL '30 days', NOW(), NOW()),
                                                                                                                                                             ('v0000000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', '👑 Voucher VIP Giảm 30% (Yêu cầu 100 Điểm)', 30, 50000.00, 100, 1, NOW() + INTERVAL '60 days', NOW(), NOW()),
-                                                                                                                                                            ('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', '💎 Voucher Kim Cương Giảm 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW())
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', '💎 Voucher Kim Cương Giảm 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000003', '🎁 Voucher Sushi 10% Chào Mới (Miễn phí 0 Điểm)', 10, 0.00, 0, 1, NOW() + INTERVAL '30 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000005', 0, 'e0000000-0000-0000-0000-000000000003', '👑 Voucher Sushi VIP 30% (Yêu cầu 100 Điểm)', 30, 50000.00, 100, 1, NOW() + INTERVAL '60 days', NOW(), NOW()),
+                                                                                                                                                            ('v0000000-0000-0000-0000-000000000006', 0, 'e0000000-0000-0000-0000-000000000003', '💎 Voucher Sushi Kim Cương 50% (Yêu cầu 300 Điểm)', 50, 150000.00, 300, 1, NOW() + INTERVAL '90 days', NOW(), NOW())
     ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
                             discount_percent = EXCLUDED.discount_percent,
@@ -482,6 +523,16 @@ SELECT
 FROM customers c
 WHERE NOT EXISTS (
     SELECT 1 FROM customer_vouchers cv WHERE cv.customer_id = c.id AND cv.voucher_id = 'v0000000-0000-0000-0000-000000000001'
+);
+
+INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, created_at, updated_at)
+SELECT
+    gen_random_uuid(), 0, c.id, 'e0000000-0000-0000-0000-000000000003',
+    'v0000000-0000-0000-0000-000000000004', 'VSUSHI' || substring(gen_random_uuid()::text, 1, 8),
+    'AVAILABLE', NOW(), NOW()
+FROM customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM customer_vouchers cv WHERE cv.customer_id = c.id AND cv.voucher_id = 'v0000000-0000-0000-0000-000000000004'
 );
 
 -- ============================================================================
@@ -538,5 +589,173 @@ WHERE NOT EXISTS (
 -- UPDATE order_items SET status = 'READY_TO_SERVE', updated_at = NOW() WHERE status IN ('PENDING', 'IN_PROGRESS');
 -- UPDATE order_items SET status = 'SERVED', updated_at = NOW() WHERE status IN ('PENDING', 'IN_PROGRESS', 'READY_TO_SERVE');
 
+-- ==========================================
+-- INVENTORY CATEGORY
+-- ==========================================
 
+INSERT INTO inventory_categories (
+    id,
+    version,
+    branch_id,
+    category_name,
+    description
+)
+VALUES
+(
+    '11111111-1111-1111-1111-111111111111',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    'Vegetables',
+    'Fresh vegetables'
+),
+(
+    '22222222-2222-2222-2222-222222222222',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    'Meat',
+    'Fresh meat products'
+),
+(
+    '33333333-3333-3333-3333-333333333333',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    'Beverages',
+    'Drinks and beverages'
+);
 
+-- ==========================================
+-- INVENTORY
+-- ==========================================
+
+INSERT INTO inventories (
+    id,
+    version,
+    branch_id,
+    inventory_category_id,
+    inventory_name,
+    unit,
+    description,
+    quantity,
+    minimum_quantity,
+    status
+)
+VALUES
+(
+    '44444444-4444-4444-4444-444444444444',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    '11111111-1111-1111-1111-111111111111',
+    'Tomato',
+    'kg',
+    'Fresh tomato',
+    80,
+    20,
+    'GOOD'
+),
+(
+    '55555555-5555-5555-5555-555555555555',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    '11111111-1111-1111-1111-111111111111',
+    'Potato',
+    'kg',
+    'Yellow potato',
+    10,
+    20,
+    'LOW'
+),
+(
+    '66666666-6666-6666-6666-666666666666',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    '22222222-2222-2222-2222-222222222222',
+    'Chicken Breast',
+    'kg',
+    'Boneless chicken breast',
+    0,
+    15,
+    'OUT_OF_STOCK'
+),
+(
+    '77777777-7777-7777-7777-777777777777',
+    0,
+    'e0000000-0000-0000-0000-000000000001',
+    '33333333-3333-3333-3333-333333333333',
+    'Coca Cola',
+    'can',
+    '330ml can',
+    120,
+    30,
+    'GOOD'
+);
+
+-- ==========================================
+-- INVENTORY TRANSACTION
+-- ==========================================
+INSERT INTO inventory_transactions (
+    id,
+    version,
+    inventory_id,
+    employee_id,
+    transaction_type,
+    transaction_direction,
+    quantity,
+    note,
+    transaction_time
+)
+VALUES
+(
+    '88888888-8888-8888-8888-888888888888',
+    0,
+    '44444444-4444-4444-4444-444444444444',
+    'f0000000-0000-0000-0000-000000000001',
+    'PURCHASE',
+    'IN',
+    100,
+    'Purchased from supplier',
+    NOW() - INTERVAL '7 days'
+),
+(
+    '99999999-9999-9999-9999-999999999999',
+    0,
+    '44444444-4444-4444-4444-444444444444',
+    'f0000000-0000-0000-0000-000000000001',
+    'SALE',
+    'OUT',
+    20,
+    'Used in kitchen',
+    NOW() - INTERVAL '3 days'
+),
+(
+    'aaaaaaaa-1111-2222-3333-444444444444',
+    0,
+    '55555555-5555-5555-5555-555555555555',
+    'f0000000-0000-0000-0000-000000000001',
+    'SALE',
+    'OUT',
+    15,
+    'Daily cooking',
+    NOW() - INTERVAL '2 days'
+),
+(
+    'cccccccc-1111-2222-3333-444444444444',
+    0,
+    '66666666-6666-6666-6666-666666666666',
+    'f0000000-0000-0000-0000-000000000001',
+    'PURCHASE',
+    'IN',
+    50,
+    'Restocked chicken',
+    NOW() - INTERVAL '1 day'
+),
+(
+    'dddddddd-1111-2222-3333-444444444444',
+    0,
+    '77777777-7777-7777-7777-777777777777',
+    'f0000000-0000-0000-0000-000000000001',
+    'ADJUSTMENT',
+    'IN',
+    10,
+    'Inventory correction',
+    NOW()
+);

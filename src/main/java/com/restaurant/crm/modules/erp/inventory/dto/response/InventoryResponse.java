@@ -16,8 +16,12 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class InventoryResponse {
     String id;
-    String ingredientId;
-    String ingredientName;
+    String branchId;
+    String inventoryCategoryId;
+    String inventoryName;
+    String inventoryCategoryName;
+    String unit;
+    String description;
     BigDecimal quantity;
     BigDecimal minimumQuantity;
     InventoryStatus status;

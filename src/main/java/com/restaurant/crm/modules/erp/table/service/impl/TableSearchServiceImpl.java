@@ -36,9 +36,24 @@ public class TableSearchServiceImpl implements TableSearchService {
     RestaurantTableRepository restaurantTableRepository;
     TableSearchMapper tableSearchMapper;
 
+    private void validateBranchAccess(String targetBranchId) {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
+            return;
+        }
+        String actorUserId = AuthUtils.getCurrentUserId();
+        if (AuthUtils.getEmployeeId() == null) {
+            organizationBranchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
+        } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<TableSearchResponse> searchTables(
+            String branchId,
             String keyword,
             String areaId,
             RestaurantTableStatus status,
@@ -48,13 +63,14 @@ public class TableSearchServiceImpl implements TableSearchService {
             int size
     ) {
         validateCriteria(minCapacity, maxCapacity, page, size);
-        String branchId = AuthUtils.getBranchId();
-        validateBranch(branchId);
+        String activeBranchId = (branchId != null && !branchId.isBlank()) ? branchId : AuthUtils.getBranchId();
+        validateBranch(activeBranchId);
+        validateBranchAccess(activeBranchId);
 
         Specification<RestaurantTable> specification =
-                (root, query, criteriaBuilder) -> criteriaBuilder.equal(
-                        root.join("area", JoinType.INNER).get("branchId"),
-                        branchId
+                (root, query, criteriaBuilder) -> criteriaBuilder.and(
+                        criteriaBuilder.equal(root.join("area", JoinType.INNER).get("branchId"), branchId),
+                        criteriaBuilder.notEqual(root.get("status"), RestaurantTableStatus.DELETED)
                 );
         if (keyword != null && !keyword.isBlank()) {
             String pattern = "%" + keyword.trim().toLowerCase() + "%";

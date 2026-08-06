@@ -38,13 +38,9 @@ public class StartDefinedOrgPermission {
     public static final String ORGANIZATION_BRANCH_VIEW = "ORGANIZATION_BRANCH_VIEW";
     public static final String ORGANIZATION_BRANCH_MANAGE = "ORGANIZATION_BRANCH_MANAGE";
 
-    // ===== INGREDIENT CATEGORY =====
-    public static final String INGREDIENT_CATEGORY_VIEW = "INGREDIENT_CATEGORY_VIEW";
-    public static final String INGREDIENT_CATEGORY_MANAGE = "INGREDIENT_CATEGORY_MANAGE";
-    public static final String INGREDIENT_VIEW = "INGREDIENT_VIEW";
-    public static final String INGREDIENT_MANAGE = "INGREDIENT_MANAGE";
-
     // ===== INVENTORY =====
+    public static final String INVENTORY_CATEGORY_VIEW = "INVENTORY_CATEGORY_VIEW";
+    public static final String INVENTORY_CATEGORY_MANAGE = "INVENTORY_CATEGORY_MANAGE";
     public static final String INVENTORY_VIEW = "INVENTORY_VIEW";
     public static final String INVENTORY_MANAGE = "INVENTORY_MANAGE";
     public static final String INVENTORY_TRANSACTION_VIEW = "INVENTORY_TRANSACTION_VIEW";

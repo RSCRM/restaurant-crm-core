@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = OrganizationConstants.TABLE_ORGANIZATION)
 public class Organization extends BaseEntity {
 
-    @NotBlank
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = OrganizationConstants.COL_OWNER_ID, nullable = false)
     User owner;

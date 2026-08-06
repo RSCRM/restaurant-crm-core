@@ -1,8 +1,13 @@
 package com.restaurant.crm.modules.licensemanagement.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
+import com.restaurant.crm.common.constant.PaginationConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.licensemanagement.dto.request.GrantSubscriptionRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.request.SubscriptionSearchRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.SubscriptionResponse;
 import com.restaurant.crm.modules.licensemanagement.service.interfaces.LicenseSubscriptionService;
 import jakarta.validation.Valid;
@@ -12,11 +17,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin/subscriptions")
@@ -66,6 +67,33 @@ public class LicenseSubscriptionController {
         ApiResponse<SubscriptionResponse> response = ApiResponse.<SubscriptionResponse>builder()
                 .success(ApiConstant.SUCCESS)
                 .data(subscriptionResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/organization/{organizationId}/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PagingResponse<SubscriptionResponse>>> searchSubscriptionsByOrganization(
+            @PathVariable String organizationId,
+            @RequestBody SubscriptionSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        ApiResponse<PagingResponse<SubscriptionResponse>> response = ApiResponse.<PagingResponse<SubscriptionResponse>>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(licenseSubscriptionService.searchSubscriptionsByOrganization(organizationId, searchRequest, pagingRequest))
                 .build();
 
         return ResponseEntity.ok(response);
