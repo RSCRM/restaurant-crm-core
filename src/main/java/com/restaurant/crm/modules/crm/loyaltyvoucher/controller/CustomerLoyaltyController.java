@@ -80,6 +80,16 @@ public class CustomerLoyaltyController {
                 .build());
     }
 
+    /** Áp dụng Voucher Mã Code trực tiếp vào đơn hàng hiện tại */
+    @PostMapping("/vouchers/code/apply")
+    public ResponseEntity<ApiResponse<String>> applyVoucherCode(@org.springframework.web.bind.annotation.RequestParam String voucherCode) {
+        customerLoyaltyService.applyVoucherCodeToCurrentOrder(voucherCode);
+        return ResponseEntity.ok(ApiResponse.<String>builder()
+                .success(true)
+                .data("Đã áp dụng mã ưu đãi thành công!")
+                .build());
+    }
+
     /** Hủy dùng Voucher (bỏ áp dụng Voucher đang dùng trên đơn hàng hiện tại) */
     @PostMapping("/vouchers/remove")
     public ResponseEntity<ApiResponse<String>> removeVoucher() {

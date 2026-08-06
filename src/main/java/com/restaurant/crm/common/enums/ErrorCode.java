@@ -115,6 +115,7 @@ public enum ErrorCode {
     ALLOCATION_INVALID_PERCENT("ALLOC_1003", "Allocation percent must be between 1 and 100", HttpStatus.BAD_REQUEST),
     // ==== BOOKING ERRORS ====
     BOOKING_NOT_FOUND("BOOKING_1000", "Booking not found", HttpStatus.NOT_FOUND),
+    BOOKING_TIME_MUST_BE_FUTURE("BOOKING_1001", "Thời gian đặt bàn phải ở trong tương lai", HttpStatus.BAD_REQUEST),
 
     // ==== TABLE ERRORS ====
     TABLE_AREA_NOT_FOUND("TABLE_1000", "Table area not found in branch", HttpStatus.NOT_FOUND),
@@ -308,6 +309,11 @@ public enum ErrorCode {
     // ==== CUSTOMER ORDER TRACKING ERRORS ====
     TRACK_NO_ACTIVE_ORDER("TRACK_1000", "No active order for this session yet", HttpStatus.CONFLICT),
     TRACK_ORDER_NOT_FOUND("TRACK_1001", "The order linked to this session no longer exists", HttpStatus.NOT_FOUND),
+
+    // ==== VOUCHER CODE ERRORS ====
+    VOUCHER_CODE_CANNOT_BE_REDEEMED_BY_POINTS("VOUCHER_1001", "Voucher code cannot be redeemed by points", HttpStatus.BAD_REQUEST),
+    VOUCHER_USAGE_LIMIT_EXCEEDED("VOUCHER_1002", "Mã ưu đãi đã hết số lượt sử dụng", HttpStatus.BAD_REQUEST),
+    VOUCHER_CODE_INVALID_OR_NOT_FOUND("VOUCHER_1003", "Mã ưu đãi không tồn tại hoặc không hợp lệ", HttpStatus.BAD_REQUEST),
     ;
 
     String code;

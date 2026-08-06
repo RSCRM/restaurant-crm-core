@@ -68,6 +68,10 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse createBooking(CreateBookingRequest request) {
         validateBranchAccess(request.getBranchId());
 
+        if (request.getBookingTime() != null && request.getBookingTime().isBefore(java.time.Instant.now())) {
+            throw new AppException(ErrorCode.BOOKING_TIME_MUST_BE_FUTURE);
+        }
+
         Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
                 .orElseGet(() -> customerRepository.save(Customer.builder()
                         .phone(request.getCustomerPhone())
@@ -230,6 +234,83 @@ public class BookingServiceImpl implements BookingService {
 
         Booking updatedBooking = bookingRepository.save(booking);
 
+        return bookingMapper.toBookingResponse(updatedBooking);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<BookingResponse> searchBookings(com.restaurant.crm.modules.erp.booking.dto.request.BookingSearchRequest searchRequest, int page, int size) {
+        if (searchRequest != null) {
+            if ((searchRequest.getBranchId() == null || searchRequest.getBranchId().isBlank()) && AuthUtils.getBranchId() != null) {
+                searchRequest.setBranchId(AuthUtils.getBranchId());
+            }
+            if (searchRequest.getBranchId() != null && !searchRequest.getBranchId().isBlank()) {
+                validateBranchAccess(searchRequest.getBranchId());
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        Page<Booking> bookingPage = bookingRepository.findAll(com.restaurant.crm.modules.erp.booking.specification.BookingSpecification.build(searchRequest), pageable);
+
+        return PagingResponse.<BookingResponse>builder()
+                .currentPage(page)
+                .pageSize(bookingPage.getSize())
+                .totalPages(bookingPage.getTotalPages())
+                .totalElement(bookingPage.getTotalElements())
+                .data(bookingPage.getContent().stream()
+                        .map(bookingMapper::toBookingResponse)
+                        .toList())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse updateBooking(String id, com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingRequest request) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        validateBranchAccess(booking.getBranch().getId());
+
+        if (request.getBookingTime() != null && request.getBookingTime().isBefore(java.time.Instant.now())) {
+            throw new AppException(ErrorCode.BOOKING_TIME_MUST_BE_FUTURE);
+        }
+
+        if (request.getCustomerPhone() != null && !request.getCustomerPhone().isBlank()) {
+            Customer customer = customerRepository.findByPhone(request.getCustomerPhone())
+                    .orElseGet(() -> customerRepository.save(Customer.builder()
+                            .phone(request.getCustomerPhone())
+                            .status(CustomerStatus.ACTIVE)
+                            .build()));
+            booking.setCustomer(customer);
+        }
+
+        if (request.getTableId() != null) {
+            if (request.getTableId().isBlank()) {
+                booking.setTables(null);
+            } else {
+                RestaurantTable table = tableRepository.findById(request.getTableId())
+                        .orElseThrow(() -> new AppException(ErrorCode.ORDER_TABLE_NOT_FOUND));
+                booking.setTables(table);
+            }
+        }
+
+        if (request.getBookingTime() != null) {
+            booking.setBookingTime(request.getBookingTime());
+        }
+
+        if (request.getGuestCount() != null) {
+            booking.setGuestCount(request.getGuestCount());
+        }
+
+        if (request.getNote() != null) {
+            booking.setNote(request.getNote());
+        }
+
+        if (request.getStatus() != null) {
+            booking.setStatus(request.getStatus());
+        }
+
+        Booking updatedBooking = bookingRepository.save(booking);
         return bookingMapper.toBookingResponse(updatedBooking);
     }
 }

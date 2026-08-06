@@ -25,6 +25,9 @@ public interface CustomerLoyaltyService {
     /** Áp dụng Voucher vào đơn hàng hiện tại */
     void applyVoucherToCurrentOrder(String customerVoucherId);
 
+    /** Áp dụng Voucher Mã Code trực tiếp vào đơn hàng hiện tại */
+    void applyVoucherCodeToCurrentOrder(String voucherCode);
+
     /** Hủy áp dụng Voucher khỏi đơn hàng hiện tại */
     void removeVoucherFromCurrentOrder();
 }
