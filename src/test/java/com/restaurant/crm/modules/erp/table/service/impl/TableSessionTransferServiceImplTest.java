@@ -20,6 +20,7 @@ import com.restaurant.crm.modules.erp.table.mapper.TableSessionMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableTransferHistoryRepository;
+import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,8 @@ class TableSessionTransferServiceImplTest {
     @Mock
     OrderRepository orderRepository;
     @Mock
+    BookingRepository bookingRepository;
+    @Mock
     TableSessionMapper tableSessionMapper;
 
     TableSessionServiceImpl service;
@@ -64,6 +67,7 @@ class TableSessionTransferServiceImplTest {
                 tableSessionRepository,
                 tableTransferHistoryRepository,
                 orderRepository,
+                bookingRepository,
                 tableSessionMapper
         );
     }
