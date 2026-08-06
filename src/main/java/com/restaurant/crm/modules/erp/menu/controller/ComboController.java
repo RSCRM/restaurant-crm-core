@@ -34,21 +34,21 @@ public class ComboController {
     ComboManagementService service;
 
     @PostMapping("/combos")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.COMBO_ADD + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.COMBO_ADD + "')")
     public ResponseEntity<ApiResponse<ComboResponse>> create(@Valid @RequestBody CreateComboRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<ComboResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.create(request)).build());
     }
 
     @PutMapping("/combos/{id}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.COMBO_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.COMBO_UPDATE + "')")
     public ResponseEntity<ApiResponse<ComboResponse>> update(@PathVariable String id, @Valid @RequestBody UpdateComboRequest request) {
         return ResponseEntity.ok(ApiResponse.<ComboResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.update(id, request)).build());
     }
 
     @DeleteMapping("/combos/{id}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.COMBO_DELETE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.COMBO_DELETE + "')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());
@@ -92,21 +92,21 @@ public class ComboController {
     }
 
     @PostMapping("/combos/{comboId}/items")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.COMBO_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.COMBO_UPDATE + "')")
     public ResponseEntity<ApiResponse<ComboItemResponse>> addItem(@PathVariable String comboId, @Valid @RequestBody ComboItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<ComboItemResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.addItem(comboId, request)).build());
     }
 
     @PutMapping("/combo-items/{itemId}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.COMBO_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.COMBO_UPDATE + "')")
     public ResponseEntity<ApiResponse<ComboItemResponse>> updateItem(@PathVariable String itemId, @Valid @RequestBody ComboItemRequest request) {
         return ResponseEntity.ok(ApiResponse.<ComboItemResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.updateItem(itemId, request)).build());
     }
 
     @DeleteMapping("/combo-items/{itemId}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.COMBO_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.COMBO_UPDATE + "')")
     public ResponseEntity<ApiResponse<Void>> deleteItem(@PathVariable String itemId) {
         service.deleteItem(itemId);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());

@@ -1,4 +1,4 @@
-package com.restaurant.crm.modules.erp.menu.security;
+package com.restaurant.crm.modules.erp.table.security;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
@@ -7,7 +7,7 @@ import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MenuBranchGuard {
+public class TableBranchGuard {
 
     // owner (orgRole = OWNER) qua thang; employee phai dung branch cua minh
     public void validateBranchAccess(String branchId) {

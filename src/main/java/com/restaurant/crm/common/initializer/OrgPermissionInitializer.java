@@ -63,6 +63,7 @@ public class OrgPermissionInitializer implements ApplicationRunner {
                 StartDefinedOrgPermission.STAFF_MANAGE,
                 StartDefinedOrgPermission.BRANCH_MANAGE,
                 StartDefinedOrgPermission.ORG_MANAGE,
+                StartDefinedOrgPermission.ORG_ROLE_MANAGE,
 
                 // ===== ORGANIZATION =====
                 StartDefinedOrgPermission.ORGANIZATION_VIEW,
@@ -86,6 +87,7 @@ public class OrgPermissionInitializer implements ApplicationRunner {
 
                 // ── Employee ──
                 EmployeeConstants.EMPLOYEE_ADD,
+                EmployeeConstants.EMPLOYEE_VIEW,
                 EmployeeConstants.EMPLOYEE_UPDATE,
                 EmployeeConstants.EMPLOYEE_DELETE,
                 EmployeeConstants.EMPLOYEE_ROLE_ASSIGN,

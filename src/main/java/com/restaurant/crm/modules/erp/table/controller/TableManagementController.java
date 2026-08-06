@@ -41,14 +41,14 @@ public class TableManagementController {
     // ---------- AREA ----------
 
     @PostMapping(TableManagementConstants.AREAS)
-    @PreAuthorize("@tableAccessChecker.canManage('" + TablePermissionConstants.TABLE_AREA_ADD + "')")
+    @PreAuthorize("hasAuthority('" + TablePermissionConstants.TABLE_AREA_ADD + "')")
     public ResponseEntity<ApiResponse<TableAreaResponse>> createArea(@Valid @RequestBody CreateAreaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<TableAreaResponse>builder()
                 .success(ApiConstant.SUCCESS).data(tableManagementService.createArea(request)).build());
     }
 
     @PutMapping(TableManagementConstants.AREAS + "/{id}")
-    @PreAuthorize("@tableAccessChecker.canManage('" + TablePermissionConstants.TABLE_AREA_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + TablePermissionConstants.TABLE_AREA_UPDATE + "')")
     public ResponseEntity<ApiResponse<TableAreaResponse>> updateArea(@PathVariable String id,
                                                                      @Valid @RequestBody UpdateAreaRequest request) {
         return ResponseEntity.ok(ApiResponse.<TableAreaResponse>builder()
@@ -56,7 +56,7 @@ public class TableManagementController {
     }
 
     @DeleteMapping(TableManagementConstants.AREAS + "/{id}")
-    @PreAuthorize("@tableAccessChecker.canManage('" + TablePermissionConstants.TABLE_AREA_DELETE + "')")
+    @PreAuthorize("hasAuthority('" + TablePermissionConstants.TABLE_AREA_DELETE + "')")
     public ResponseEntity<ApiResponse<Void>> deleteArea(@PathVariable String id) {
         tableManagementService.deleteArea(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());
@@ -77,14 +77,14 @@ public class TableManagementController {
     // ---------- TABLE ----------
 
     @PostMapping(TableManagementConstants.TABLES)
-    @PreAuthorize("@tableAccessChecker.canManage('" + TablePermissionConstants.RESTAURANT_TABLE_ADD + "')")
+    @PreAuthorize("hasAuthority('" + TablePermissionConstants.RESTAURANT_TABLE_ADD + "')")
     public ResponseEntity<ApiResponse<RestaurantTableResponse>> createTable(@Valid @RequestBody CreateTableRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<RestaurantTableResponse>builder()
                 .success(ApiConstant.SUCCESS).data(tableManagementService.createTable(request)).build());
     }
 
     @PutMapping(TableManagementConstants.TABLES + "/{id}")
-    @PreAuthorize("@tableAccessChecker.canManage('" + TablePermissionConstants.RESTAURANT_TABLE_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + TablePermissionConstants.RESTAURANT_TABLE_UPDATE + "')")
     public ResponseEntity<ApiResponse<RestaurantTableResponse>> updateTable(@PathVariable String id,
                                                                             @Valid @RequestBody UpdateTableRequest request) {
         return ResponseEntity.ok(ApiResponse.<RestaurantTableResponse>builder()
@@ -92,7 +92,7 @@ public class TableManagementController {
     }
 
     @DeleteMapping(TableManagementConstants.TABLES + "/{id}")
-    @PreAuthorize("@tableAccessChecker.canManage('" + TablePermissionConstants.RESTAURANT_TABLE_DELETE + "')")
+    @PreAuthorize("hasAuthority('" + TablePermissionConstants.RESTAURANT_TABLE_DELETE + "')")
     public ResponseEntity<ApiResponse<Void>> deleteTable(@PathVariable String id) {
         tableManagementService.deleteTable(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());

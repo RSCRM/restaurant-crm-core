@@ -34,7 +34,7 @@ public class ProductController {
     ProductManagementService service;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.PRODUCT_ADD + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.PRODUCT_ADD + "')")
     public ResponseEntity<ApiResponse<ProductResponse>> create(@Valid @ModelAttribute CreateProductRequest request,
                                                                @RequestPart(value = "image", required = false) MultipartFile image) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<ProductResponse>builder()
@@ -42,7 +42,7 @@ public class ProductController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.PRODUCT_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.PRODUCT_UPDATE + "')")
     public ResponseEntity<ApiResponse<ProductResponse>> update(@PathVariable String id,
                                                                @Valid @ModelAttribute UpdateProductRequest request,
                                                                @RequestPart(value = "image", required = false) MultipartFile image) {
@@ -51,7 +51,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.PRODUCT_DELETE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.PRODUCT_DELETE + "')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());

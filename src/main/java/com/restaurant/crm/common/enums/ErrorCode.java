@@ -53,6 +53,7 @@ public enum ErrorCode {
         FILE_INVALID_UPLOAD_TYPE("FILE_1004", "Invalid upload type", HttpStatus.BAD_REQUEST),
         FILE_REF_ID_REQUIRED("FILE_1005", "Reference id is required", HttpStatus.BAD_REQUEST),
 
+<<<<<<< HEAD
         // ==== EMPLOYEE ERRORS ====
         EMPLOYEE_NOT_FOUND("EMP_1000", "Employee not found", HttpStatus.NOT_FOUND),
         EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
@@ -66,6 +67,33 @@ public enum ErrorCode {
         EMPLOYEE_BRANCH_REQUIRED("EMP_1009", "Branch id is required", HttpStatus.BAD_REQUEST),
         EMPLOYEE_START_DATE_REQUIRED("EMP_1010", "Start date is required", HttpStatus.BAD_REQUEST),
         EMPLOYEE_ORG_ROLE_REQUIRED("EMP_1011", "Org role id is required", HttpStatus.BAD_REQUEST),
+=======
+    // ==== EMPLOYEE ERRORS ====
+    EMPLOYEE_NOT_FOUND("EMP_1000", "Employee not found", HttpStatus.NOT_FOUND),
+    EMPLOYEE_CODE_EXISTS("EMP_1001", "Employee code already exists", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_EMAIL_INVALID("EMP_1002", "Email not valid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_NOT_ACTIVE("EMP_1003", "Employee is not active", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ORG_ROLE_NOT_FOUND("EMP_1004", "Org role not found", HttpStatus.NOT_FOUND),
+    EMPLOYEE_SALARY_INVALID("EMP_1005", "Salary must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_USERNAME_REQUIRED("EMP_1006", "Username is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_EMAIL_REQUIRED("EMP_1007", "Email is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_PHONE_REQUIRED("EMP_1008", "Phone is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_BRANCH_REQUIRED("EMP_1009", "Branch id is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_START_DATE_REQUIRED("EMP_1010", "Start date is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ORG_ROLE_REQUIRED("EMP_1011", "Org role id is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_FULL_NAME_REQUIRED("EMP_1012", "Full name is required", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_FULL_NAME_INVALID("EMP_1013", "Full name is not valid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_PHONE_INVALID("EMP_1014", "Phone is not valid", HttpStatus.BAD_REQUEST),
+    EMPLOYEE_ACTIVATE_REQUIRES_ORG_ROLE("EMP_1015", "Employee must be assigned an org role before activation", HttpStatus.BAD_REQUEST),
+
+    // ==== ORG ROLE ERRORS ====
+    ORG_ROLE_NOT_FOUND("ORGROLE_1000", "Org role not found", HttpStatus.NOT_FOUND),
+    ORG_ROLE_NAME_EXISTS("ORGROLE_1001", "Role name already exists in this organization", HttpStatus.BAD_REQUEST),
+    ORG_ROLE_NAME_REQUIRED("ORGROLE_1002", "Role name is required", HttpStatus.BAD_REQUEST),
+    ORG_ROLE_ORGANIZATION_REQUIRED("ORGROLE_1003", "Organization id is required", HttpStatus.BAD_REQUEST),
+    ORG_ROLE_DATA_SCOPE_REQUIRED("ORGROLE_1004", "Data scope is required", HttpStatus.BAD_REQUEST),
+    ORG_PERMISSION_NOT_FOUND("ORGROLE_1005", "Org permission not found", HttpStatus.NOT_FOUND),
+>>>>>>> c1a5563ed8e61b5464cf9bfceb1b79e4d27e5209
 
         // ==== ATTENDANCE ERRORS ====
         ATTENDANCE_SHIFT_NOT_FOUND("ATT_1000", "No active shift found", HttpStatus.NOT_FOUND),

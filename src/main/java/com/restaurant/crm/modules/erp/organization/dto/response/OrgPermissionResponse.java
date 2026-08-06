@@ -8,24 +8,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EmployeeResponse {
+public class OrgPermissionResponse {
     String id;
-    String username;
-    String email;
-    String phone;
-    String fullName;
-    String branchId;
-    String orgRoleName;
-    BigDecimal salary;
-    String status;
-    LocalDate startDate;
+    String permissionName;
 }

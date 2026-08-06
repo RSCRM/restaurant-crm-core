@@ -27,21 +27,21 @@ public class CategoryController {
     CategoryManagementService service;
 
     @PostMapping
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.CATEGORY_ADD + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.CATEGORY_ADD + "')")
     public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<CategoryResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.create(request)).build());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.CATEGORY_UPDATE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.CATEGORY_UPDATE + "')")
     public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable String id, @Valid @RequestBody UpdateCategoryRequest request) {
         return ResponseEntity.ok(ApiResponse.<CategoryResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.update(id, request)).build());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@menuAccessChecker.canManage('" + MenuPermissionConstants.CATEGORY_DELETE + "')")
+    @PreAuthorize("hasAuthority('" + MenuPermissionConstants.CATEGORY_DELETE + "')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(ApiConstant.SUCCESS).build());

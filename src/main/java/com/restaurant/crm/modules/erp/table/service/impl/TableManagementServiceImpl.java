@@ -5,7 +5,6 @@ import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.booking.entity.Booking;
 import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
 import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
-import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.constants.TableManagementConstants;
 import com.restaurant.crm.modules.erp.table.constants.TableSessionConstants;
 import com.restaurant.crm.modules.erp.table.dto.request.CreateAreaRequest;
@@ -23,8 +22,8 @@ import com.restaurant.crm.modules.erp.table.mapper.TableManagementMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableAreaRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
+import com.restaurant.crm.modules.erp.table.security.TableBranchGuard;
 import com.restaurant.crm.modules.erp.table.service.interfaces.TableManagementService;
-import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,17 +40,17 @@ public class TableManagementServiceImpl implements TableManagementService {
 
     TableAreaRepository tableAreaRepository;
     RestaurantTableRepository restaurantTableRepository;
-    OrganizationBranchRepository organizationBranchRepository;
     BookingRepository bookingRepository;
     TableSessionRepository tableSessionRepository;
     TableManagementMapper mapper;
+    TableBranchGuard tableBranchGuard;
 
     // ================= AREA =================
 
     @Override
     @Transactional
     public TableAreaResponse createArea(CreateAreaRequest request) {
-        validateBranchAccess(request.getBranchId());
+        tableBranchGuard.validateBranchAccess(request.getBranchId());
         if (tableAreaRepository.existsByBranchIdAndAreaName(request.getBranchId(), request.getAreaName())) {
             throw new AppException(ErrorCode.TABLE_AREA_NAME_EXISTS);
         }
@@ -70,7 +69,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public TableAreaResponse updateArea(String areaId, UpdateAreaRequest request) {
         TableArea area = tableAreaRepository.findById(areaId)
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_AREA_NOT_FOUND));
-        validateBranchAccess(area.getBranchId());
+        tableBranchGuard.validateBranchAccess(area.getBranchId());
         if (!area.getAreaName().equals(request.getAreaName())
                 && tableAreaRepository.existsByBranchIdAndAreaNameAndIdNot(area.getBranchId(), request.getAreaName(), areaId)) {
             throw new AppException(ErrorCode.TABLE_AREA_NAME_EXISTS);
@@ -87,7 +86,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public void deleteArea(String areaId) {
         TableArea area = tableAreaRepository.findById(areaId)
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_AREA_NOT_FOUND));
-        validateBranchAccess(area.getBranchId());
+        tableBranchGuard.validateBranchAccess(area.getBranchId());
         List<RestaurantTable> tables = restaurantTableRepository.findByAreaIdOrderByTableNumberAsc(areaId);
         restaurantTableRepository.deleteAll(tables);
         tableAreaRepository.delete(area);
@@ -96,7 +95,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     @Override
     @Transactional(readOnly = true)
     public List<TableAreaResponse> listAreasByBranch(String branchId) {
-        validateBranchAccess(branchId);
+        tableBranchGuard.validateBranchAccess(branchId);
         return tableAreaRepository.findByBranchIdOrderByDisplayOrderAscAreaNameAsc(branchId)
                 .stream().map(mapper::toAreaResponse).toList();
     }
@@ -106,7 +105,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public TableAreaResponse getArea(String areaId) {
         TableArea area = tableAreaRepository.findById(areaId)
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_AREA_NOT_FOUND));
-        validateBranchAccess(area.getBranchId());
+        tableBranchGuard.validateBranchAccess(area.getBranchId());
         return mapper.toAreaResponse(area);
     }
 
@@ -117,7 +116,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public RestaurantTableResponse createTable(CreateTableRequest request) {
         TableArea area = tableAreaRepository.findById(request.getAreaId())
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_AREA_NOT_FOUND));
-        validateBranchAccess(area.getBranchId());
+        tableBranchGuard.validateBranchAccess(area.getBranchId());
         if (restaurantTableRepository.existsByArea_IdAndTableNumber(area.getId(), request.getTableNumber())) {
             throw new AppException(ErrorCode.RESTAURANT_TABLE_NUMBER_EXISTS);
         }
@@ -139,7 +138,7 @@ public class TableManagementServiceImpl implements TableManagementService {
         RestaurantTable table = restaurantTableRepository.findById(tableId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESTAURANT_TABLE_NOT_FOUND));
         TableArea currentArea = table.getArea();
-        validateBranchAccess(currentArea.getBranchId());
+        tableBranchGuard.validateBranchAccess(currentArea.getBranchId());
 
         TableArea targetArea = currentArea;
         if (request.getAreaId() != null && !request.getAreaId().isBlank()
@@ -173,7 +172,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public void deleteTable(String tableId) {
         RestaurantTable table = restaurantTableRepository.findById(tableId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESTAURANT_TABLE_NOT_FOUND));
-        validateBranchAccess(table.getArea().getBranchId());
+        tableBranchGuard.validateBranchAccess(table.getArea().getBranchId());
         if (table.getStatus() != RestaurantTableStatus.AVAILABLE) {
             throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
         }
@@ -186,7 +185,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public List<RestaurantTableResponse> listTablesByArea(String areaId) {
         TableArea area = tableAreaRepository.findById(areaId)
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_AREA_NOT_FOUND));
-        validateBranchAccess(area.getBranchId());
+        tableBranchGuard.validateBranchAccess(area.getBranchId());
         return restaurantTableRepository.findByAreaIdOrderByTableNumberAsc(areaId)
                 .stream()
                 .filter(table -> table.getStatus() != RestaurantTableStatus.DELETED)
@@ -199,7 +198,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     public RestaurantTableResponse getTable(String tableId) {
         RestaurantTable table = restaurantTableRepository.findById(tableId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESTAURANT_TABLE_NOT_FOUND));
-        validateBranchAccess(table.getArea().getBranchId());
+        tableBranchGuard.validateBranchAccess(table.getArea().getBranchId());
         return mapper.toTableResponse(table);
     }
 
@@ -250,7 +249,7 @@ public class TableManagementServiceImpl implements TableManagementService {
     private RestaurantTable getBookingTable(String tableId) {
         RestaurantTable table = restaurantTableRepository.findById(tableId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESTAURANT_TABLE_NOT_FOUND));
-        validateBranchAccess(table.getArea().getBranchId());
+        tableBranchGuard.validateBranchAccess(table.getArea().getBranchId());
         if (table.getStatus() == RestaurantTableStatus.DELETED) {
             throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
         }
@@ -265,15 +264,4 @@ public class TableManagementServiceImpl implements TableManagementService {
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
     }
 
-    // ================= AUTHZ =================
-
-    private void validateBranchAccess(String branchId) {
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            organizationBranchRepository.findByIdAndOrganization_OwnerId(branchId, actorUserId)
-                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-        } else if (!branchId.equals(AuthUtils.getBranchId())) {
-            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-        }
-    }
 }
