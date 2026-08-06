@@ -16,6 +16,7 @@ import java.time.Instant;
 public class OrganizationResponse {
     String id;
     String ownerId;
+    String ownerName;
     String organizationName;
     String taxCode;
     String address;
