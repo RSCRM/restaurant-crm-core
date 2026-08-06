@@ -7,6 +7,7 @@ public class EmployeeConstants {
 
     //======= Employee management permissions ========
     public static final String EMPLOYEE_ADD = "EMPLOYEE_ADD";
+    public static final String EMPLOYEE_VIEW = "EMPLOYEE_VIEW";
     public static final String EMPLOYEE_UPDATE = "EMPLOYEE_UPDATE";
     public static final String EMPLOYEE_DELETE = "EMPLOYEE_DELETE";
     public static final String EMPLOYEE_ROLE_ASSIGN = "EMPLOYEE_ROLE_ASSIGN";
