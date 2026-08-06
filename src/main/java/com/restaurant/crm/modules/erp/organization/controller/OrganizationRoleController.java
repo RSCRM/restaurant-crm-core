@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.organization.controller;
 
 import com.restaurant.crm.common.constant.ApiConstant;
 import com.restaurant.crm.common.dto.response.ApiResponse;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPermission;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrgRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrgRoleRequest;
@@ -42,14 +43,16 @@ public class OrganizationRoleController {
     }
 
     @GetMapping("/org-roles")
-    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.ORG_ROLE_MANAGE + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.ORG_ROLE_MANAGE + "') "
+            + "or hasAuthority('" + EmployeeConstants.EMPLOYEE_ROLE_ASSIGN + "')")
     public ResponseEntity<ApiResponse<List<OrgRoleResponse>>> list() {
         return ResponseEntity.ok(ApiResponse.<List<OrgRoleResponse>>builder()
                 .success(ApiConstant.SUCCESS).data(service.listOrgRoles()).build());
     }
 
     @GetMapping("/org-roles/{id}")
-    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.ORG_ROLE_MANAGE + "')")
+    @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.ORG_ROLE_MANAGE + "') "
+            + "or hasAuthority('" + EmployeeConstants.EMPLOYEE_ROLE_ASSIGN + "')")
     public ResponseEntity<ApiResponse<OrgRoleResponse>> get(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.<OrgRoleResponse>builder()
                 .success(ApiConstant.SUCCESS).data(service.get(id)).build());

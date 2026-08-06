@@ -4,6 +4,7 @@ import com.restaurant.crm.modules.profile.constants.UserProfileConstants;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -37,6 +38,9 @@ public class CreateEmployeeRequest {
             max = UserProfileConstants.MAX_CHARS_FULL_NAME,
             message = "EMPLOYEE_FULL_NAME_INVALID")
     String fullName;
+
+    @Pattern(regexp = UserProfileConstants.PHONE_PATTERN, message = "EMPLOYEE_PHONE_INVALID")
+    String phone;
 
     @NotBlank(message = "EMPLOYEE_BRANCH_REQUIRED")
     String branchId;

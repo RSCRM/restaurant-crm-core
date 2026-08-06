@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.organization.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
@@ -69,6 +70,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         List<Employee> visible = employees.stream()
                 .filter(employee -> !employee.getId().equals(currentEmployeeId))
+                .filter(employee -> employee.getOrgRole() == null
+                        || !OrgRoleConstants.OWNER_ROLE.equals(employee.getOrgRole().getRoleName()))
                 .toList();
 
         List<String> userIds = visible.stream()
@@ -141,6 +144,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
+        if (request.getPhone() != null && userProfileRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
+        }
 
         OrganizationBranch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
@@ -161,6 +167,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         userProfileRepository.save(UserProfile.builder()
                 .user(user)
                 .fullName(request.getFullName())
+                .phone(request.getPhone())
                 .build());
 
         // Gan role di duong rieng (assignRole), sau do moi activate qua updateEmployee.
@@ -168,6 +175,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .user(user)
                 .branch(branch)
                 .email(request.getEmail())
+                .phone(request.getPhone())
                 .startDate(request.getStartDate())
                 .salary(request.getSalary())
                 .status(EmployeeAccountConstants.DEFAULT_STATUS)

@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -74,7 +75,7 @@ public class OrganizationRoleServiceImpl implements OrganizationRoleService {
     @Override
     @Transactional(readOnly = true)
     public List<OrgRoleResponse> listOrgRoles() {
-        Organization org = currentOrganization();
+        Organization org = organizationFromToken();
         return orgRoleRepository.findByOrganization_Id(org.getId())
                 .stream()
                 .filter(role -> !OrgRoleConstants.OWNER_ROLE.equals(role.getRoleName()))
@@ -86,7 +87,7 @@ public class OrganizationRoleServiceImpl implements OrganizationRoleService {
     public OrgRoleResponse get(String id) {
         OrgRole role = orgRoleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ORG_ROLE_NOT_FOUND));
-        requireRoleInOrganization(role, currentOrganization());
+        requireRoleInOrganization(role, organizationFromToken());
         return mapper.toOrgRoleResponse(role);
     }
 
@@ -96,9 +97,15 @@ public class OrganizationRoleServiceImpl implements OrganizationRoleService {
         return mapper.toOrgPermissionResponses(orgPermissionRepository.findAll());
     }
 
-    // owner-only (theo orgRole tu claim); organization lay tu token context
+    // owner-only (create/update): check owner roi lay org tu token
     private Organization currentOrganization() {
         orgRoleGuard.requireOwner();
+        return organizationFromToken();
+    }
+
+    // view (list/get): chi scope theo organizationId trong token, khong ep owner
+    // (authz da gate o @PreAuthorize: ORG_ROLE_MANAGE or EMPLOYEE_ROLE_ASSIGN)
+    private Organization organizationFromToken() {
         String orgId = AuthUtils.getOrganizationId();
         if (orgId == null) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
@@ -115,12 +122,12 @@ public class OrganizationRoleServiceImpl implements OrganizationRoleService {
 
     private Set<OrgPermission> resolvePermissions(List<String> permissionIds) {
         if (permissionIds == null || permissionIds.isEmpty()) {
-            return Set.of();
+            return new HashSet<>();
         }
         List<OrgPermission> found = orgPermissionRepository.findAllById(permissionIds);
         if (found.size() != permissionIds.stream().distinct().count()) {
             throw new AppException(ErrorCode.ORG_PERMISSION_NOT_FOUND);
         }
-        return Set.copyOf(found);
+        return new HashSet<>(found);
     }
 }

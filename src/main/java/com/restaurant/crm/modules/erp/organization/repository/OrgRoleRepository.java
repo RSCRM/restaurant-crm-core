@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface OrgRoleRepository extends JpaRepository<OrgRole, String> {
     Optional<OrgRole> findByRoleName(String roleName);
 
+    Optional<OrgRole> findByOrganization_IdAndRoleName(String organizationId, String roleName);
+
     List<OrgRole> findByOrganization_Id(String organizationId);
 
     boolean existsByOrganization_IdAndRoleName(String organizationId, String roleName);

@@ -37,7 +37,11 @@ FE đọc `success` để phân nhánh, `errorMessage.errorCode` để map thôn
 
 # A. ORG ROLE MANAGEMENT
 
-Quản lý org_role (vai trò cấp tổ chức) + gán permission. Chỉ **owner** gọi được (permission `ORG_ROLE_MANAGE` + guard owner). `organizationId` backend tự lấy từ token — FE **không** gửi. Mọi org_role tạo qua CRUD luôn có `dataScope = BRANCH` (backend set cứng, FE không gửi/không chọn).
+Quản lý org_role (vai trò cấp tổ chức) + gán permission. `organizationId` backend tự lấy từ token — FE **không** gửi. Mọi org_role tạo qua CRUD luôn có `dataScope = BRANCH` (backend set cứng, FE không gửi/không chọn).
+
+**Phân quyền:**
+- **Ghi (create/update)** + **list permission**: chỉ **owner** — permission `ORG_ROLE_MANAGE` + guard `orgRole == OWNER`.
+- **Xem org-role (list/get)**: **owner HOẶC người có `EMPLOYEE_ROLE_ASSIGN`** — gate `hasAuthority('ORG_ROLE_MANAGE') or hasAuthority('EMPLOYEE_ROLE_ASSIGN')`, chỉ scope theo org trong token (không ép owner). Mục đích: người được quyền gán role cho nhân viên có thể xem danh sách org-role để chọn.
 
 ## A1. List permission hệ thống
 - **GET** `/api/v1/erp/org-permissions`
@@ -54,9 +58,10 @@ Quản lý org_role (vai trò cấp tổ chức) + gán permission. Chỉ **owne
 }
 ```
 
-## A2. List org_role của org hiện tại
+## A2. List org_role của org hiện tại — `ORG_ROLE_MANAGE` hoặc `EMPLOYEE_ROLE_ASSIGN`
 - **GET** `/api/v1/erp/org-roles`
 - Request: (none) — org lấy từ token, không truyền query.
+- **Ai gọi được**: owner (có `ORG_ROLE_MANAGE`) HOẶC người có `EMPLOYEE_ROLE_ASSIGN`. Không ép phải là owner.
 - **Lưu ý**: role hệ thống `OWNER` **không** nằm trong danh sách trả về (bị loại) — FE không hiển thị/quản lý role này.
 - Response 200:
 ```json
@@ -150,7 +155,7 @@ Bước 3 **không thể** làm trước bước 2: activate một employee chư
 - **Phạm vi dữ liệu (theo `dataScope` trong token)**:
   - `dataScope = ORGANIZATION` (vd owner): trả **toàn bộ** employee của org.
   - `dataScope = BRANCH` (vd quản lý/nhân viên chi nhánh): chỉ trả employee thuộc `branchId` trong token.
-  - Cả 2 scope đều **loại chính người đang gọi** ra khỏi danh sách (không tự thấy mình).
+  - Cả 2 scope đều **luôn loại chính người đang gọi** (không tự thấy mình) **và loại owner** (`orgRole = OWNER`) ra khỏi danh sách.
   - Mỗi item có thêm `fullName` (từ profile). Backend batch-fetch profile theo user (không N+1).
 - Response 200:
 ```json
@@ -182,16 +187,17 @@ Bước 3 **không thể** làm trước bước 2: activate một employee chư
   "username": "cashier01",
   "email": "cashier01@shop.com",
   "fullName": "Nguyen Van A",
+  "phone": "0900000000",
   "branchId": "branch-uuid",
   "startDate": "2026-07-01",
   "salary": 8000000
 }
 ```
-  - `username`, `email`, `fullName`, `branchId`, `startDate` (bắt buộc). `salary` (optional). Mật khẩu account do backend đặt mặc định.
+  - `username`, `email`, `fullName`, `branchId`, `startDate` (bắt buộc). `phone`, `salary` (optional). Mật khẩu account do backend đặt mặc định.
   - **`orgRoleId` KHÔNG còn nhận ở API này** — gán role là hành động riêng, gọi B3 sau khi tạo. Gửi thừa field sẽ bị bỏ qua.
-  - **`phone` KHÔNG nhập lúc tạo** (điền sau qua B2). Backend tạo kèm `UserProfile` (fullName). `fullName` dài 2–255 ký tự.
-- Response 201: `EmployeeResponse` với `status` = `"INACTIVE"`, `orgRoleName` = `null`, `phone` = `null`, `fullName` như gửi.
-- Lỗi: `EMPLOYEE_USERNAME_REQUIRED`, `EMPLOYEE_EMAIL_REQUIRED`, `EMPLOYEE_EMAIL_INVALID`, `EMPLOYEE_FULL_NAME_REQUIRED`, `EMPLOYEE_FULL_NAME_INVALID`, `EMPLOYEE_BRANCH_REQUIRED`, `EMPLOYEE_START_DATE_REQUIRED`, `USER_USERNAME_ALREADY_EXISTS`, `EMAIL_ALREADY_EXISTS`, `ORGANIZATION_BRANCH_NOT_FOUND`, `AUTHZ_UNAUTHORIZED`.
+  - Backend insert 1 lúc 3 bảng (`users` + `user_profiles` + `employees`). `fullName` (2–255) → profile; `phone` (nếu gửi, định dạng `^\+?[0-9]{9,15}$`) → set **cả `user_profiles.phone` lẫn `employees.phone`**, **unique toàn hệ thống**.
+- Response 201: `EmployeeResponse` với `status` = `"INACTIVE"`, `orgRoleName` = `null`, `fullName`/`phone` như gửi (`phone` = `null` nếu không gửi).
+- Lỗi: `EMPLOYEE_USERNAME_REQUIRED`, `EMPLOYEE_EMAIL_REQUIRED`, `EMPLOYEE_EMAIL_INVALID`, `EMPLOYEE_FULL_NAME_REQUIRED`, `EMPLOYEE_FULL_NAME_INVALID`, `EMPLOYEE_PHONE_INVALID`, `EMPLOYEE_BRANCH_REQUIRED`, `EMPLOYEE_START_DATE_REQUIRED`, `USER_USERNAME_ALREADY_EXISTS`, `EMAIL_ALREADY_EXISTS`, `USER_PHONE_ALREADY_EXISTS`, `ORGANIZATION_BRANCH_NOT_FOUND`, `AUTHZ_UNAUTHORIZED`.
 
 ## B2. Cập nhật thông tin employee (update-thường) — permission `EMPLOYEE_UPDATE`
 - **PUT** `/api/v1/personal/branches/employees/{id}`
