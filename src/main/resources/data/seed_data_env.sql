@@ -228,13 +228,23 @@ WHERE (role.role_name IN ('OWNER', 'MANAGER', 'CASHIER', 'WAITER', 'CHEF')
        AND permission.permission_name = 'TABLE_SESSION_CREATE')
 ON CONFLICT DO NOTHING;
 
+-- UC-SW: Booking permissions seed.
+-- Ensure all 3 booking permission rows exist in org_permissions.
+INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at)
+VALUES
+    ('p0000000-0000-0000-0000-000000000301', 0, 'BOOKING_CREATE', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000302', 0, 'BOOKING_READ',   NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000303', 0, 'BOOKING_UPDATE', NOW(), NOW())
+ON CONFLICT (permission_name) DO NOTHING;
+
 -- Owner/manager handle reservations from the table-management screen.
+-- Grant BOOKING_CREATE + BOOKING_READ + BOOKING_UPDATE to OWNER and MANAGER.
 INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
 SELECT role.id, permission.id
 FROM org_roles role
 CROSS JOIN org_permissions permission
 WHERE role.role_name IN ('OWNER', 'MANAGER')
-  AND permission.permission_name IN ('BOOKING_READ', 'BOOKING_UPDATE')
+  AND permission.permission_name IN ('BOOKING_CREATE', 'BOOKING_READ', 'BOOKING_UPDATE')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO table_areas
