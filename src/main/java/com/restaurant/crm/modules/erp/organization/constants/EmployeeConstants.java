@@ -3,8 +3,6 @@ package com.restaurant.crm.modules.erp.organization.constants;
 public class EmployeeConstants {
     private EmployeeConstants() {}
 
-    public static final String BRANCH_MANAGER_ASSIGN = "BRANCH_MANAGER_ASSIGN";
-
     //======= Employee management permissions ========
     public static final String EMPLOYEE_ADD = "EMPLOYEE_ADD";
     public static final String EMPLOYEE_VIEW = "EMPLOYEE_VIEW";

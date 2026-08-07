@@ -58,10 +58,6 @@ public class OrganizationSpecification {
                 }
 
                 // ── Filter fields (AND) ──
-                if (request.getOwnerId() != null && !request.getOwnerId().isBlank()) {
-                    predicates.add(cb.equal(root.get("owner").get("id"), request.getOwnerId()));
-                }
-
                 if (request.getStatus() != null) {
                     predicates.add(cb.equal(root.get("status"), request.getStatus()));
                 }

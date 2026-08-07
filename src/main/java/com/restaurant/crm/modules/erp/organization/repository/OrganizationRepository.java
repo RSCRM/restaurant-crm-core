@@ -14,10 +14,6 @@ import java.util.Optional;
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, String>, JpaSpecificationExecutor<Organization> {
 
-    Optional<Organization> findByOwnerId(String ownerId);
-    List<Organization> findAllByOwnerId(String ownerId);
-    Optional<Organization> findByIdAndOwnerId(String id, String ownerId);
-
     List<Organization> findByStatus(OrganizationStatus status);
 
     Page<Organization> findByStatus(
@@ -38,11 +34,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
 
     Page<Organization> findById(
         String id,
-        Pageable pageable
-    );
-
-    Page<Organization> findByOwnerId(
-        String ownerId,
         Pageable pageable
     );
 }

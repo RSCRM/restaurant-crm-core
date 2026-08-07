@@ -26,9 +26,6 @@ public class OrganizationBranch extends BaseEntity {
     @JoinColumn(name = OrganizationBranchConstants.COL_ORGANIZATION_ID, nullable = false)
     Organization organization;
 
-    @Column(name = OrganizationBranchConstants.COL_MANAGER_ID, unique = true)
-    String managerId;
-
     @NotBlank
     @NotNull
     @Column(name = OrganizationBranchConstants.COL_BRANCH_NAME,
