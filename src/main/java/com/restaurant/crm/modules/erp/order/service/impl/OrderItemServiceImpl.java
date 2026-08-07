@@ -85,7 +85,7 @@ public class OrderItemServiceImpl implements OrderItemService {
     @Override
     @Transactional
     public AddOrderItemResponse addOrderItem(String orderId, AddOrderItemRequestDto request) {
-        Order existingOrder = orderRepository.findById(orderId)
+        Order existingOrder = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         validateOrderStatusForOrderItemMutation(existingOrder);
 

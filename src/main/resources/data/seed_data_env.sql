@@ -8,15 +8,18 @@ WHERE username IN ('owner_a', 'owner_b', 'manager', 'chef_q1', 'chef_q2', 'waite
 INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at)
 VALUES
     ('p0000000-0000-0000-0000-000000000216', 0, 'PROFILE_VIEW', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000217', 0, 'PROFILE_UPDATE', NOW(), NOW())
+    ('p0000000-0000-0000-0000-000000000217', 0, 'PROFILE_UPDATE', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000218', 0, 'BRANCH_MANAGER_ASSIGN', NOW(), NOW())
 ON CONFLICT (permission_name) DO NOTHING;
 
 INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
 SELECT role.id, permission.id
 FROM org_roles role
 CROSS JOIN org_permissions permission
-WHERE role.role_name IN ('OWNER', 'MANAGER')
-  AND permission.permission_name IN ('PROFILE_VIEW', 'PROFILE_UPDATE')
+WHERE (role.role_name IN ('OWNER', 'MANAGER')
+       AND permission.permission_name IN ('PROFILE_VIEW', 'PROFILE_UPDATE'))
+   OR (role.role_name = 'OWNER'
+       AND permission.permission_name = 'BRANCH_MANAGER_ASSIGN')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO user_profiles
