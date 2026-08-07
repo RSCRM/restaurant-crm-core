@@ -74,6 +74,28 @@ public class InventoryCategoryController {
         );
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('INVENTORY_CATEGORY_VIEW')")
+    public ResponseEntity<ApiResponse<PagingResponse<InventoryCategoryResponse>>> searchInventoryCategories(
+        @RequestParam(required = false) String categoryName,
+        @RequestParam(value = "page", defaultValue = "1") int page,
+        @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+
+        PagingResponse<InventoryCategoryResponse> response =
+            inventoryCategoryService.searchInventoryCategories(
+                categoryName,
+                page,
+                size
+            );
+
+        return ResponseEntity.ok(
+            ApiResponse.<PagingResponse<InventoryCategoryResponse>>builder()
+                .data(response)
+                .build()
+        );
+    }
+
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('INVENTORY_CATEGORY_MANAGE')")
     public ResponseEntity<ApiResponse<InventoryCategoryResponse>> updateInventoryCategory(

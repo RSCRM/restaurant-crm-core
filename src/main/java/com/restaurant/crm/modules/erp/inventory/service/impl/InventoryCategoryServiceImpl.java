@@ -20,6 +20,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,16 +141,26 @@ public class InventoryCategoryServiceImpl implements InventoryCategoryService {
 
         Pageable pageable = PageRequest.of(
             page - GlobalVariableConstant.PAGE_SIZE_INDEX,
-            size
+            size,
+            Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<InventoryCategory> categoryPage =
-            inventoryCategoryRepository
-                .findByBranchIdAndCategoryNameContainingIgnoreCase(
-                    branchId,
-                    categoryName,
-                    pageable
-                );
+        Page<InventoryCategory> categoryPage;
+
+        if (categoryName == null || categoryName.isBlank()) {
+            categoryPage = inventoryCategoryRepository.findByBranchId(
+                branchId,
+                pageable
+            );
+        } else {
+            categoryPage =
+                inventoryCategoryRepository
+                    .findByBranchIdAndCategoryNameContainingIgnoreCase(
+                        branchId,
+                        categoryName,
+                        pageable
+                    );
+        }
 
         return PagingResponse.<InventoryCategoryResponse>builder()
             .currentPage(page)
