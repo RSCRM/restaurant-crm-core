@@ -99,9 +99,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(this::buildContextResponse)
                 .toList());
 
-        // Load owner contexts (user may own multiple organizations)
-        organizationRepository.findAllByOwnerId(user.getId())
-                .forEach(organization -> contexts.add(buildOwnerContextResponse(organization)));
+        // Load owner contexts (owner is now an Employee with orgRole=OWNER, branch=null)
+        employeeRepository.findByUser_IdAndOrgRole_RoleName(user.getId(), OWNER_ROLE)
+                .forEach(employee -> contexts.add(buildContextResponse(employee)));
 
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
@@ -130,18 +130,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String userId = extractClaim(signedJWT, JwtClaimSetConstant.CLAIM_USER_ID);
 
-        // Owner path: no employeeId, just organizationId
-        if (request.getEmployeeId() == null) {
-            Organization organization = organizationRepository
-                    .findByIdAndOwnerId(request.getOrganizationId(), userId)
-                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-            String contextToken = generateOwnerContextToken(userId, organization.getId());
-            return ContextSelectionResponse.builder()
-                    .contextToken(contextToken)
-                    .build();
-        }
-
-        // Employee path: verify employee belongs to user
+        // All contexts (including owner) go through employee path
         Employee employee = employeeRepository.findByIdAndUserId(request.getEmployeeId(), userId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
@@ -249,8 +238,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         OrganizationBranch branch = employee.getBranch();
         String branchId = branch != null ? branch.getId() : null;
-        String organizationId = branch != null && branch.getOrganization() != null
-                ? branch.getOrganization().getId() : null;
+        // Owner Employee: branch=null, organization from employee.organization
+        // Regular Employee: organization derived from branch.organization
+        String organizationId;
+        if (branch != null && branch.getOrganization() != null) {
+            organizationId = branch.getOrganization().getId();
+        } else if (employee.getOrganization() != null) {
+            organizationId = employee.getOrganization().getId();
+        } else {
+            organizationId = null;
+        }
 
         JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(employee.getEmail())
@@ -272,29 +269,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         return signToken(jwsHeader, claimsBuilder.build());
-    }
-
-    private String generateOwnerContextToken(String userId, String organizationId) {
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-        Set<String> permissions = orgRoleRepository
-                .findByOrganization_IdAndRoleName(organizationId, OWNER_ROLE)
-                .map(this::buildOrgPermissions)
-                .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(userId)
-                .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(CONTEXT_TOKEN_EXPIRY_HOURS, ChronoUnit.HOURS)))
-                .jwtID(UUID.randomUUID().toString())
-                .claim(JwtClaimSetConstant.CLAIM_USER_ID, userId)
-                .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_CONTEXT)
-                .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, organizationId)
-                .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, OWNER_ROLE)
-                .claim(JwtClaimSetConstant.CLAIM_DATA_SCOPE, OrgDataScope.ORGANIZATION.name())
-                .claim(JwtClaimSetConstant.CLAIM_PERMISSION, permissions)
-                .build();
-
-        return signToken(jwsHeader, jwtClaimsSet);
     }
 
     private String signToken(JWSHeader jwsHeader, JWTClaimsSet jwtClaimsSet) {
@@ -342,10 +316,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         OrganizationBranch branch = employee.getBranch();
         String branchId = branch != null ? branch.getId() : null;
         String branchName = branch != null ? branch.getBranchName() : null;
-        String organizationId = branch != null && branch.getOrganization() != null
-                ? branch.getOrganization().getId() : null;
-        String organizationName = branch != null && branch.getOrganization() != null
-                ? branch.getOrganization().getOrganizationName() : null;
+        // Owner Employee: branch=null, organization from employee.organization
+        // Regular Employee: organization derived from branch.organization
+        String organizationId;
+        String organizationName;
+        if (branch != null && branch.getOrganization() != null) {
+            organizationId = branch.getOrganization().getId();
+            organizationName = branch.getOrganization().getOrganizationName();
+        } else if (employee.getOrganization() != null) {
+            organizationId = employee.getOrganization().getId();
+            organizationName = employee.getOrganization().getOrganizationName();
+        } else {
+            organizationId = null;
+            organizationName = null;
+        }
         String roleName = employee.getOrgRole() != null ? employee.getOrgRole().getRoleName() : null;
 
         return ContextResponse.builder()
@@ -355,15 +339,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .branchId(branchId)
                 .branchName(branchName)
                 .role(roleName)
-                .build();
-    }
-
-    private ContextResponse buildOwnerContextResponse(Organization organization) {
-        return ContextResponse.builder()
-                .employeeId(null)
-                .organizationId(organization.getId())
-                .organizationName(organization.getOrganizationName())
-                .role("OWNER")
                 .build();
     }
 

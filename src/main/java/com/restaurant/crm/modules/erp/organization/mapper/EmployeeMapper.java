@@ -15,6 +15,7 @@ public interface EmployeeMapper {
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "email", source = "user.email")
     @Mapping(target = "enabled", source = "user.enabled")
+    @Mapping(target = "organizationId", source = "organization.id")
     @Mapping(target = "branchId", source = "branch.id")
     @Mapping(target = "branchName", source = "branch.branchName")
     @Mapping(target = "orgRoleId", source = "orgRole.id")
@@ -23,6 +24,7 @@ public interface EmployeeMapper {
 
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "organizationId", source = "organization.id")
     @Mapping(target = "branchId", source = "branch.id")
     @Mapping(target = "orgRoleName", source = "orgRole.roleName")
     EmployeeResponse toEmployeeResponse(Employee employee);

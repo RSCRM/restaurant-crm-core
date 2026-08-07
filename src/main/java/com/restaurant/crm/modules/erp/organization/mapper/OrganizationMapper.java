@@ -13,8 +13,6 @@ public interface OrganizationMapper {
 
     @Mapping(target = "id", ignore = true)
 
-    // Set manually in service
-    @Mapping(target = "owner", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
@@ -25,15 +23,11 @@ public interface OrganizationMapper {
         CreateOrganizationRequest request
     );
 
-    @Mapping(target = "ownerId", source = "owner.id")
-    @Mapping(target = "ownerName", source = "owner.username")
     OrganizationResponse toOrganizationResponse(
         Organization organization
     );
 
     @Mapping(target = "id", ignore = true)
-    // Prevent changing owner
-    @Mapping(target = "owner", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)

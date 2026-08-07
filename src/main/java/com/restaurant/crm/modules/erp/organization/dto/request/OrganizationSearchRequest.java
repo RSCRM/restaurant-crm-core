@@ -23,7 +23,6 @@ public class OrganizationSearchRequest {
     String taxCode;
 
     // Filter
-    String ownerId;
     OrganizationStatus status;
     String address;
 }

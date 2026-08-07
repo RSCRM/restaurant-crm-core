@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.menu.security;
 
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Component("menuAccessChecker")
 public class MenuAccessChecker {
 
-    // owner-context (token khong co employeeId) -> qua cong; nguoc lai phai co authority = permission
+    // owner (orgRole = OWNER) -> qua cong; nguoc lai phai co authority = permission
     public boolean canManage(String permission) {
-        if (AuthUtils.getEmployeeId() == null) {
+        if (OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())) {
             return true;
         }
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

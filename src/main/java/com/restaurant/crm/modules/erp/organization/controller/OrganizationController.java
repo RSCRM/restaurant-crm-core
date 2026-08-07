@@ -128,22 +128,6 @@ public class OrganizationController {
         );
     }
 
-    @GetMapping("/owner/{ownerId}")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
-    public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationByOwnerId(
-            @PathVariable String ownerId
-    ) {
-
-        OrganizationResponse response =
-                organizationService.getOrganizationByOwnerId(ownerId);
-
-        return ResponseEntity.ok(
-                ApiResponse.<OrganizationResponse>builder()
-                        .data(response)
-                        .build()
-        );
-    }
-
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_MANAGE')")
     public ResponseEntity<ApiResponse<OrganizationResponse>> updateOrganization(

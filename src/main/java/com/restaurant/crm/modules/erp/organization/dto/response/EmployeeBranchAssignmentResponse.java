@@ -27,6 +27,7 @@ public class EmployeeBranchAssignmentResponse {
     EmployeeStatus status;
     LocalDate startDate;
     LocalDate endDate;
+    String organizationId;
     String branchId;
     String branchName;
     String orgRoleId;

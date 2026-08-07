@@ -6,21 +6,22 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.utils.PagingUtil;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.OrganizationSearchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationResponse;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationMapper;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationService;
 import com.restaurant.crm.modules.erp.organization.specification.OrganizationSpecification;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
-import com.restaurant.crm.modules.identity.entity.User;
-import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrganizationRepository organizationRepository;
     OrganizationBranchRepository organizationBranchRepository;
     OrganizationMapper organizationMapper;
-    UserRepository userRepository;
+    EmployeeRepository employeeRepository;
 
     @Override
     @Transactional
@@ -55,11 +56,6 @@ public class OrganizationServiceImpl implements OrganizationService {
         }
 
         Organization organization = organizationMapper.toOrganization(request);
-
-        User owner = userRepository.findById(request.getOwnerId())
-            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        organization.setOwner(owner);
 
         organization = organizationRepository.save(organization);
 
@@ -81,11 +77,17 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Transactional(readOnly = true)
     public OrganizationResponse getOrganizationByOwnerId(String ownerId) {
 
-        Organization organization = organizationRepository.findByOwnerId(ownerId)
-                .orElseThrow(() ->
-                        new AppException(ErrorCode.ORGANIZATION_NOT_FOUND));
+        Employee ownerEmployee = employeeRepository
+                .findByUser_IdAndOrgRole_RoleName(ownerId, OrgRoleConstants.OWNER_ROLE)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_NOT_FOUND));
 
-        return organizationMapper.toOrganizationResponse(organization);
+        if (ownerEmployee.getOrganization() == null) {
+            throw new AppException(ErrorCode.ORGANIZATION_NOT_FOUND);
+        }
+
+        return organizationMapper.toOrganizationResponse(ownerEmployee.getOrganization());
     }
 
     @Override
@@ -150,12 +152,25 @@ public class OrganizationServiceImpl implements OrganizationService {
                         );
                 }
 
-                case SELF ->
+                case SELF -> {
+                    // Find owner Employee for current user, then get their organization
+                    Employee ownerEmployee = employeeRepository
+                            .findByUser_IdAndOrgRole_RoleName(
+                                    AuthUtils.getCurrentUserId(),
+                                    OrgRoleConstants.OWNER_ROLE)
+                            .stream()
+                            .findFirst()
+                            .orElse(null);
 
-                    organizationPage = organizationRepository.findByOwnerId(
-                        AuthUtils.getCurrentUserId(),
-                        pageable
-                    );
+                    if (ownerEmployee != null && ownerEmployee.getOrganization() != null) {
+                        organizationPage = new PageImpl<>(
+                                List.of(ownerEmployee.getOrganization()),
+                                pageable,
+                                1);
+                    } else {
+                        organizationPage = Page.empty(pageable);
+                    }
+                }
 
                 default ->
                     throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);

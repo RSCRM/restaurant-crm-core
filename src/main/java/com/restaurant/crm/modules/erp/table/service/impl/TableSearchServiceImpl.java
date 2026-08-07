@@ -4,6 +4,7 @@ import com.restaurant.crm.common.constant.GlobalVariableConstant;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
@@ -41,9 +42,11 @@ public class TableSearchServiceImpl implements TableSearchService {
         if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
             return;
         }
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            organizationBranchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+        if (OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())) {
+            // Owner: verify branch belongs to their organization
+            organizationBranchRepository.findById(targetBranchId)
+                    .filter(b -> b.getOrganization() != null
+                            && AuthUtils.getOrganizationId().equals(b.getOrganization().getId()))
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
         } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);

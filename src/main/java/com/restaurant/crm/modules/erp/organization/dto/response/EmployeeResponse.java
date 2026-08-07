@@ -23,6 +23,7 @@ public class EmployeeResponse {
     String email;
     String phone;
     String fullName;
+    String organizationId;
     String branchId;
     String orgRoleName;
     BigDecimal salary;
