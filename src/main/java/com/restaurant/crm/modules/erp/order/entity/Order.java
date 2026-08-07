@@ -111,4 +111,10 @@ public class Order extends BaseEntity {
             scale = OrderConstants.MONEY_SCALE
     )
     BigDecimal totalAmount = BigDecimal.ZERO;
+
+    @Column(name = "applied_voucher_code")
+    String appliedVoucherCode;
+
+    @Column(name = "applied_voucher_id", columnDefinition = OrderConstants.UUID_DEFINITION)
+    String appliedVoucherId;
 }
