@@ -89,9 +89,10 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
                 .orElse(0);
 
         // Load active and unexpired vouchers for this branch (catalog should NEVER show
-        // expired vouchers)
+        // expired vouchers or promo code-based vouchers)
         List<Voucher> vouchers = voucherRepository.findByBranchIdAndIsActive(branchId, (short) 1).stream()
-                .filter(v -> (v.getStartAt() == null || !Instant.now().isBefore(v.getStartAt()))
+                .filter(v -> (v.getVoucherCode() == null || v.getVoucherCode().isBlank())
+                        && (v.getStartAt() == null || !Instant.now().isBefore(v.getStartAt()))
                         && (v.getEndAt() == null || Instant.now().isBefore(v.getEndAt()))
                         && (v.getExpiredAt() == null || Instant.now().isBefore(v.getExpiredAt())))
                 .toList();
@@ -154,6 +155,10 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
 
         if (voucher.getIsActive() != 1) {
             throw new AppException(ErrorCode.VOUCHER_INACTIVE);
+        }
+
+        if (voucher.getVoucherCode() != null && !voucher.getVoucherCode().isBlank()) {
+            throw new AppException(ErrorCode.VOUCHER_CODE_CANNOT_BE_REDEEMED_BY_POINTS);
         }
 
         // Check expiry
@@ -319,6 +324,68 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
 
     @Override
     @Transactional
+    public void applyVoucherCodeToCurrentOrder(String voucherCode) {
+        if (voucherCode == null || voucherCode.isBlank()) {
+            throw new AppException(ErrorCode.VOUCHER_CODE_INVALID_OR_NOT_FOUND);
+        }
+
+        QrSessionData session = currentSession();
+        String orderId = session.orderId();
+        if (orderId == null || orderId.isBlank()) {
+            throw new AppException(ErrorCode.TRACK_NO_ACTIVE_ORDER);
+        }
+
+        String branchId = session.branchId();
+        Voucher voucher = voucherRepository.findByBranchIdAndVoucherCodeIgnoreCaseAndIsActive(branchId, voucherCode.trim(), (short) 1)
+                .orElseThrow(() -> new AppException(ErrorCode.VOUCHER_CODE_INVALID_OR_NOT_FOUND));
+
+        if (voucher.getStartAt() != null && Instant.now().isBefore(voucher.getStartAt())) {
+            throw new AppException(ErrorCode.VOUCHER_NOT_STARTED_YET);
+        }
+        if (voucher.getEndAt() != null && Instant.now().isAfter(voucher.getEndAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+        if (voucher.getExpiredAt() != null && Instant.now().isAfter(voucher.getExpiredAt())) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_EXPIRED);
+        }
+
+        // Validate usage limit if configured
+        if (voucher.getUsageLimit() != null && voucher.getUsageLimit() > 0) {
+            long usedCount = orderRepository.countByAppliedVoucherId(voucher.getId());
+            if (usedCount >= voucher.getUsageLimit()) {
+                throw new AppException(ErrorCode.VOUCHER_USAGE_LIMIT_EXCEEDED);
+            }
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getSubtotal().compareTo(voucher.getMinBillAmount()) < 0) {
+            throw new AppException(ErrorCode.CUSTOMER_VOUCHER_MIN_BILL_NOT_MET);
+        }
+
+        // 1. Release existing customer voucher on this order if any
+        customerVoucherRepository.findByOrderId(orderId).ifPresent(existingCv -> {
+            existingCv.setStatus(CustomerVoucherStatus.AVAILABLE);
+            existingCv.setUsedAt(null);
+            existingCv.setOrderId(null);
+            customerVoucherRepository.save(existingCv);
+        });
+
+        // 2. Calculate discount and update order directly (NOT saved to CustomerVoucher wallet)
+        BigDecimal discountAmount = order.getSubtotal()
+                .multiply(BigDecimal.valueOf(voucher.getDiscountPercent()))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR);
+
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(order.getSubtotal().subtract(discountAmount));
+        order.setAppliedVoucherCode(voucher.getVoucherCode());
+        order.setAppliedVoucherId(voucher.getId());
+        orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
     public void removeVoucherFromCurrentOrder() {
         QrSessionData session = currentSession();
         String orderId = session.orderId();
@@ -337,9 +404,11 @@ public class CustomerLoyaltyServiceImpl implements CustomerLoyaltyService {
             customerVoucherRepository.save(cv);
         });
 
-        // Reset discount on order
+        // Reset discount and voucher fields on order
         order.setDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(order.getSubtotal());
+        order.setAppliedVoucherCode(null);
+        order.setAppliedVoucherId(null);
         orderRepository.save(order);
     }
 

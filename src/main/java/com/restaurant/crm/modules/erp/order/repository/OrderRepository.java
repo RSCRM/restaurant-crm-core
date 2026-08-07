@@ -14,4 +14,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     boolean existsOrderById(String orderId);
 
     Optional<Order> findFirstByTableIdAndStatusOrderByCreatedAtDesc(String tableId, OrderStatus status);
+
+    long countByAppliedVoucherId(String appliedVoucherId);
+
+    long countByAppliedVoucherCodeIgnoreCase(String appliedVoucherCode);
 }

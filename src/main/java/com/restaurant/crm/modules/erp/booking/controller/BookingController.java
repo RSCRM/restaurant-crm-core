@@ -85,4 +85,25 @@ public class BookingController {
         BookingResponse response = bookingService.updateBookingStatus(id, request);
         return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
     }
+
+    @PostMapping("/search")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
+    public ResponseEntity<ApiResponse<PagingResponse<BookingResponse>>> searchBookings(
+            @RequestBody com.restaurant.crm.modules.erp.booking.dto.request.BookingSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size
+    ) {
+        PagingResponse<BookingResponse> response = bookingService.searchBookings(searchRequest, page, size);
+        return ResponseEntity.ok(ApiResponse.<PagingResponse<BookingResponse>>builder().data(response).build());
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
+    public ResponseEntity<ApiResponse<BookingResponse>> updateBooking(
+            @PathVariable String id,
+            @Valid @RequestBody com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingRequest request
+    ) {
+        BookingResponse response = bookingService.updateBooking(id, request);
+        return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
+    }
 }

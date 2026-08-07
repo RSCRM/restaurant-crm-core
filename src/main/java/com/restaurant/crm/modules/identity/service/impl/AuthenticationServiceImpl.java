@@ -286,7 +286,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private String generateOwnerContextToken(String userId, String organizationId, String branchId) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-        Set<String> permissions = orgRoleRepository.findByRoleName(OWNER_ROLE)
+        Set<String> permissions = orgRoleRepository
+                .findByOrganization_IdAndRoleName(organizationId, OWNER_ROLE)
                 .map(this::buildOrgPermissions)
                 .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
 

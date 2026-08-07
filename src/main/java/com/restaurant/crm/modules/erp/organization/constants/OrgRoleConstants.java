@@ -3,6 +3,9 @@ package com.restaurant.crm.modules.erp.organization.constants;
 public class OrgRoleConstants {
     private OrgRoleConstants() {}
 
+    //======= Predefined role names ========
+    public static final String OWNER_ROLE = "OWNER";
+
     //======= Role table name ========
     public static final String TABLE_ROLE = "org_roles";
 

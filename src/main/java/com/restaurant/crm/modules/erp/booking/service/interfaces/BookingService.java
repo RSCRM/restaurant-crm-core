@@ -1,7 +1,9 @@
 package com.restaurant.crm.modules.erp.booking.service.interfaces;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.erp.booking.dto.request.BookingSearchRequest;
 import com.restaurant.crm.modules.erp.booking.dto.request.CreateBookingRequest;
+import com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingRequest;
 import com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingStatusRequest;
 import com.restaurant.crm.modules.erp.booking.dto.response.BookingResponse;
 
@@ -18,4 +20,8 @@ public interface BookingService {
     BookingResponse getBookingById(String id);
 
     BookingResponse updateBookingStatus(String bookingId, UpdateBookingStatusRequest request);
+
+    PagingResponse<BookingResponse> searchBookings(BookingSearchRequest searchRequest, int page, int size);
+
+    BookingResponse updateBooking(String id, UpdateBookingRequest request);
 }

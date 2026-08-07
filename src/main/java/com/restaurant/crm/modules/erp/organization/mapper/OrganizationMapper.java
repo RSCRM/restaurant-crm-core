@@ -25,7 +25,8 @@ public interface OrganizationMapper {
         CreateOrganizationRequest request
     );
 
-    @Mapping(source = "owner.id", target = "ownerId")
+    @Mapping(target = "ownerId", source = "owner.id")
+    @Mapping(target = "ownerName", source = "owner.username")
     OrganizationResponse toOrganizationResponse(
         Organization organization
     );
