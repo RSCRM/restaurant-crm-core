@@ -18,8 +18,6 @@ import com.restaurant.crm.modules.erp.organization.service.interfaces.Organizati
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
-import com.restaurant.crm.modules.profile.entity.UserProfile;
-import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -32,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +39,6 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
     OrganizationBranchRepository organizationBranchRepository;
     OrganizationRepository organizationRepository;
     EmployeeRepository employeeRepository;
-    UserProfileRepository userProfileRepository;
     OrganizationBranchMapper organizationBranchMapper;
 
     @Override
@@ -248,13 +244,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
         response.setManagerId(manager.getId());
         if (manager.getUser() != null) {
             response.setManagerUserId(manager.getUser().getId());
-            String managerName = Optional.ofNullable(userProfileRepository.findByUser_Id(manager.getUser().getId()))
-                    .orElse(Optional.empty())
-                    .map(UserProfile::getFullName)
-                    .filter(StringUtils::hasText)
-                    .map(String::trim)
-                    .orElse(manager.getUser().getUsername());
-            response.setManagerName(managerName);
+            response.setManagerName(manager.getUser().getUsername());
             response.setManagerUsername(manager.getUser().getUsername());
             response.setManagerEmail(manager.getUser().getEmail());
         }

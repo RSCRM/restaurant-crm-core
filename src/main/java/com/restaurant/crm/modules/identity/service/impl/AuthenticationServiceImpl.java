@@ -102,8 +102,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .toList());
 
         // Load owner contexts. A user can own more than one organization.
-        organizationRepository.findAllByOwnerId(user.getId())
-                .forEach(organization -> contexts.add(buildOwnerContextResponse(organization)));
+//        organizationRepository.findAllByOwnerId(user.getId())
+//                .forEach(organization -> contexts.add(buildOwnerContextResponse(organization)));
 
         // Load owner context (user is owner of an organization)
 //         organizationRepository.findByOwnerId(user.getId())

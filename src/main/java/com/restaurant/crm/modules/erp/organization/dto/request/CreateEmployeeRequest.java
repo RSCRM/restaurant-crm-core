@@ -27,7 +27,10 @@ import java.time.LocalDate;
 public class CreateEmployeeRequest {
 
     @NotBlank(message = "USER_FULL_NAME_INVALID")
-    String fullName;
+    String firstName;
+
+    @NotBlank(message = "USER_FULL_NAME_INVALID")
+    String lastName;
 
     @NotBlank(message = "EMPLOYEE_USERNAME_REQUIRED")
     @Size(

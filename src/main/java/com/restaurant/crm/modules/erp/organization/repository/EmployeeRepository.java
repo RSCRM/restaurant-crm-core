@@ -104,14 +104,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
                     LEFT JOIN FETCH e.orgRole r
                     JOIN FETCH e.branch b
                     JOIN FETCH b.organization o
-                    LEFT JOIN UserProfile p ON p.user.id = u.id
                     WHERE o.id = :organizationId
                       AND (:branchId IS NULL OR b.id = :branchId)
                       AND (:role IS NULL OR r.id = :role OR r.roleName = :role)
                       AND (:status IS NULL OR e.status = :status)
                       AND (
                             :keyword IS NULL
-                            OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
                             OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
                             OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
                             OR LOWER(e.email) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
@@ -125,14 +123,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
                     LEFT JOIN e.orgRole r
                     JOIN e.branch b
                     JOIN b.organization o
-                    LEFT JOIN UserProfile p ON p.user.id = u.id
                     WHERE o.id = :organizationId
                       AND (:branchId IS NULL OR b.id = :branchId)
                       AND (:role IS NULL OR r.id = :role OR r.roleName = :role)
                       AND (:status IS NULL OR e.status = :status)
                       AND (
                             :keyword IS NULL
-                            OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
                             OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
                             OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
                             OR LOWER(e.email) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))

@@ -165,11 +165,15 @@ class EmployeeServiceImplTests {
             assertSame(savedUser, savedEmployee.getUser());
             assertSame(branch, savedEmployee.getBranch());
             assertSame(orgRole, savedEmployee.getOrgRole());
+            assertEquals("New", savedEmployee.getFirstName());
+            assertEquals("Employee", savedEmployee.getLastName());
             assertEquals("employee@example.com", savedEmployee.getEmail());
             assertEquals("0909000000", savedEmployee.getPhone());
             assertEquals(EmployeeStatus.ACTIVE, savedEmployee.getStatus());
             assertEquals(new BigDecimal("12000000"), savedEmployee.getSalary());
             assertEquals("New Employee", response.getFullName());
+            assertEquals("New", response.getFirstName());
+            assertEquals("Employee", response.getLastName());
         }
     }
 
@@ -441,7 +445,8 @@ class EmployeeServiceImplTests {
 
     private CreateEmployeeRequest buildCreateRequest(String branchId, String orgRoleId) {
         return CreateEmployeeRequest.builder()
-                .fullName(" New Employee ")
+                .firstName(" New ")
+                .lastName(" Employee ")
                 .username(" new.employee ")
                 .password("Password@123")
                 .email(" employee@example.com ")
