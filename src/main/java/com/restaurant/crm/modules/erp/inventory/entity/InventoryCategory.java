@@ -2,21 +2,13 @@ package com.restaurant.crm.modules.erp.inventory.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.erp.inventory.constants.InventoryCategoryConstants;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryCategoryStatus;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
@@ -53,4 +45,13 @@ public class InventoryCategory extends BaseEntity {
             columnDefinition = InventoryCategoryConstants.DESCRIPTION_DEFINITION
     )
     String description;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(
+        name = InventoryCategoryConstants.COL_STATUS,
+        nullable = false,
+        columnDefinition = InventoryCategoryConstants.STATUS_DEFINITION
+    )
+    InventoryCategoryStatus status = InventoryCategoryStatus.ACTIVE;
 }

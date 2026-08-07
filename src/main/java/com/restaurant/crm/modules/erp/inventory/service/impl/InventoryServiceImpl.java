@@ -12,6 +12,7 @@ import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryReque
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
 import com.restaurant.crm.modules.erp.inventory.entity.Inventory;
 import com.restaurant.crm.modules.erp.inventory.entity.InventoryCategory;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryCategoryStatus;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import com.restaurant.crm.modules.erp.inventory.mapper.InventoryMapper;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryCategoryRepository;
@@ -27,10 +28,12 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -63,6 +66,10 @@ public class InventoryServiceImpl implements InventoryService {
                 )
                 .orElseThrow(() ->
                     new AppException(ErrorCode.INVENTORY_CATEGORY_NOT_FOUND));
+
+        if (category.getStatus() == InventoryCategoryStatus.INACTIVE) {
+            throw new AppException(ErrorCode.INVENTORY_CATEGORY_INACTIVE);
+        }
 
         if (inventoryRepository.existsByBranchIdAndInventoryName(
             branchId,
@@ -186,34 +193,19 @@ public class InventoryServiceImpl implements InventoryService {
             inventory
         );
 
-        inventory.setStatus(
-            calculateStatus(
-                inventory.getQuantity(),
-                inventory.getMinimumQuantity()
-            )
-        );
+        if (inventory.getStatus() != InventoryStatus.INACTIVE) {
+            inventory.setStatus(
+                calculateStatus(
+                    inventory.getQuantity(),
+                    inventory.getMinimumQuantity()
+                )
+            );
+        }
 
         inventory =
             inventoryRepository.save(inventory);
 
         return inventoryMapper.toInventoryResponse(inventory);
-    }
-
-    @Override
-    @Transactional
-    public void deleteInventory(
-        String id
-    ) {
-
-        String branchId = AuthUtils.getBranchId();
-
-        Inventory inventory =
-            inventoryRepository
-                .findByIdAndBranchId(id, branchId)
-                .orElseThrow(() ->
-                    new AppException(ErrorCode.INVENTORY_NOT_FOUND));
-
-        inventoryRepository.delete(inventory);
     }
 
     @Override
@@ -264,7 +256,10 @@ public class InventoryServiceImpl implements InventoryService {
             PageRequest.of(
                 pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
                 pagingRequest.getPageSize(),
-                PagingUtil.createSort(pagingRequest)
+                Sort.by(
+                    Sort.Order.asc("inventoryCategory.categoryName"),
+                    Sort.Order.asc("inventoryName")
+                )
             );
 
         Page<Inventory> inventoryPage =
@@ -304,5 +299,57 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         return InventoryStatus.GOOD;
+    }
+
+    @Override
+    @Transactional
+    public InventoryResponse updateInventoryStatus(String id) {
+
+        String branchId = AuthUtils.getBranchId();
+
+        Inventory inventory = inventoryRepository
+            .findByIdAndBranchId(id, branchId)
+            .orElseThrow(() ->
+                new AppException(ErrorCode.INVENTORY_NOT_FOUND)
+            );
+
+        if (inventory.getStatus() == InventoryStatus.INACTIVE) {
+
+            if (inventory.getInventoryCategory().getStatus() == InventoryCategoryStatus.INACTIVE) {
+                throw new AppException(ErrorCode.INVENTORY_CATEGORY_INACTIVE);
+            }
+
+            inventory.setStatus(
+                calculateStatus(
+                    inventory.getQuantity(),
+                    inventory.getMinimumQuantity()
+                )
+            );
+
+        } else {
+
+            inventory.setStatus(InventoryStatus.INACTIVE);
+
+        }
+
+        inventory = inventoryRepository.save(inventory);
+
+        return inventoryMapper.toInventoryResponse(inventory);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryResponse> getActiveInventories() {
+
+        String branchId = AuthUtils.getBranchId();
+
+        return inventoryRepository
+            .findByBranchIdAndStatusNotOrderByInventoryNameAsc(
+                branchId,
+                InventoryStatus.INACTIVE
+            )
+            .stream()
+            .map(inventoryMapper::toInventoryResponse)
+            .toList();
     }
 }

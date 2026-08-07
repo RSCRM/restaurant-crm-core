@@ -21,9 +21,4 @@ public interface InventoryTransactionRepository extends
         String branchId,
         Pageable pageable
     );
-
-    Page<InventoryTransaction> findByInventoryId(
-        String inventoryId,
-        Pageable pageable
-    );
 }

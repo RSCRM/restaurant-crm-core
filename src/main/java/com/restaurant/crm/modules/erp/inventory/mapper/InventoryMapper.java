@@ -33,6 +33,7 @@ public interface InventoryMapper {
     @Mapping(source = "branch.id", target = "branchId")
     @Mapping(source = "inventoryCategory.id", target = "inventoryCategoryId")
     @Mapping(source = "inventoryCategory.categoryName", target = "inventoryCategoryName")
+    @Mapping(source = "inventoryCategory.status", target = "inventoryCategoryStatus")
     InventoryResponse toInventoryResponse(
         Inventory inventory
     );

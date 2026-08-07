@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.inventory.dto.response;
 
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryCategoryStatus;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +20,5 @@ public class InventoryCategoryResponse {
     String description;
     Instant createdAt;
     Instant updatedAt;
+    InventoryCategoryStatus status;
 }

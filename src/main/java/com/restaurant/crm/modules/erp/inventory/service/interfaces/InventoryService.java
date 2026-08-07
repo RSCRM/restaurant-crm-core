@@ -7,6 +7,8 @@ import com.restaurant.crm.modules.erp.inventory.dto.request.InventorySearchReque
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
 
+import java.util.List;
+
 public interface InventoryService {
 
     InventoryResponse createInventory(
@@ -38,7 +40,7 @@ public interface InventoryService {
         UpdateInventoryRequest request
     );
 
-    void deleteInventory(
-        String id
-    );
+    InventoryResponse updateInventoryStatus(String id);
+
+    List<InventoryResponse> getActiveInventories();
 }

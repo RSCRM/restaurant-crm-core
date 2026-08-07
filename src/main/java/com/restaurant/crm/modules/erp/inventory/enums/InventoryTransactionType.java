@@ -1,9 +1,17 @@
 package com.restaurant.crm.modules.erp.inventory.enums;
 
 public enum InventoryTransactionType {
-    PURCHASE,     // Import inventory from supplier
-    SALE,         // Inventory used for orders
-    ADJUSTMENT,   // Manual stock correction
-    WASTE,        // Spoiled/damaged inventory
-    RETURN        // Returned inventory
+    PURCHASE,
+    SALE,
+    ADJUSTMENT,
+    WASTE,
+    RETURN;
+
+    public boolean isValidDirection(InventoryTransactionDirection direction) {
+        return switch (this) {
+            case PURCHASE, RETURN -> direction == InventoryTransactionDirection.IN;
+            case SALE, WASTE -> direction == InventoryTransactionDirection.OUT;
+            case ADJUSTMENT -> true; // allow both IN and OUT
+        };
+    }
 }
