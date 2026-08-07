@@ -15,6 +15,7 @@ import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
 import com.restaurant.crm.modules.erp.booking.mapper.BookingMapper;
 import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
 import com.restaurant.crm.modules.erp.booking.service.interfaces.BookingService;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.entity.RestaurantTable;
@@ -54,9 +55,11 @@ public class BookingServiceImpl implements BookingService {
         if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
             return;
         }
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+        if (OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())) {
+            // Owner: verify branch belongs to their organization
+            branchRepository.findById(targetBranchId)
+                    .filter(b -> b.getOrganization() != null
+                            && AuthUtils.getOrganizationId().equals(b.getOrganization().getId()))
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
         } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
@@ -122,7 +125,7 @@ public class BookingServiceImpl implements BookingService {
         Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
         
         Page<Booking> bookingPage;
-        if (AuthUtils.getEmployeeId() != null) {
+        if (AuthUtils.getBranchId() != null) {
             bookingPage = bookingRepository.findByCustomerIdAndBranchId(customerId, AuthUtils.getBranchId(), pageable);
         } else if (AuthUtils.getOrganizationId() != null) {
             bookingPage = bookingRepository.findByCustomerIdAndBranch_OrganizationId(customerId, AuthUtils.getOrganizationId(), pageable);
@@ -145,9 +148,9 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public PagingResponse<BookingResponse> getBookingsByCustomerPhone(String phone, int page, int size) {
         Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
-        
+
         Page<Booking> bookingPage;
-        if (AuthUtils.getEmployeeId() != null) {
+        if (AuthUtils.getBranchId() != null) {
             bookingPage = bookingRepository.findByCustomerPhoneAndBranchId(phone, AuthUtils.getBranchId(), pageable);
         } else if (AuthUtils.getOrganizationId() != null) {
             bookingPage = bookingRepository.findByCustomerPhoneAndBranch_OrganizationId(phone, AuthUtils.getOrganizationId(), pageable);

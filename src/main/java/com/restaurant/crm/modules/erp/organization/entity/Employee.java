@@ -48,6 +48,10 @@ public class Employee extends BaseEntity {
     OrgRole orgRole;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = EmployeeConstants.COL_ORGANIZATION_ID)
+    Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = EmployeeConstants.COL_BRANCH_ID)
     OrganizationBranch branch;
 

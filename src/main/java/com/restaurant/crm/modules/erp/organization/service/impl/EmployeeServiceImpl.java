@@ -63,9 +63,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     public List<EmployeeResponse> listEmployees() {
         OrgDataScope scope = AuthUtils.getDataScope();
-        List<Employee> employees = (scope == OrgDataScope.ORGANIZATION)
-                ? employeeRepository.findByBranch_Organization_Id(AuthUtils.getOrganizationId())
-                : employeeRepository.findByBranch_Id(AuthUtils.getBranchId());
+        List<Employee> employees;
+        if (scope == OrgDataScope.ORGANIZATION) {
+            employees = new java.util.ArrayList<>(
+                    employeeRepository.findByBranch_Organization_Id(AuthUtils.getOrganizationId()));
+            // Owner Employee has branch=null, query separately by organization
+            employees.addAll(employeeRepository.findByOrganization_Id(AuthUtils.getOrganizationId()));
+        } else {
+            employees = employeeRepository.findByBranch_Id(AuthUtils.getBranchId());
+        }
         String currentEmployeeId = AuthUtils.getEmployeeId();
 
         List<Employee> visible = employees.stream()

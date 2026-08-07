@@ -130,101 +130,101 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
 
 
 -- =============================================================================
--- 7. ERP MODULE: ORG_ROLES
+-- 7. ERP MODULE: ORG_ROLES (per-organization, composite unique: organization_id + role_name)
 -- =============================================================================
 
-INSERT INTO org_roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
-                                                                                       ('r0000000-0000-0000-0000-000000000001', 0, 'OWNER',   'ORGANIZATION', NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000002', 0, 'MANAGER', 'BRANCH',       NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000003', 0, 'CASHIER', 'BRANCH',       NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000004', 0, 'WAITER',  'SELF',         NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000005', 0, 'CHEF',    'SELF',         NOW(), NOW())
-    ON CONFLICT (role_name) DO NOTHING;
+-- Phở Việt Chain (d001) roles
+INSERT INTO org_roles (id, version, organization_id, role_name, data_scope, created_at, updated_at) VALUES
+    ('r0000000-0000-0000-0000-000000000001', 0, 'd0000000-0000-0000-0000-000000000001', 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000002', 0, 'd0000000-0000-0000-0000-000000000001', 'MANAGER', 'BRANCH',       NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000003', 0, 'd0000000-0000-0000-0000-000000000001', 'CASHIER', 'BRANCH',       NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000004', 0, 'd0000000-0000-0000-0000-000000000001', 'WAITER',  'SELF',         NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000005', 0, 'd0000000-0000-0000-0000-000000000001', 'CHEF',    'SELF',         NOW(), NOW())
+    ON CONFLICT (organization_id, role_name) DO NOTHING;
+
+-- Sushi Tokyo Group (d002) roles
+INSERT INTO org_roles (id, version, organization_id, role_name, data_scope, created_at, updated_at) VALUES
+    ('r0000000-0000-0000-0000-000000000011', 0, 'd0000000-0000-0000-0000-000000000002', 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000012', 0, 'd0000000-0000-0000-0000-000000000002', 'MANAGER', 'BRANCH',       NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000013', 0, 'd0000000-0000-0000-0000-000000000002', 'CASHIER', 'BRANCH',       NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000014', 0, 'd0000000-0000-0000-0000-000000000002', 'WAITER',  'SELF',         NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000015', 0, 'd0000000-0000-0000-0000-000000000002', 'CHEF',    'SELF',         NOW(), NOW())
+    ON CONFLICT (organization_id, role_name) DO NOTHING;
+
+-- BBQ Garden (d003) roles
+INSERT INTO org_roles (id, version, organization_id, role_name, data_scope, created_at, updated_at) VALUES
+    ('r0000000-0000-0000-0000-000000000021', 0, 'd0000000-0000-0000-0000-000000000003', 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000022', 0, 'd0000000-0000-0000-0000-000000000003', 'MANAGER', 'BRANCH',       NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000023', 0, 'd0000000-0000-0000-0000-000000000003', 'CASHIER', 'BRANCH',       NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000024', 0, 'd0000000-0000-0000-0000-000000000003', 'WAITER',  'SELF',         NOW(), NOW()),
+    ('r0000000-0000-0000-0000-000000000025', 0, 'd0000000-0000-0000-0000-000000000003', 'CHEF',    'SELF',         NOW(), NOW())
+    ON CONFLICT (organization_id, role_name) DO NOTHING;
 
 -- =============================================================================
 -- 8. ERP MODULE: ORG_ROLE <-> ORG_PERMISSION (org_roles_org_permissions)
+-- Uses cross-join to map permissions to ALL per-org roles at once.
 -- =============================================================================
 
--- OWNER: all org permissions
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000003'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000004'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000005'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000006'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000007'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000008'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000009'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000010'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000011'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000012')
+-- OWNER: all org permissions (per-org OWNER roles: r001, r011, r021)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'OWNER'
     ON CONFLICT DO NOTHING;
 
--- MANAGER: daily operations
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000003'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000005'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000006'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000007'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000008'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000009'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000016'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000017'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000018'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000102'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000201'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000202'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000203'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000204'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000205'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000206')
+-- MANAGER: daily operations (per-org MANAGER roles: r002, r012, r022)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'MANAGER'
+  AND p.permission_name IN (
+    'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
+    'PAYMENT_READ', 'PAYMENT_CREATE',
+    'MENU_MANAGE', 'TABLE_MANAGE', 'REPORT_VIEW',
+    'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
+    'EMPLOYEE_DELETE', 'EMPLOYEE_ROLE_ASSIGN', 'EMPLOYEE_ROLE_REVOKE',
+    'TABLE_MAP_READ', 'TABLE_SEARCH_READ',
+    'INVENTORY_CATEGORY_VIEW', 'INVENTORY_CATEGORY_MANAGE',
+    'INVENTORY_VIEW', 'INVENTORY_MANAGE',
+    'INVENTORY_TRANSACTION_VIEW', 'INVENTORY_TRANSACTION_MANAGE'
+)
+    ON CONFLICT DO NOTHING;
+
+-- CASHIER: orders + payments (per-org CASHIER roles: r003, r013, r023)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'CASHIER'
+  AND p.permission_name IN (
+    'ORDER_READ', 'ORDER_CREATE', 'PAYMENT_READ', 'PAYMENT_CREATE',
+    'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
+    'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+)
+    ON CONFLICT DO NOTHING;
+
+-- WAITER: order read + create (per-org WAITER roles: r004, r014, r024)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'WAITER'
+  AND p.permission_name IN (
+    'ORDER_READ', 'ORDER_CREATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
+    'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+)
+    ON CONFLICT DO NOTHING;
+
+-- CHEF: order read + update (per-org CHEF roles: r005, r015, r025)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'CHEF'
+  AND p.permission_name IN (
+    'ORDER_READ', 'ORDER_UPDATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
+    'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+)
     ON CONFLICT DO NOTHING;
 
 
--- CASHIER: orders + payments
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000005'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000006'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000102')
-    ON CONFLICT DO NOTHING;
-
--- WAITER: order read + create
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000102')
-
-    ON CONFLICT DO NOTHING;
-
--- CHEF: order read + update
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000003'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000102')
-    ON CONFLICT DO NOTHING;
-
--- =============================================================================
 -- 9. ORGANIZATIONS
 -- =============================================================================
 
@@ -265,13 +265,13 @@ INSERT INTO organization_branches (id, version, organization_id, manager_id, bra
 -- =============================================================================
 
 -- Manager user as employee at 3 branches:
---   f001: MANAGER @ Phở Việt Q1       (Owner A)
---   f002: CASHIER @ Sushi Tokyo Huệ   (Owner B, org1)
---   f003: MANAGER @ BBQ Garden Q3     (Owner B, org2)
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-                                                                                                                                             ('f0000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-01-15', NULL, NOW(), NOW()),
-                                                                                                                                             ('f0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-03-01', NULL, NOW(), NOW()),
-                                                                                                                                             ('f0000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000005', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-06-01', NULL, NOW(), NOW())
+--   f001: MANAGER @ Phở Việt Q1       (org d001, role r002)
+--   f002: CASHIER @ Sushi Tokyo Huế   (org d002, role r013)
+--   f003: MANAGER @ BBQ Garden Q3     (org d003, role r022)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-01-15', NULL, NOW(), NOW()),
+    ('f0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000013', 'd0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-03-01', NULL, NOW(), NOW()),
+    ('f0000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000022', 'd0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000005', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-06-01', NULL, NOW(), NOW()),
     ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
@@ -286,10 +286,6 @@ UPDATE organization_branches SET manager_id = 'f0000000-0000-0000-0000-000000000
 -- 13. ADDITIONAL SEED DATA FOR KITCHEN READY-TO-SERVE TESTING (uc-sw-14)
 -- =============================================================================
 
--- Add CHEF role
-INSERT INTO org_roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
-    ('r0000000-0000-0000-0000-000000000005', 0, 'CHEF', 'SELF', NOW(), NOW())
-    ON CONFLICT (role_name) DO NOTHING;
 
 -- Chef user: username = chef_q1, email = chef_q1@restaurant.com
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
@@ -319,74 +315,25 @@ INSERT INTO user_roles (user_id, role_id) VALUES
     ON CONFLICT DO NOTHING;
 
 -- Employees:
--- Chef at Phở Việt Q1
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-    ('f0000000-0000-0000-0000-000000000008', 0, 'c0000000-0000-0000-0000-000000000008', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q1@restaurant.com', '0905000001', '2024-01-15', NULL, NOW(), NOW())
+-- Employees:
+-- Chef at Phở Việt Q1 (org d001, role r005)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000008', 0, 'c0000000-0000-0000-0000-000000000008', 'r0000000-0000-0000-0000-000000000005', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q1@restaurant.com', '0905000001', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
--- Waiter at Phở Việt Q1
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-    ('f0000000-0000-0000-0000-000000000009', 0, 'c0000000-0000-0000-0000-000000000009', 'r0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'waiter_q1@restaurant.com', '0905000002', '2024-01-15', NULL, NOW(), NOW())
+-- Waiter at Phở Việt Q1 (org d001, role r004)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000009', 0, 'c0000000-0000-0000-0000-000000000009', 'r0000000-0000-0000-0000-000000000004', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'waiter_q1@restaurant.com', '0905000002', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
--- Chef 2 at Phở Việt Q1
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-    ('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
+-- Chef 2 at Phở Việt Q1 (org d001, role r005)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 
 
 
--- 15. ERP MODULE: ORG_ROLE <-> ORG_PERMISSION MAPPINGS
--- OWNER Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000001', id FROM org_permissions
-    ON CONFLICT DO NOTHING;
-
--- MANAGER Role Mappings (Standard Manager Tasks + Booking + Loyalty permissions)
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000002', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
-                          'PAYMENT_READ', 'PAYMENT_CREATE',
-                          'MENU_MANAGE', 'TABLE_MANAGE', 'REPORT_VIEW',
-                          'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
-                          'EMPLOYEE_DELETE', 'EMPLOYEE_ROLE_ASSIGN', 'EMPLOYEE_ROLE_REVOKE',
-                          'TABLE_MAP_READ', 'TABLE_SEARCH_READ',
-                          'BOOKING_READ', 'BOOKING_CREATE', 'BOOKING_UPDATE', 'BOOKING_DELETE',
-                          'CUSTOMER_READ', 'POINT_WALLET_READ', 'VOUCHER_CREATE', 'VOUCHER_READ',
-                          'VOUCHER_UPDATE', 'CUSTOMER_VOUCHER_READ', 'CUSTOMER_VOUCHER_REDEEM',
-                          'CUSTOMER_VOUCHER_GIVE', 'CUSTOMER_VOUCHER_USE'
-    )
-    ON CONFLICT DO NOTHING;
-
--- CASHIER Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000003', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_CREATE', 'PAYMENT_READ', 'PAYMENT_CREATE',
-                          'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
-                          'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
-    )
-    ON CONFLICT DO NOTHING;
-
--- WAITER Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000004', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_CREATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
-                          'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
-    )
-    ON CONFLICT DO NOTHING;
-
--- CHEF Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000005', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_UPDATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
-                          'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
-    )
-    ON CONFLICT DO NOTHING;
 
 
 -- =========================================================================
