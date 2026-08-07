@@ -1,0 +1,13 @@
+-- =============================================================================
+-- SEED DATA: ORG-SCOPED ROLES (DEPRECATED)
+-- =============================================================================
+-- This file is DEPRECATED. All org_roles, permission mappings, and employee
+-- role assignments are now handled in seed_data.sql (sections 7, 8, 11).
+--
+-- DO NOT run this file — it will cause duplicate key errors because:
+--   1. seed_data.sql already inserts per-org roles with IDs r001-r025
+--   2. This file's role IDs (r0101-r0305) would conflict with the composite
+--      unique constraint (organization_id, role_name)
+--
+-- If you need to add new org-scoped roles, update seed_data.sql section 7.
+-- =============================================================================

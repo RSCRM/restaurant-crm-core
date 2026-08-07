@@ -2,18 +2,66 @@
 -- 1. IDENTITY MODULE: PERMISSIONS
 -- =============================================================================
 
-INSERT INTO permissions (id, version, permission_name, created_at, updated_at) VALUES
-                                                                                   ('a0000000-0000-0000-0000-000000000001', 0, 'SYSTEM_VIEW',       NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000002', 0, 'SYSTEM_MANAGE',     NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000003', 0, 'USER_VIEW',         NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000004', 0, 'USER_UPDATE',       NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000005', 0, 'USER_DELETE',       NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000006', 0, 'ROLE_VIEW',         NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000007', 0, 'ROLE_MANAGE',       NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000008', 0, 'PERMISSION_VIEW',   NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000009', 0, 'PERMISSION_MANAGE', NOW(), NOW()),
-                                                                                   ('a0000000-0000-0000-0000-000000000010', 0, 'AUDIT_VIEW',        NOW(), NOW())
-    ON CONFLICT (permission_name) DO NOTHING;
+insert
+into
+    permissions (id,
+                 version,
+                 permission_name,
+                 created_at,
+                 updated_at)
+values
+    ('a0000000-0000-0000-0000-000000000001',
+     0,
+     'SYSTEM_VIEW',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000002',
+     0,
+     'SYSTEM_MANAGE',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000003',
+     0,
+     'USER_VIEW',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000004',
+     0,
+     'USER_UPDATE',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000005',
+     0,
+     'USER_DELETE',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000006',
+     0,
+     'ROLE_VIEW',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000007',
+     0,
+     'ROLE_MANAGE',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000008',
+     0,
+     'PERMISSION_VIEW',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000009',
+     0,
+     'PERMISSION_MANAGE',
+     NOW(),
+     NOW()),
+    ('a0000000-0000-0000-0000-000000000010',
+     0,
+     'AUDIT_VIEW',
+     NOW(),
+     NOW())
+    on
+conflict (permission_name) do nothing;
 
 -- =============================================================================
 -- 2. IDENTITY MODULE: ROLES
@@ -47,9 +95,29 @@ INSERT INTO roles_permissions (role_id, permissions_id) VALUES
 -- =============================================================================
 
 -- Case 1: Admin
-INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
-    ('c0000000-0000-0000-0000-000000000001', 0, 'admin', '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq', 'admin@system.local', 'ACTIVE', true, NOW(), NOW())
-    ON CONFLICT (username) DO NOTHING;
+insert
+into
+    users (id,
+           version,
+           username,
+           password,
+           email,
+           status,
+           enabled,
+           created_at,
+           updated_at)
+values
+    ('c0000000-0000-0000-0000-000000000001',
+     0,
+     'admin',
+     '$2a$10$LCKw9m993mk/Hz4v7C5u0u4ye3RA.GqVzpd9SC30euP/8pztZdxZq',
+     'admin@system.local',
+     'ACTIVE',
+     true,
+     NOW(),
+     NOW())
+    on
+conflict (username) do nothing;
 
 -- Case 2: Owner A (1 organization)
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
@@ -77,20 +145,12 @@ INSERT INTO user_profiles (id, version, user_id, full_name, phone, created_at, u
                                                                                                ('c1000000-0000-0000-0000-000000000004', 0, 'c0000000-0000-0000-0000-000000000004', 'Restaurant Manager', '0904000001', NOW(), NOW())
     ON CONFLICT DO NOTHING;
 
--- =============================================================================
--- 5. USER <-> ROLE (user_roles)
--- =============================================================================
-
 INSERT INTO user_roles (user_id, role_id) VALUES
                                               ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001'),  -- admin   -> ADMIN
                                               ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002'),  -- owner_a -> USER
                                               ('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000002'),  -- owner_b -> USER
                                               ('c0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000002')   -- manager -> USER
     ON CONFLICT DO NOTHING;
-
--- =============================================================================
--- 6. ERP MODULE: ORG_PERMISSIONS
--- =============================================================================
 
 INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at) VALUES
                                                                                        ('p0000000-0000-0000-0000-000000000001', 0, 'ORDER_READ',      NOW(), NOW()),
@@ -119,177 +179,171 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
                                                                                        ('p0000000-0000-0000-0000-000000000018', 0, 'EMPLOYEE_ROLE_REVOKE', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000101', 0, 'TABLE_MAP_READ',   NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000102', 0, 'TABLE_SEARCH_READ', NOW(), NOW()),
-																					   ('p0000000-0000-0000-0000-000000000201', 0, 'INVENTORY_CATEGORY_VIEW',   NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000201', 0, 'INVENTORY_CATEGORY_VIEW',   NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000202', 0, 'INVENTORY_CATEGORY_MANAGE', NOW(), NOW()),
-																					   ('p0000000-0000-0000-0000-000000000203', 0, 'INVENTORY_VIEW',   NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000203', 0, 'INVENTORY_VIEW',   NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000204', 0, 'INVENTORY_MANAGE', NOW(), NOW()),
-																					   ('p0000000-0000-0000-0000-000000000205', 0, 'INVENTORY_TRANSACTION_VIEW',   NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000205', 0, 'INVENTORY_TRANSACTION_VIEW',   NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000206', 0, 'INVENTORY_TRANSACTION_MANAGE', NOW(), NOW())
     ON CONFLICT (permission_name) DO NOTHING;
 
 
 
--- =============================================================================
--- 7. ERP MODULE: ORG_ROLES
--- =============================================================================
-
-INSERT INTO org_roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
-                                                                                       ('r0000000-0000-0000-0000-000000000001', 0, 'OWNER',   'ORGANIZATION', NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000002', 0, 'MANAGER', 'BRANCH',       NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000003', 0, 'CASHIER', 'BRANCH',       NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000004', 0, 'WAITER',  'SELF',         NOW(), NOW()),
-                                                                                       ('r0000000-0000-0000-0000-000000000005', 0, 'CHEF',    'SELF',         NOW(), NOW())
-    ON CONFLICT (role_name) DO NOTHING;
-
--- =============================================================================
--- 8. ERP MODULE: ORG_ROLE <-> ORG_PERMISSION (org_roles_org_permissions)
--- =============================================================================
-
--- OWNER: all org permissions
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000003'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000004'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000005'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000006'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000007'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000008'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000009'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000010'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000011'),
-                                                                            ('r0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000012')
-    ON CONFLICT DO NOTHING;
-
--- MANAGER: daily operations
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000003'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000005'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000006'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000007'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000008'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000009'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000016'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000017'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000018'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000102'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000201'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000202'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000203'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000204'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000205'),
-																			('r0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000206')
-    ON CONFLICT DO NOTHING;
-
-
--- CASHIER: orders + payments
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000005'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000006'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000102')
-    ON CONFLICT DO NOTHING;
-
--- WAITER: order read + create
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000002'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000102')
-
-    ON CONFLICT DO NOTHING;
-
--- CHEF: order read + update
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id) VALUES
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000001'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000003'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000013'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000014'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000015'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000101'),
-                                                                            ('r0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000102')
-    ON CONFLICT DO NOTHING;
-
--- =============================================================================
--- 9. ORGANIZATIONS
--- =============================================================================
-
 -- Owner A: 1 organization
-INSERT INTO organizations (id, version, owner_id, organization_name, tax_code, address, phone, email, status, created_at, updated_at) VALUES
-    ('d0000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000002', 'Phở Việt Chain', 'TAX-A001', '123 Lê Lợi, Q1, TP.HCM', '0901000001', 'phoviet@restaurant.com', 'ACTIVE', NOW(), NOW())
+INSERT INTO organizations (id, version, organization_name, tax_code, address, phone, email, status, created_at, updated_at) VALUES
+    ('d0000000-0000-0000-0000-000000000001', 0, 'Phở Việt Chain', 'TAX-A001', '123 Lê Lợi, Q1, TP.HCM', '0901000001', 'phoviet@restaurant.com', 'ACTIVE', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 -- Owner B: 2 organizations
-INSERT INTO organizations (id, version, owner_id, organization_name, tax_code, address, phone, email, status, created_at, updated_at) VALUES
-                                                                                                                                          ('d0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000003', 'Sushi Tokyo Group', 'TAX-B001', '456 Nguyễn Huệ, Q1, TP.HCM', '0902000001', 'sushitokyo@restaurant.com', 'ACTIVE', NOW(), NOW()),
-                                                                                                                                          ('d0000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000003', 'BBQ Garden',       'TAX-B002', '789 Cách Mạng T8, Q3, TP.HCM', '0902000002', 'bbqgarden@restaurant.com', 'ACTIVE', NOW(), NOW())
+INSERT INTO organizations (id, version, organization_name, tax_code, address, phone, email, status, created_at, updated_at) VALUES
+                                                                                                                                ('d0000000-0000-0000-0000-000000000002', 0, 'Sushi Tokyo Group', 'TAX-B001', '456 Nguyễn Huệ, Q1, TP.HCM', '0902000001', 'sushitokyo@restaurant.com', 'ACTIVE', NOW(), NOW()),
+                                                                                                                                ('d0000000-0000-0000-0000-000000000003', 0, 'BBQ Garden',       'TAX-B002', '789 Cách Mạng T8, Q3, TP.HCM', '0902000002', 'bbqgarden@restaurant.com', 'ACTIVE', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
+-- 7. ERP MODULE: ORG_ROLES (per-organization, composite unique: organization_id + role_name)
+-- =============================================================================
+
+-- Phở Việt Chain (d001) roles
+INSERT INTO org_roles (id, version, organization_id, role_name, data_scope, created_at, updated_at) VALUES
+                                                                                                        ('r0000000-0000-0000-0000-000000000001', 0, 'd0000000-0000-0000-0000-000000000001', 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000002', 0, 'd0000000-0000-0000-0000-000000000001', 'MANAGER', 'BRANCH',       NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000003', 0, 'd0000000-0000-0000-0000-000000000001', 'CASHIER', 'BRANCH',       NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000004', 0, 'd0000000-0000-0000-0000-000000000001', 'WAITER',  'SELF',         NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000005', 0, 'd0000000-0000-0000-0000-000000000001', 'CHEF',    'SELF',         NOW(), NOW())
+    ON CONFLICT (organization_id, role_name) DO NOTHING;
+
+-- Sushi Tokyo Group (d002) roles
+INSERT INTO org_roles (id, version, organization_id, role_name, data_scope, created_at, updated_at) VALUES
+                                                                                                        ('r0000000-0000-0000-0000-000000000011', 0, 'd0000000-0000-0000-0000-000000000002', 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000012', 0, 'd0000000-0000-0000-0000-000000000002', 'MANAGER', 'BRANCH',       NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000013', 0, 'd0000000-0000-0000-0000-000000000002', 'CASHIER', 'BRANCH',       NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000014', 0, 'd0000000-0000-0000-0000-000000000002', 'WAITER',  'SELF',         NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000015', 0, 'd0000000-0000-0000-0000-000000000002', 'CHEF',    'SELF',         NOW(), NOW())
+    ON CONFLICT (organization_id, role_name) DO NOTHING;
+
+-- BBQ Garden (d003) roles
+INSERT INTO org_roles (id, version, organization_id, role_name, data_scope, created_at, updated_at) VALUES
+                                                                                                        ('r0000000-0000-0000-0000-000000000021', 0, 'd0000000-0000-0000-0000-000000000003', 'OWNER',   'ORGANIZATION', NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000022', 0, 'd0000000-0000-0000-0000-000000000003', 'MANAGER', 'BRANCH',       NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000023', 0, 'd0000000-0000-0000-0000-000000000003', 'CASHIER', 'BRANCH',       NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000024', 0, 'd0000000-0000-0000-0000-000000000003', 'WAITER',  'SELF',         NOW(), NOW()),
+                                                                                                        ('r0000000-0000-0000-0000-000000000025', 0, 'd0000000-0000-0000-0000-000000000003', 'CHEF',    'SELF',         NOW(), NOW())
+    ON CONFLICT (organization_id, role_name) DO NOTHING;
+
+-- =============================================================================
+-- 8. ERP MODULE: ORG_ROLE <-> ORG_PERMISSION (org_roles_org_permissions)
+-- Uses cross-join to map permissions to ALL per-org roles at once.
+-- =============================================================================
+
+-- OWNER: all org permissions (per-org OWNER roles: r001, r011, r021)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'OWNER'
+    ON CONFLICT DO NOTHING;
+
+-- MANAGER: daily operations (per-org MANAGER roles: r002, r012, r022)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'MANAGER'
+  AND p.permission_name IN (
+                            'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
+                            'PAYMENT_READ', 'PAYMENT_CREATE',
+                            'MENU_MANAGE', 'TABLE_MANAGE', 'REPORT_VIEW',
+                            'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
+                            'EMPLOYEE_DELETE', 'EMPLOYEE_ROLE_ASSIGN', 'EMPLOYEE_ROLE_REVOKE',
+                            'TABLE_MAP_READ', 'TABLE_SEARCH_READ',
+                            'INVENTORY_CATEGORY_VIEW', 'INVENTORY_CATEGORY_MANAGE',
+                            'INVENTORY_VIEW', 'INVENTORY_MANAGE',
+                            'INVENTORY_TRANSACTION_VIEW', 'INVENTORY_TRANSACTION_MANAGE'
+    )
+    ON CONFLICT DO NOTHING;
+
+-- CASHIER: orders + payments (per-org CASHIER roles: r003, r013, r023)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'CASHIER'
+  AND p.permission_name IN (
+                            'ORDER_READ', 'ORDER_CREATE', 'PAYMENT_READ', 'PAYMENT_CREATE',
+                            'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
+                            'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+    )
+    ON CONFLICT DO NOTHING;
+
+-- WAITER: order read + create (per-org WAITER roles: r004, r014, r024)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'WAITER'
+  AND p.permission_name IN (
+                            'ORDER_READ', 'ORDER_CREATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
+                            'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+    )
+    ON CONFLICT DO NOTHING;
+
+-- CHEF: order read + update (per-org CHEF roles: r005, r015, r025)
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT r.id, p.id
+FROM org_roles r CROSS JOIN org_permissions p
+WHERE r.role_name = 'CHEF'
+  AND p.permission_name IN (
+                            'ORDER_READ', 'ORDER_UPDATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
+                            'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
+    )
+    ON CONFLICT DO NOTHING;
+
+
 -- 10. ORGANIZATION BRANCHES
 -- =============================================================================
 
 -- Owner A branches (Phở Việt Chain)
-INSERT INTO organization_branches (id, version, organization_id, manager_id, branch_name, address, phone, status, created_at, updated_at) VALUES
-                                                                                                                                              ('e0000000-0000-0000-0000-000000000001', 0, 'd0000000-0000-0000-0000-000000000001', NULL, 'Phở Việt - Chi nhánh Q1', '123 Lê Lợi, Q1, TP.HCM', '0901001001', 'ACTIVE', NOW(), NOW()),
-                                                                                                                                              ('e0000000-0000-0000-0000-000000000002', 0, 'd0000000-0000-0000-0000-000000000001', NULL, 'Phở Việt - Chi nhánh Q7', '56 Nguyễn Thị Thập, Q7, TP.HCM', '0901001002', 'ACTIVE', NOW(), NOW())
+INSERT INTO organization_branches (id, version, organization_id, branch_name, address, phone, status, created_at, updated_at) VALUES
+                                                                                                                                  ('e0000000-0000-0000-0000-000000000001', 0, 'd0000000-0000-0000-0000-000000000001', 'Phở Việt - Chi nhánh Q1', '123 Lê Lợi, Q1, TP.HCM', '0901001001', 'ACTIVE', NOW(), NOW()),
+                                                                                                                                  ('e0000000-0000-0000-0000-000000000002', 0, 'd0000000-0000-0000-0000-000000000001', 'Phở Việt - Chi nhánh Q7', '56 Nguyễn Thị Thập, Q7, TP.HCM', '0901001002', 'ACTIVE', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 -- Owner B branches - org1 (Sushi Tokyo Group)
-INSERT INTO organization_branches (id, version, organization_id, manager_id, branch_name, address, phone, status, created_at, updated_at) VALUES
-                                                                                                                                              ('e0000000-0000-0000-0000-000000000003', 0, 'd0000000-0000-0000-0000-000000000002', NULL, 'Sushi Tokyo - Nguyễn Huệ', '456 Nguyễn Huệ, Q1, TP.HCM', '0902001001', 'ACTIVE', NOW(), NOW()),
-                                                                                                                                              ('e0000000-0000-0000-0000-000000000004', 0, 'd0000000-0000-0000-0000-000000000002', NULL, 'Sushi Tokyo - Thủ Đức', '100 Võ Văn Ngân, Thủ Đức, TP.HCM', '0902001002', 'ACTIVE', NOW(), NOW())
+INSERT INTO organization_branches (id, version, organization_id, branch_name, address, phone, status, created_at, updated_at) VALUES
+                                                                                                                                  ('e0000000-0000-0000-0000-000000000003', 0, 'd0000000-0000-0000-0000-000000000002', 'Sushi Tokyo - Nguyễn Huệ', '456 Nguyễn Huệ, Q1, TP.HCM', '0902001001', 'ACTIVE', NOW(), NOW()),
+                                                                                                                                  ('e0000000-0000-0000-0000-000000000004', 0, 'd0000000-0000-0000-0000-000000000002', 'Sushi Tokyo - Thủ Đức', '100 Võ Văn Ngân, Thủ Đức, TP.HCM', '0902001002', 'ACTIVE', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 -- Owner B branches - org2 (BBQ Garden)
-INSERT INTO organization_branches (id, version, organization_id, manager_id, branch_name, address, phone, status, created_at, updated_at) VALUES
-    ('e0000000-0000-0000-0000-000000000005', 0, 'd0000000-0000-0000-0000-000000000003', NULL, 'BBQ Garden - Q3', '789 Cách Mạng T8, Q3, TP.HCM', '0903001001', 'ACTIVE', NOW(), NOW())
+INSERT INTO organization_branches (id, version, organization_id, branch_name, address, phone, status, created_at, updated_at) VALUES
+    ('e0000000-0000-0000-0000-000000000005', 0, 'd0000000-0000-0000-0000-000000000003', 'BBQ Garden - Q3', '789 Cách Mạng T8, Q3, TP.HCM', '0903001001', 'ACTIVE', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
 -- 11. EMPLOYEES
 -- =============================================================================
 
--- Manager user as employee at 3 branches:
---   f001: MANAGER @ Phở Việt Q1       (Owner A)
---   f002: CASHIER @ Sushi Tokyo Huệ   (Owner B, org1)
---   f003: MANAGER @ BBQ Garden Q3     (Owner B, org2)
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-                                                                                                                                             ('f0000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-01-15', NULL, NOW(), NOW()),
-                                                                                                                                             ('f0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-03-01', NULL, NOW(), NOW()),
-                                                                                                                                             ('f0000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000005', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-06-01', NULL, NOW(), NOW())
+-- Owner Employees (branch_id = NULL, organization_id = their org):
+--   f004: owner_a (c002) → OWNER @ Phở Việt (org d001, role r001)
+--   f005: owner_b (c003) → OWNER @ Sushi Tokyo (org d002, role r011)
+--   f006: owner_b (c003) → OWNER @ BBQ Garden (org d003, role r021)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+                                                                                                                                                              ('f0000000-0000-0000-0000-000000000004', 0, 'c0000000-0000-0000-0000-000000000002', 'r0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', NULL, 'ACTIVE', 'owner_a@restaurant.com', '0901000000', '2024-01-01', NULL, NOW(), NOW()),
+                                                                                                                                                              ('f0000000-0000-0000-0000-000000000005', 0, 'c0000000-0000-0000-0000-000000000003', 'r0000000-0000-0000-0000-000000000011', 'd0000000-0000-0000-0000-000000000002', NULL, 'ACTIVE', 'owner_b@restaurant.com', '0902000000', '2024-01-01', NULL, NOW(), NOW()),
+                                                                                                                                                              ('f0000000-0000-0000-0000-000000000006', 0, 'c0000000-0000-0000-0000-000000000003', 'r0000000-0000-0000-0000-000000000021', 'd0000000-0000-0000-0000-000000000003', NULL, 'ACTIVE', 'owner_b@restaurant.com', '0902000000', '2024-01-01', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
--- =============================================================================
--- 12. UPDATE BRANCH MANAGER REFERENCES
--- =============================================================================
-
-UPDATE organization_branches SET manager_id = 'f0000000-0000-0000-0000-000000000001' WHERE id = 'e0000000-0000-0000-0000-000000000001';
-UPDATE organization_branches SET manager_id = 'f0000000-0000-0000-0000-000000000002' WHERE id = 'e0000000-0000-0000-0000-000000000003';
-UPDATE organization_branches SET manager_id = 'f0000000-0000-0000-0000-000000000003' WHERE id = 'e0000000-0000-0000-0000-000000000005';
+-- Manager user as employee at 3 branches:
+--   f001: MANAGER @ Phở Việt Q1       (org d001, role r002)
+--   f002: CASHIER @ Sushi Tokyo Huế   (org d002, role r013)
+--   f003: MANAGER @ BBQ Garden Q3     (org d003, role r022)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+                                                                                                                                                              ('f0000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-01-15', NULL, NOW(), NOW()),
+                                                                                                                                                              ('f0000000-0000-0000-0000-000000000002', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000013', 'd0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-03-01', NULL, NOW(), NOW()),
+                                                                                                                                                              ('f0000000-0000-0000-0000-000000000003', 0, 'c0000000-0000-0000-0000-000000000004', 'r0000000-0000-0000-0000-000000000022', 'd0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000005', 'ACTIVE', 'manager@restaurant.com', '0904000001', '2024-06-01', NULL, NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
 -- 13. ADDITIONAL SEED DATA FOR KITCHEN READY-TO-SERVE TESTING (uc-sw-14)
 -- =============================================================================
 
--- Add CHEF role
-INSERT INTO org_roles (id, version, role_name, data_scope, created_at, updated_at) VALUES
-    ('r0000000-0000-0000-0000-000000000005', 0, 'CHEF', 'SELF', NOW(), NOW())
-    ON CONFLICT (role_name) DO NOTHING;
 
 -- Chef user: username = chef_q1, email = chef_q1@restaurant.com
 INSERT INTO users (id, version, username, password, email, status, enabled, created_at, updated_at) VALUES
@@ -319,74 +373,24 @@ INSERT INTO user_roles (user_id, role_id) VALUES
     ON CONFLICT DO NOTHING;
 
 -- Employees:
--- Chef at Phở Việt Q1
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-    ('f0000000-0000-0000-0000-000000000008', 0, 'c0000000-0000-0000-0000-000000000008', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q1@restaurant.com', '0905000001', '2024-01-15', NULL, NOW(), NOW())
+-- Chef at Phở Việt Q1 (org d001, role r005)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000008', 0, 'c0000000-0000-0000-0000-000000000008', 'r0000000-0000-0000-0000-000000000005', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q1@restaurant.com', '0905000001', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
--- Waiter at Phở Việt Q1
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-    ('f0000000-0000-0000-0000-000000000009', 0, 'c0000000-0000-0000-0000-000000000009', 'r0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'waiter_q1@restaurant.com', '0905000002', '2024-01-15', NULL, NOW(), NOW())
+-- Waiter at Phở Việt Q1 (org d001, role r004)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000009', 0, 'c0000000-0000-0000-0000-000000000009', 'r0000000-0000-0000-0000-000000000004', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'waiter_q1@restaurant.com', '0905000002', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
--- Chef 2 at Phở Việt Q1
-INSERT INTO employees (id, version, user_id, org_role_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
-    ('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
+-- Chef 2 at Phở Việt Q1 (org d001, role r005)
+INSERT INTO employees (id, version, user_id, org_role_id, organization_id, branch_id, status, email, phone, start_date, end_date, created_at, updated_at) VALUES
+    ('f0000000-0000-0000-0000-000000000010', 0, 'c0000000-0000-0000-0000-000000000010', 'r0000000-0000-0000-0000-000000000005', 'd0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'ACTIVE', 'chef_q2@restaurant.com', '0905000003', '2024-01-15', NULL, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 
 
 
--- 15. ERP MODULE: ORG_ROLE <-> ORG_PERMISSION MAPPINGS
--- OWNER Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000001', id FROM org_permissions
-    ON CONFLICT DO NOTHING;
-
--- MANAGER Role Mappings (Standard Manager Tasks + Booking + Loyalty permissions)
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000002', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
-                          'PAYMENT_READ', 'PAYMENT_CREATE',
-                          'MENU_MANAGE', 'TABLE_MANAGE', 'REPORT_VIEW',
-                          'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
-                          'EMPLOYEE_DELETE', 'EMPLOYEE_ROLE_ASSIGN', 'EMPLOYEE_ROLE_REVOKE',
-                          'TABLE_MAP_READ', 'TABLE_SEARCH_READ',
-                          'BOOKING_READ', 'BOOKING_CREATE', 'BOOKING_UPDATE', 'BOOKING_DELETE',
-                          'CUSTOMER_READ', 'POINT_WALLET_READ', 'VOUCHER_CREATE', 'VOUCHER_READ',
-                          'VOUCHER_UPDATE', 'CUSTOMER_VOUCHER_READ', 'CUSTOMER_VOUCHER_REDEEM',
-                          'CUSTOMER_VOUCHER_GIVE', 'CUSTOMER_VOUCHER_USE'
-    )
-    ON CONFLICT DO NOTHING;
-
--- CASHIER Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000003', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_CREATE', 'PAYMENT_READ', 'PAYMENT_CREATE',
-                          'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
-                          'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
-    )
-    ON CONFLICT DO NOTHING;
-
--- WAITER Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000004', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_CREATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
-                          'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
-    )
-    ON CONFLICT DO NOTHING;
-
--- CHEF Role Mappings
-INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
-SELECT 'r0000000-0000-0000-0000-000000000005', id FROM org_permissions
-WHERE permission_name IN (
-                          'ORDER_READ', 'ORDER_UPDATE', 'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE',
-                          'ATTENDANCE_SELF_READ', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ'
-    )
-    ON CONFLICT DO NOTHING;
 
 
 -- =========================================================================
@@ -404,20 +408,20 @@ INSERT INTO table_areas (
     updated_at
 )
 VALUES (
-    'a0000000-0000-0000-0000-000000000001',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    'Main Area',
-    'Default dining area',
-    1,
-    NOW(),
-    NOW()
-);
+           'a0000000-0000-0000-0000-000000000001',
+           0,
+           'e0000000-0000-0000-0000-000000000001',
+           'Main Area',
+           'Default dining area',
+           1,
+           NOW(),
+           NOW()
+       );
 
 -- 16.1. Table Areas
 INSERT INTO table_areas (area_id, branch_id, area_name, version) VALUES
-    ('a0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Khu Vực A (Tầng trệt)', 0),
-    ('a0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'Khu A - Sushi Tokyo', 0)
+                                                                     ('a0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Khu Vực A (Tầng trệt)', 0),
+                                                                     ('a0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'Khu A - Sushi Tokyo', 0)
     ON CONFLICT (area_id) DO NOTHING;
 
 -- 16.2. Restaurant Tables
@@ -505,14 +509,14 @@ INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_
 INSERT INTO categories (category_id, version, branch_id, category_name, description, display_order, created_at, updated_at) VALUES
                                                                                                                                 ('cat00000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Phở & Bún', 'Các món Phở truyền thống Việt Nam', 1, NOW(), NOW()),
                                                                                                                                 ('cat00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'Đồ Uống', 'Nước giải khát & Trà thanh nhiệt', 2, NOW(), NOW())
-    ON CONFLICT (category_id) DO NOTHING;
+    ON CONFLICT (branch_id, category_name) DO NOTHING;
 
 INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
                                                                                                                                                                           ('prd00000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Phở Bò Tái', 'Phở bò tái truyền thống với nước dùng đậm đà', 55000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
                                                                                                                                                                           ('prd00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Phở Gà Đặc Biệt', 'Phở gà ta thịt đùi xé phay kèm trứng non', 65000.00, NULL, 'AVAILABLE', true, NOW(), NOW()),
                                                                                                                                                                           ('prd00000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000002', 'Trà Đá', 'Trà đá ướp hoa lài ướp lạnh', 5000.00, NULL, 'AVAILABLE', false, NOW(), NOW()),
                                                                                                                                                                           ('prd00000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000002', 'cat00000-0000-0000-0000-000000000002', 'Nước Cam Ép', 'Cam sành ép tươi 100% nguyên chất', 25000.00, NULL, 'AVAILABLE', false, NOW(), NOW())
-    ON CONFLICT (product_id) DO NOTHING;
+    ON CONFLICT (branch_id, product_name) DO NOTHING;
 
 -- 16.9. Tự động gắn Voucher 0 điểm mẫu cho tất cả Khách hàng hiện có (nếu chưa có trong ví)
 INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, created_at, updated_at)
@@ -601,27 +605,27 @@ INSERT INTO inventory_categories (
     description
 )
 VALUES
-(
-    '11111111-1111-1111-1111-111111111111',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    'Vegetables',
-    'Fresh vegetables'
-),
-(
-    '22222222-2222-2222-2222-222222222222',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    'Meat',
-    'Fresh meat products'
-),
-(
-    '33333333-3333-3333-3333-333333333333',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    'Beverages',
-    'Drinks and beverages'
-);
+    (
+        '11111111-1111-1111-1111-111111111111',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        'Vegetables',
+        'Fresh vegetables'
+    ),
+    (
+        '22222222-2222-2222-2222-222222222222',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        'Meat',
+        'Fresh meat products'
+    ),
+    (
+        '33333333-3333-3333-3333-333333333333',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        'Beverages',
+        'Drinks and beverages'
+    );
 
 -- ==========================================
 -- INVENTORY
@@ -640,54 +644,54 @@ INSERT INTO inventories (
     status
 )
 VALUES
-(
-    '44444444-4444-4444-4444-444444444444',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    '11111111-1111-1111-1111-111111111111',
-    'Tomato',
-    'kg',
-    'Fresh tomato',
-    80,
-    20,
-    'GOOD'
-),
-(
-    '55555555-5555-5555-5555-555555555555',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    '11111111-1111-1111-1111-111111111111',
-    'Potato',
-    'kg',
-    'Yellow potato',
-    10,
-    20,
-    'LOW'
-),
-(
-    '66666666-6666-6666-6666-666666666666',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    '22222222-2222-2222-2222-222222222222',
-    'Chicken Breast',
-    'kg',
-    'Boneless chicken breast',
-    0,
-    15,
-    'OUT_OF_STOCK'
-),
-(
-    '77777777-7777-7777-7777-777777777777',
-    0,
-    'e0000000-0000-0000-0000-000000000001',
-    '33333333-3333-3333-3333-333333333333',
-    'Coca Cola',
-    'can',
-    '330ml can',
-    120,
-    30,
-    'GOOD'
-);
+    (
+        '44444444-4444-4444-4444-444444444444',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        '11111111-1111-1111-1111-111111111111',
+        'Tomato',
+        'kg',
+        'Fresh tomato',
+        80,
+        20,
+        'GOOD'
+    ),
+    (
+        '55555555-5555-5555-5555-555555555555',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        '11111111-1111-1111-1111-111111111111',
+        'Potato',
+        'kg',
+        'Yellow potato',
+        10,
+        20,
+        'LOW'
+    ),
+    (
+        '66666666-6666-6666-6666-666666666666',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        '22222222-2222-2222-2222-222222222222',
+        'Chicken Breast',
+        'kg',
+        'Boneless chicken breast',
+        0,
+        15,
+        'OUT_OF_STOCK'
+    ),
+    (
+        '77777777-7777-7777-7777-777777777777',
+        0,
+        'e0000000-0000-0000-0000-000000000001',
+        '33333333-3333-3333-3333-333333333333',
+        'Coca Cola',
+        'can',
+        '330ml can',
+        120,
+        30,
+        'GOOD'
+    );
 
 -- ==========================================
 -- INVENTORY TRANSACTION
@@ -704,58 +708,58 @@ INSERT INTO inventory_transactions (
     transaction_time
 )
 VALUES
-(
-    '88888888-8888-8888-8888-888888888888',
-    0,
-    '44444444-4444-4444-4444-444444444444',
-    'f0000000-0000-0000-0000-000000000001',
-    'PURCHASE',
-    'IN',
-    100,
-    'Purchased from supplier',
-    NOW() - INTERVAL '7 days'
-),
-(
-    '99999999-9999-9999-9999-999999999999',
-    0,
-    '44444444-4444-4444-4444-444444444444',
-    'f0000000-0000-0000-0000-000000000001',
-    'SALE',
-    'OUT',
-    20,
-    'Used in kitchen',
-    NOW() - INTERVAL '3 days'
-),
-(
-    'aaaaaaaa-1111-2222-3333-444444444444',
-    0,
-    '55555555-5555-5555-5555-555555555555',
-    'f0000000-0000-0000-0000-000000000001',
-    'SALE',
-    'OUT',
-    15,
-    'Daily cooking',
-    NOW() - INTERVAL '2 days'
-),
-(
-    'cccccccc-1111-2222-3333-444444444444',
-    0,
-    '66666666-6666-6666-6666-666666666666',
-    'f0000000-0000-0000-0000-000000000001',
-    'PURCHASE',
-    'IN',
-    50,
-    'Restocked chicken',
-    NOW() - INTERVAL '1 day'
-),
-(
-    'dddddddd-1111-2222-3333-444444444444',
-    0,
-    '77777777-7777-7777-7777-777777777777',
-    'f0000000-0000-0000-0000-000000000001',
-    'ADJUSTMENT',
-    'IN',
-    10,
-    'Inventory correction',
-    NOW()
-);
+    (
+        '88888888-8888-8888-8888-888888888888',
+        0,
+        '44444444-4444-4444-4444-444444444444',
+        'f0000000-0000-0000-0000-000000000001',
+        'PURCHASE',
+        'IN',
+        100,
+        'Purchased from supplier',
+        NOW() - INTERVAL '7 days'
+    ),
+    (
+        '99999999-9999-9999-9999-999999999999',
+        0,
+        '44444444-4444-4444-4444-444444444444',
+        'f0000000-0000-0000-0000-000000000001',
+        'SALE',
+        'OUT',
+        20,
+        'Used in kitchen',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        'aaaaaaaa-1111-2222-3333-444444444444',
+        0,
+        '55555555-5555-5555-5555-555555555555',
+        'f0000000-0000-0000-0000-000000000001',
+        'SALE',
+        'OUT',
+        15,
+        'Daily cooking',
+        NOW() - INTERVAL '2 days'
+    ),
+    (
+        'cccccccc-1111-2222-3333-444444444444',
+        0,
+        '66666666-6666-6666-6666-666666666666',
+        'f0000000-0000-0000-0000-000000000001',
+        'PURCHASE',
+        'IN',
+        50,
+        'Restocked chicken',
+        NOW() - INTERVAL '1 day'
+    ),
+    (
+        'dddddddd-1111-2222-3333-444444444444',
+        0,
+        '77777777-7777-7777-7777-777777777777',
+        'f0000000-0000-0000-0000-000000000001',
+        'ADJUSTMENT',
+        'IN',
+        10,
+        'Inventory correction',
+        NOW()
+    );

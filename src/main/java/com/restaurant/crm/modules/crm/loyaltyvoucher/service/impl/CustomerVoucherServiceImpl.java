@@ -16,6 +16,7 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.CustomerVoucherR
 import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.CustomerVoucherService;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
@@ -50,9 +51,11 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
             return;
         }
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+        if (OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())) {
+            // Owner: verify branch belongs to their organization
+            branchRepository.findById(targetBranchId)
+                    .filter(b -> b.getOrganization() != null
+                            && AuthUtils.getOrganizationId().equals(b.getOrganization().getId()))
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
         } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);

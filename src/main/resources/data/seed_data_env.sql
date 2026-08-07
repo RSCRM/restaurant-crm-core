@@ -415,21 +415,21 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO customers (id, version, phone, status, created_at, updated_at)
 VALUES
     ('c0000000-0000-0000-0000-000000000099', 0, '0966888888', 'ACTIVE', NOW(), NOW()),
-    ('c0000000-0000-0000-0000-000000000098', 0, '0987654321', 'ACTIVE', NOW(), NOW())
+    ('c0000000-0000-0000-0000-000000000001', 0, '0987654321', 'ACTIVE', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Customer Point Wallets for Phở Việt Organization ('d0000000-0000-0000-0000-000000000001')
 INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
 VALUES
     ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW()),
-    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000098', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
+    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
 ON CONFLICT (customer_id, organization_id) DO NOTHING;
 
 -- Seed Customer Vouchers
 INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, used_at, order_id, created_at, updated_at)
 VALUES
     ('cv000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000099', 'e0000000-0000-0000-0000-000000000001', 'v0000000-0000-0000-0000-000000000001', 'V10PERCENTTEST', 'AVAILABLE', NULL, NULL, NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- =============================================================================
 -- TEST DATA FOR ORDERING (ADD DISHES & COMBOS WITH NO DUPLICATES)

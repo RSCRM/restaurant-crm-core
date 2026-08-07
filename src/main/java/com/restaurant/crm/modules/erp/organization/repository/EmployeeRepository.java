@@ -22,6 +22,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
     Optional<Employee> findFirstByUser_IdAndBranch_Organization_Id(
             String userId, String organizationId);
 
+    Optional<Employee> findByUser_IdAndOrganization_Id(String userId, String organizationId);
+
+    List<Employee> findByOrganization_Id(String organizationId);
+
+    List<Employee> findByUser_IdAndOrgRole_RoleName(String userId, String roleName);
+
     List<Employee> findByBranch_Organization_Id(String organizationId);
     List<Employee> findByBranch_Id(String branchId);
 
@@ -38,10 +44,4 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
     Optional<Employee> findByIdAndBranch_IdAndOrgRole_RoleNameNot(
             String id, String branchId, String excludedRole);
-
-    Optional<Employee> findByUser_IdAndBranch_Organization_IdAndBranch_Organization_OwnerId(
-            String userId,
-            String organizationId,
-            String ownerId
-    );
 }

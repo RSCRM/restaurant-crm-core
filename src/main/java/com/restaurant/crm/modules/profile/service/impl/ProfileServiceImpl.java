@@ -9,6 +9,8 @@ import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.identity.entity.User;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.profile.dto.response.UserProfileResponse;
 import com.restaurant.crm.modules.profile.dto.request.ProfileUpdateRequest;
@@ -117,9 +119,11 @@ public class ProfileServiceImpl implements ProfileService {
     public UserProfileResponse updateMyInfo(ProfileUpdateRequest request) {
         String userId = AuthUtils.getCurrentUserId();
         String employeeId = AuthUtils.getEmployeeId();
-        if (employeeId != null && !employeeRepository.findByIdAndUserId(employeeId, userId)
-                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND))
-                .isProfileUpdateEnabled()) {
+        if (employeeId != null
+                && !OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())
+                && !employeeRepository.findByIdAndUserId(employeeId, userId)
+                        .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND))
+                        .isProfileUpdateEnabled()) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
         User user = userRepository.findById(userId)
@@ -177,6 +181,10 @@ public class ProfileServiceImpl implements ProfileService {
         if (isAdmin()) {
             return;
         }
+        // Owner bypass: owner Employee has branch=null
+        if (OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())) {
+            return;
+        }
         boolean allowed = employee.getBranch() != null && switch (AuthUtils.getDataScope()) {
             case ORGANIZATION -> employee.getBranch().getOrganization() != null
                     && AuthUtils.getOrganizationId().equals(
@@ -201,9 +209,13 @@ public class ProfileServiceImpl implements ProfileService {
             return employeeRepository.findFirstByUser_IdAndBranch_Id(
                     user.getId(), AuthUtils.getBranchId()).map(Employee::getId).orElse(null);
         }
+        // Try branch-based lookup first, then fallback to organization (for owner Employee)
         return employeeRepository.findFirstByUser_IdAndBranch_Organization_Id(
                 user.getId(), AuthUtils.getOrganizationId())
-                .map(Employee::getId).orElse(null);
+                .map(Employee::getId)
+                .orElseGet(() -> employeeRepository.findByUser_IdAndOrganization_Id(
+                        user.getId(), AuthUtils.getOrganizationId())
+                        .map(Employee::getId).orElse(null));
     }
 
     private Map<String, String> resolveEmployeeIds(List<UserProfile> profiles) {
@@ -215,7 +227,7 @@ public class ProfileServiceImpl implements ProfileService {
         if (isAdmin()) {
             employees = employeeRepository.findByUser_IdIn(userIds);
         } else {
-            employees = switch (AuthUtils.getDataScope()) {
+            employees = new java.util.ArrayList<>(switch (AuthUtils.getDataScope()) {
                 case ORGANIZATION -> employeeRepository
                         .findByUser_IdInAndBranch_Organization_Id(
                                 userIds, AuthUtils.getOrganizationId());
@@ -223,7 +235,12 @@ public class ProfileServiceImpl implements ProfileService {
                         userIds, AuthUtils.getBranchId());
                 case SELF -> employeeRepository.findByUser_IdIn(List.of(
                         AuthUtils.getCurrentUserId()));
-            };
+            });
+            // For ORGANIZATION scope, also include owner Employees (branch=null)
+            if (AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION) {
+                employees.addAll(employeeRepository.findByOrganization_Id(
+                        AuthUtils.getOrganizationId()));
+            }
         }
         return employees.stream().collect(Collectors.toMap(
                 employee -> employee.getUser().getId(),
