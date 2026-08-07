@@ -13,5 +13,7 @@ import lombok.experimental.FieldDefaults;
 public class ScheduleEmployeeResponse {
     String id;
     String name;
+    String fullName;
+    String email;
     String branchName;
 }

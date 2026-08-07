@@ -183,7 +183,7 @@ WHERE role.role_name IN ('OWNER', 'MANAGER')
 ON CONFLICT DO NOTHING;
 
 DELETE FROM work_schedules
-WHERE employee_id = 'f0000000-0000-0000-0000-000000000001';
+WHERE employee_id IN ('f0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000008', 'f0000000-0000-0000-0000-000000000009', 'f0000000-0000-0000-0000-000000000010');
 
 INSERT INTO work_schedules
     (id, version, employee_id, branch_id, work_date, start_time, end_time, note, created_at, updated_at)
@@ -423,11 +423,74 @@ INSERT INTO customer_point (id, version, customer_id, organization_id, current_p
 VALUES
     ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW()),
     ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000098', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (customer_id, organization_id) DO NOTHING;
 
 -- Seed Customer Vouchers
 INSERT INTO customer_vouchers (id, version, customer_id, branch_id, voucher_id, voucher_sn, status, used_at, order_id, created_at, updated_at)
 VALUES
     ('cv000000-0000-0000-0000-000000000001', 0, 'c0000000-0000-0000-0000-000000000099', 'e0000000-0000-0000-0000-000000000001', 'v0000000-0000-0000-0000-000000000001', 'V10PERCENTTEST', 'AVAILABLE', NULL, NULL, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
+
+-- =============================================================================
+-- TEST DATA FOR ORDERING (ADD DISHES & COMBOS WITH NO DUPLICATES)
+-- =============================================================================
+
+-- 1. Insert new categories for Cơm and Món Phụ to avoid conflicts
+INSERT INTO categories (category_id, version, branch_id, category_name, description, display_order, created_at, updated_at) VALUES
+    ('cat00000-0000-0000-0000-000000000201', 0, 'e0000000-0000-0000-0000-000000000001', 'Cơm Đặc Sản', 'Các món cơm đặc sắc', 5, NOW(), NOW()),
+    ('cat00000-0000-0000-0000-000000000202', 0, 'e0000000-0000-0000-0000-000000000001', 'Món Ăn Kèm Thêm', 'Các món phụ ăn kèm', 6, NOW(), NOW())
+    ON CONFLICT (category_id) DO NOTHING;
+
+-- 2. Insert new products for Chi nhánh Q1 (e0000000-0000-0000-0000-000000000001)
+-- Category: Phở & Bún (cat00000-0000-0000-0000-000000000001)
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+    ('prd00000-0000-0000-0000-000000000101', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Phở Bò Viên Đặc Biệt',   'Phở bò viên dai ngon giòn giòn',                           55000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Phở Bò Gân Giòn',        'Phở gân bò hầm mềm giòn sần sật',                          60000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000103', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Bún Mọc Thanh Đạm',      'Bún mọc giò heo sườn non thanh đạm',                       50000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000104', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Bún Chả Hà Nội Xưa',     'Bún chả nướng than hoa đậm vị truyền thống',               60000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000105', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000001', 'Bún Thịt Nướng Thơm',     'Bún thịt nướng tẩm ướp đậm đà, chả giò giòn',              50000.00, NULL, 'AVAILABLE', true,  NOW(), NOW())
+    ON CONFLICT (product_id) DO NOTHING;
+
+-- Category: Cơm Đặc Sản (cat00000-0000-0000-0000-000000000201)
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+    ('prd00000-0000-0000-0000-000000000106', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000201', 'Cơm Chiên Dương Châu Ngon', 'Cơm chiên lạp xưởng, xá xíu, tôm, đậu hà lan',             45000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000107', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000201', 'Cơm Bò Lúc Lắc Mềm',      'Cơm bò lúc lắc khoai tây chiên sốt đậm đà',                65000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000108', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000201', 'Cơm Đùi Gà Xối Mỡ Giòn',   'Cơm chiên tỏi đùi gà xối mỡ da giòn rụm',                 55000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000109', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000201', 'Cơm Sườn Que Thơm',         'Cơm sườn que nướng mật ong thơm phức',                      50000.00, NULL, 'AVAILABLE', true,  NOW(), NOW())
+    ON CONFLICT (product_id) DO NOTHING;
+
+-- Category: Đồ Uống (cat00000-0000-0000-0000-000000000002)
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+    ('prd00000-0000-0000-0000-000000000110', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000002', 'Sinh Tố Bơ Béo',           'Bơ sáp xay sữa đặc béo ngậy thơm ngon',                    35000.00, NULL, 'AVAILABLE', false, NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000111', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000002', 'Sinh Tố Xoài Ngọt',         'Xoài cát chín xay mát lạnh',                                30000.00, NULL, 'AVAILABLE', false, NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000112', 0, 'e0000000-0000-0000-0000-000000000002', 'cat00000-0000-0000-0000-000000000002', 'Trà Sữa Trân Châu Dai',    'Trà sữa hồng trà trân châu đen dai giòn',                   35000.00, NULL, 'AVAILABLE', false, NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000113', 0, 'e0000000-0000-0000-0000-000000000002', 'cat00000-0000-0000-0000-000000000002', 'Nước Suối Tinh Khiết',     'Nước khoáng đóng chai Aquafina 500ml',                     10000.00, NULL, 'AVAILABLE', false, NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000114', 0, 'e0000000-0000-0000-0000-000000000002', 'cat00000-0000-0000-0000-000000000002', 'Bia Heineken Lạnh',        'Bia Heineken lon 330ml',                                   30000.00, NULL, 'AVAILABLE', false, NOW(), NOW())
+    ON CONFLICT (product_id) DO NOTHING;
+
+-- Category: Món Ăn Kèm Thêm (cat00000-0000-0000-0000-000000000202)
+INSERT INTO products (product_id, version, branch_id, category_id, product_name, description, price, image_url, status, requires_preparation, created_at, updated_at) VALUES
+    ('prd00000-0000-0000-0000-000000000115', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000202', 'Nem Rán Giòn Rụm',         'Nem rán nhân thịt heo nấm mèo giòn rụm',                   20000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000116', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000202', 'Gỏi Cuốn Tôm Thịt Ngon',   'Gỏi cuốn tôm thịt chấm sốt tương đậu phộng',                15000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000117', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000202', 'Bát Bò Viên Thêm',         'Thêm bát bò viên nước lèo ăn kèm',                         20000.00, NULL, 'AVAILABLE', true,  NOW(), NOW()),
+    ('prd00000-0000-0000-0000-000000000118', 0, 'e0000000-0000-0000-0000-000000000001', 'cat00000-0000-0000-0000-000000000202', 'Tiết Hột Gà Chần',         'Bát tiết hột gà chần béo ngậy thơm ngon',                  15000.00, NULL, 'AVAILABLE', true,  NOW(), NOW())
+    ON CONFLICT (product_id) DO NOTHING;
+
+-- 3. Combos
+INSERT INTO combos (combo_id, version, branch_id, combo_name, description, price, image_url, status, created_at, updated_at) VALUES
+    ('cmb00000-0000-0000-0000-000000000001', 0, 'e0000000-0000-0000-0000-000000000001', 'Combo Phở & Nước Ép', 'Phở bò tái kèm nước cam ép sành tươi ngon', 70000.00, NULL, 'AVAILABLE', NOW(), NOW()),
+    ('cmb00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 'Set Gia Đình Ấm Cúng', 'Bao gồm các món cơm đặc sản tự chọn', 250000.00, NULL, 'AVAILABLE', NOW(), NOW()),
+    ('cmb00000-0000-0000-0000-000000000003', 0, 'e0000000-0000-0000-0000-000000000001', 'Set Ăn Sáng Tiện Lợi', '1 Phở Bò Viên + 1 Trà Đá', 60000.00, NULL, 'AVAILABLE', NOW(), NOW())
+    ON CONFLICT (combo_id) DO NOTHING;
+
+-- 4. Combo Items
+INSERT INTO combo_items (combo_item_id, version, combo_id, product_id, quantity, created_at, updated_at) VALUES
+    ('cbi00000-0000-0000-0000-000000000001', 0, 'cmb00000-0000-0000-0000-000000000001', 'prd00000-0000-0000-0000-000000000101', 1, NOW(), NOW()),
+    ('cbi00000-0000-0000-0000-000000000002', 0, 'cmb00000-0000-0000-0000-000000000001', 'prd00000-0000-0000-0000-000000000110', 1, NOW(), NOW()),
+    ('cbi00000-0000-0000-0000-000000000003', 0, 'cmb00000-0000-0000-0000-000000000002', 'prd00000-0000-0000-0000-000000000106', 2, NOW(), NOW()),
+    ('cbi00000-0000-0000-0000-000000000004', 0, 'cmb00000-0000-0000-0000-000000000002', 'prd00000-0000-0000-0000-000000000107', 2, NOW(), NOW()),
+    ('cbi00000-0000-0000-0000-000000000005', 0, 'cmb00000-0000-0000-0000-000000000003', 'prd00000-0000-0000-0000-000000000101', 1, NOW(), NOW()),
+    ('cbi00000-0000-0000-0000-000000000006', 0, 'cmb00000-0000-0000-0000-000000000003', 'prd00000-0000-0000-0000-000000000113', 1, NOW(), NOW())
+    ON CONFLICT (combo_item_id) DO NOTHING;
+
 

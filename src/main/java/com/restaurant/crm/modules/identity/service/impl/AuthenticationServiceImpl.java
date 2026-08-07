@@ -135,7 +135,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             Organization organization = organizationRepository
                     .findByIdAndOwnerId(request.getOrganizationId(), userId)
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-            String contextToken = generateOwnerContextToken(userId, organization.getId());
+            OrganizationBranch branch = request.getBranchId() == null || request.getBranchId().isBlank()
+                    ? organizationBranchRepository
+                            .findByOrganizationIdAndStatus(organization.getId(), OrganizationBranchStatus.ACTIVE)
+                            .stream()
+                            .findFirst()
+                            .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND))
+                    : organizationBranchRepository
+                            .findByIdAndOrganization_OwnerId(request.getBranchId(), userId)
+                            .filter(candidate -> organization.getId().equals(candidate.getOrganization().getId()))
+                            .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
+            String contextToken = generateOwnerContextToken(userId, organization.getId(), branch.getId());
             return ContextSelectionResponse.builder()
                     .contextToken(contextToken)
                     .build();
@@ -274,7 +284,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return signToken(jwsHeader, claimsBuilder.build());
     }
 
-    private String generateOwnerContextToken(String userId, String organizationId) {
+    private String generateOwnerContextToken(String userId, String organizationId, String branchId) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         Set<String> permissions = orgRoleRepository.findByRoleName(OWNER_ROLE)
                 .map(this::buildOrgPermissions)
@@ -288,6 +298,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .claim(JwtClaimSetConstant.CLAIM_USER_ID, userId)
                 .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_CONTEXT)
                 .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, organizationId)
+                .claim(JwtClaimSetConstant.CLAIM_BRANCH_ID, branchId)
                 .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, OWNER_ROLE)
                 .claim(JwtClaimSetConstant.CLAIM_DATA_SCOPE, OrgDataScope.ORGANIZATION.name())
                 .claim(JwtClaimSetConstant.CLAIM_PERMISSION, permissions)
