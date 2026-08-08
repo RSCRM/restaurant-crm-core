@@ -224,6 +224,8 @@ public enum ErrorCode {
         INVENTORY_CATEGORY_NOT_FOUND("INVENTORY_CATEGORY_1000", "Inventory category not found", HttpStatus.NOT_FOUND),
         INVENTORY_CATEGORY_EXISTS("INVENTORY_CATEGORY_1001", "Inventory category already exists in this branch",
                         HttpStatus.CONFLICT),
+        INVENTORY_CATEGORY_INACTIVE("INVENTORY_CATEGORY_1003", "Inventory category is inactive",
+        HttpStatus.CONFLICT),
         INVENTORY_NOT_FOUND("INV_1000", "Inventory not found", HttpStatus.NOT_FOUND),
         INVENTORY_INVALID_QUANTITY("INV_1001", "Inventory quantity must be greater than or equal to zero",
                         HttpStatus.BAD_REQUEST),
@@ -231,13 +233,14 @@ public enum ErrorCode {
         INVENTORY_OUT_OF_STOCK("INV_1003", "Inventory is out of stock", HttpStatus.BAD_REQUEST),
         INVENTORY_EXISTS("INV_1004", "Inventory already exists", HttpStatus.BAD_REQUEST),
         INVALID_DATE_RANGE("INV_1005", "Invalid date", HttpStatus.BAD_REQUEST),
+        INVENTORY_INACTIVE("INV_1006", "Inventory not found", HttpStatus.BAD_REQUEST),
         // ==== INVENTORY TRANSACTION ERRORS ====
         INVENTORY_TRANSACTION_NOT_FOUND("INV_TX_1000", "Inventory transaction not found", HttpStatus.NOT_FOUND),
         INVENTORY_TRANSACTION_INVALID_QUANTITY("INV_TX_1001", "Transaction quantity must be greater than zero",
                         HttpStatus.BAD_REQUEST),
         INVENTORY_TRANSACTION_INVALID_TYPE("INV_TX_1002", "Invalid inventory transaction type", HttpStatus.BAD_REQUEST),
         INVENTORY_TRANSACTION_FAILED("INV_TX_1003", "Inventory transaction failed", HttpStatus.INTERNAL_SERVER_ERROR),
-
+    INVENTORY_INVALID_TRANSACTION_TYPE_DIRECTION("INV_TX_1004", "Invalid inventory transaction direction", HttpStatus.BAD_REQUEST),
         // ==== RESTAURANT ERRORS ====
         RESTAURANT_ID_REQUIRED("REST_1000", "Restaurant ID is required", HttpStatus.BAD_REQUEST),
 

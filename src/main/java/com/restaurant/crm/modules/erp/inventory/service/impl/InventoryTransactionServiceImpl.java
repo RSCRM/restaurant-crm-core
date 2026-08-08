@@ -11,6 +11,7 @@ import com.restaurant.crm.modules.erp.inventory.dto.request.InventoryTransaction
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryTransactionResponse;
 import com.restaurant.crm.modules.erp.inventory.entity.Inventory;
 import com.restaurant.crm.modules.erp.inventory.entity.InventoryTransaction;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryCategoryStatus;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryTransactionDirection;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryTransactionType;
@@ -52,6 +53,10 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         Employee employee = employeeRepository.findById(employeeId)
             .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
+        if (!request.getTransactionType().isValidDirection(request.getTransactionDirection())) {
+            throw new AppException(ErrorCode.INVENTORY_INVALID_TRANSACTION_TYPE_DIRECTION);
+        }
+
         Inventory inventory =
             inventoryRepository.findByIdAndBranchId(
                     request.getInventoryId(),
@@ -60,7 +65,9 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                 .orElseThrow(() ->
                     new AppException(ErrorCode.INVENTORY_NOT_FOUND)
                 );
-
+        if (inventory.getStatus() == InventoryStatus.INACTIVE) {
+            throw new AppException(ErrorCode.INVENTORY_INACTIVE);
+        }
         InventoryTransaction transaction =
             transactionMapper.toInventoryTransaction(request);
 

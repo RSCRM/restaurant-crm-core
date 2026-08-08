@@ -4,6 +4,7 @@ import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryCategoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryCategoryRequest;
+import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryCategoryStatusRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryCategoryResponse;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryCategoryService;
 import jakarta.validation.Valid;
@@ -13,6 +14,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/erp/inventory-categories")
@@ -116,16 +119,29 @@ public class InventoryCategoryController {
         );
     }
 
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('INVENTORY_CATEGORY_MANAGE')")
-    public ResponseEntity<ApiResponse<Void>> deleteInventoryCategory(
-        @PathVariable String id
+    public ResponseEntity<ApiResponse<InventoryCategoryResponse>> updateStatus(
+        @PathVariable String id,
+        @Valid @RequestBody UpdateInventoryCategoryStatusRequest request
     ) {
+        return ResponseEntity.ok(
+            ApiResponse.<InventoryCategoryResponse>builder()
+                .data(inventoryCategoryService.updateInventoryCategoryStatus(id, request))
+                .build()
+        );
+    }
 
-        inventoryCategoryService.deleteInventoryCategory(id);
+    @GetMapping("/active")
+    @PreAuthorize("hasAuthority('INVENTORY_MANAGE')")
+    public ResponseEntity<ApiResponse<List<InventoryCategoryResponse>>> getActiveInventoryCategories() {
+
+        List<InventoryCategoryResponse> response =
+            inventoryCategoryService.getActiveInventoryCategories();
 
         return ResponseEntity.ok(
-            ApiResponse.<Void>builder()
+            ApiResponse.<List<InventoryCategoryResponse>>builder()
+                .data(response)
                 .build()
         );
     }

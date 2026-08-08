@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/erp/inventories")
 @RequiredArgsConstructor
@@ -145,6 +147,28 @@ public class InventoryController {
         return ResponseEntity.ok(
             ApiResponse.<InventoryResponse>builder()
                 .data(response)
+                .build()
+        );
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('INVENTORY_MANAGE')")
+    public ResponseEntity<ApiResponse<InventoryResponse>> updateStatus(
+        @PathVariable String id
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.<InventoryResponse>builder()
+                .data(inventoryService.updateInventoryStatus(id))
+                .build()
+        );
+    }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
+    public ResponseEntity<ApiResponse<List<InventoryResponse>>> getActiveInventories() {
+        return ResponseEntity.ok(
+            ApiResponse.<List<InventoryResponse>>builder()
+                .data(inventoryService.getActiveInventories())
                 .build()
         );
     }

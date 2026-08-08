@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.inventory.dto.response;
 
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryCategoryStatus;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,6 +21,7 @@ public class InventoryResponse {
     String inventoryCategoryId;
     String inventoryName;
     String inventoryCategoryName;
+    InventoryCategoryStatus inventoryCategoryStatus;
     String unit;
     String description;
     BigDecimal quantity;

@@ -15,7 +15,7 @@ public interface InventoryCategoryMapper {
 
     // Set manually in service
     @Mapping(target = "branch", ignore = true)
-
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -37,7 +37,7 @@ public interface InventoryCategoryMapper {
 
     // Don't allow changing branch
     @Mapping(target = "branch", ignore = true)
-
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

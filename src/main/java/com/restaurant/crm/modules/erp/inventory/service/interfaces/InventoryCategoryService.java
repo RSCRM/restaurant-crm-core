@@ -3,7 +3,10 @@ package com.restaurant.crm.modules.erp.inventory.service.interfaces;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryCategoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryCategoryRequest;
+import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryCategoryStatusRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryCategoryResponse;
+
+import java.util.List;
 
 public interface InventoryCategoryService {
 
@@ -31,7 +34,10 @@ public interface InventoryCategoryService {
         UpdateInventoryCategoryRequest request
     );
 
-    void deleteInventoryCategory(
-        String id
+    InventoryCategoryResponse updateInventoryCategoryStatus(
+        String id,
+        UpdateInventoryCategoryStatusRequest request
     );
+
+    List<InventoryCategoryResponse> getActiveInventoryCategories();
 }
