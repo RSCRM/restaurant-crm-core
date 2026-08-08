@@ -177,6 +177,7 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
                                                                                        ('p0000000-0000-0000-0000-000000000016', 0, 'EMPLOYEE_DELETE', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000017', 0, 'EMPLOYEE_ROLE_ASSIGN', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000018', 0, 'EMPLOYEE_ROLE_REVOKE', NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000218', 0, 'BRANCH_MANAGER_ASSIGN', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000101', 0, 'TABLE_MAP_READ',   NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000102', 0, 'TABLE_SEARCH_READ', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000201', 0, 'INVENTORY_CATEGORY_VIEW',   NOW(), NOW()),

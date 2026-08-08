@@ -271,6 +271,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return signToken(jwsHeader, claimsBuilder.build());
     }
 
+
     private String signToken(JWSHeader jwsHeader, JWTClaimsSet jwtClaimsSet) {
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(jwtClaimsSet.toJSONObject()));
         try {

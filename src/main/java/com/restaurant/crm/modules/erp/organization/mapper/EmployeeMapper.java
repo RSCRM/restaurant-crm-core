@@ -15,7 +15,7 @@ public interface EmployeeMapper {
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "email", source = "user.email")
     @Mapping(target = "enabled", source = "user.enabled")
-    @Mapping(target = "organizationId", source = "organization.id")
+    @Mapping(target = "organizationId", source = "branch.organization.id")
     @Mapping(target = "branchId", source = "branch.id")
     @Mapping(target = "branchName", source = "branch.branchName")
     @Mapping(target = "orgRoleId", source = "orgRole.id")

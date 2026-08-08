@@ -172,7 +172,7 @@ public class TableSessionServiceImpl implements TableSessionService {
         return bookingRepository
                 .findFirstByTables_IdAndStatusInOrderByBookingTimeAsc(
                         tableId, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED))
-                .filter(booking -> !booking.getBookingTime().isAfter(Instant.now().plusSeconds(30 * 60)))
+                .filter(booking -> !booking.getBookingTime().isAfter(Instant.now().plusSeconds(15 * 60)))
                 .isPresent();
     }
 

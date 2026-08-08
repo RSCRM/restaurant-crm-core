@@ -17,6 +17,8 @@ import com.restaurant.crm.modules.erp.schedule.mapper.WorkScheduleMapper;
 import com.restaurant.crm.modules.erp.schedule.repository.WorkScheduleRepository;
 import com.restaurant.crm.modules.erp.schedule.service.interfaces.ScheduleService;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,6 +29,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +40,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     EmployeeRepository employeeRepository;
     WorkScheduleRepository workScheduleRepository;
     WorkScheduleMapper workScheduleMapper;
+    UserProfileRepository userProfileRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -49,13 +54,11 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new AppException(ErrorCode.EMPLOYEE_NOT_ACTIVE);
         }
 
-        return workScheduleMapper.toResponseList(
-                workScheduleRepository.findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
-                        employee.getId(),
-                        from,
-                        to
-                )
-        );
+        return mapAndPopulate(workScheduleRepository.findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                employee.getId(),
+                from,
+                to
+        ));
     }
 
     @Override
@@ -64,13 +67,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         validateDateRange(from, to);
         Employee employee = getManagedEmployee(employeeId);
 
-        return workScheduleMapper.toResponseList(
-                workScheduleRepository.findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
-                        employee.getId(),
-                        from,
-                        to
-                )
-        );
+        return mapAndPopulate(workScheduleRepository.findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                employee.getId(),
+                from,
+                to
+        ));
     }
 
     @Override
@@ -83,9 +84,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 : workScheduleRepository.findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
                         AuthUtils.getBranchId(), from, to);
         String currentEmployeeId = AuthUtils.getEmployeeId();
-        return workScheduleMapper.toResponseList(schedules.stream()
+        List<WorkSchedule> filtered = schedules.stream()
                 .filter(schedule -> !Objects.equals(schedule.getEmployee().getId(), currentEmployeeId))
-                .toList());
+                .toList();
+        return mapAndPopulate(filtered);
     }
 
     @Override
@@ -96,12 +98,29 @@ public class ScheduleServiceImpl implements ScheduleService {
                         AuthUtils.getOrganizationId(), EmployeeStatus.ACTIVE, "MANAGER")
                 : employeeRepository.findByBranch_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
                         AuthUtils.getBranchId(), EmployeeStatus.ACTIVE, "MANAGER");
+
+        Map<String, String> namesByUser = userProfileRepository
+                .findByUser_IdIn(employees.stream()
+                        .map(employee -> employee.getUser().getId())
+                        .toList())
+                .stream()
+                .filter(profile -> profile.getFullName() != null
+                        && !profile.getFullName().isBlank())
+                .collect(Collectors.toMap(
+                        profile -> profile.getUser().getId(),
+                        UserProfile::getFullName));
+
         return employees.stream()
-                .map(employee -> ScheduleEmployeeResponse.builder()
-                        .id(employee.getId())
-                        .name(employee.getUser().getUsername())
-                        .branchName(employee.getBranch().getBranchName())
-                        .build())
+                .map(employee -> {
+                    String fullName = namesByUser.getOrDefault(employee.getUser().getId(), "");
+                    return ScheduleEmployeeResponse.builder()
+                            .id(employee.getId())
+                            .name(employee.getUser().getUsername())
+                            .fullName(fullName)
+                            .email(employee.getUser().getEmail())
+                            .branchName(employee.getBranch().getBranchName())
+                            .build();
+                })
                 .toList();
     }
 
@@ -198,6 +217,28 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (ChronoUnit.DAYS.between(from, to) + 1 > WorkScheduleConstants.MAX_RANGE_DAYS) {
             throw new AppException(ErrorCode.SCHEDULE_DATE_RANGE_EXCEEDED);
         }
+    }
+
+    private List<PersonalScheduleResponse> mapAndPopulate(List<WorkSchedule> schedules) {
+        List<PersonalScheduleResponse> responses = workScheduleMapper.toResponseList(schedules);
+        if (responses.isEmpty()) {
+            return responses;
+        }
+        List<String> userIds = schedules.stream()
+                .map(s -> s.getEmployee().getUser().getId())
+                .distinct()
+                .toList();
+        List<UserProfile> profiles = userProfileRepository.findByUser_IdIn(userIds);
+        Map<String, String> nameByUserId = profiles.stream()
+                .filter(p -> p.getFullName() != null && !p.getFullName().isBlank())
+                .collect(Collectors.toMap(p -> p.getUser().getId(), UserProfile::getFullName));
+
+        for (int i = 0; i < responses.size(); i++) {
+            PersonalScheduleResponse response = responses.get(i);
+            WorkSchedule schedule = schedules.get(i);
+            response.setEmployeeFullName(nameByUserId.getOrDefault(schedule.getEmployee().getUser().getId(), ""));
+        }
+        return responses;
     }
 }
 

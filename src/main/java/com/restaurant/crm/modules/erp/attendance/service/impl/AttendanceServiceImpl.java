@@ -227,17 +227,26 @@ public class AttendanceServiceImpl implements AttendanceService {
                 page - 1, size, Sort.by(Sort.Direction.DESC, "checkInAt"));
         Page<Attendance> result;
         if (employeeId == null) {
-            result = workDate == null
-                    ? attendanceRepository.findByShiftAssignmentBranchId(branchId, pageable)
-                    : attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
-                            branchId, workDate, pageable);
+            if (workDate == null) {
+                LocalDate to = LocalDate.now();
+                LocalDate from = to.minusDays(30);
+                result = attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentWorkDateBetween(
+                        branchId, from, to, pageable);
+            } else {
+                result = attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentWorkDate(
+                        branchId, workDate, pageable);
+            }
         } else {
-            result = workDate == null
-                    ? attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeId(
-                            branchId, employeeId, pageable)
-                    : attendanceRepository
-                            .findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDate(
-                                    branchId, employeeId, workDate, pageable);
+            if (workDate == null) {
+                LocalDate to = LocalDate.now();
+                LocalDate from = to.minusDays(30);
+                result = attendanceRepository.findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDateBetween(
+                        branchId, employeeId, from, to, pageable);
+            } else {
+                result = attendanceRepository
+                        .findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDate(
+                                branchId, employeeId, workDate, pageable);
+            }
         }
         Map<String, String> namesByUser = userProfileRepository
                 .findByUser_IdIn(result.getContent().stream()
@@ -257,6 +266,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                     Employee employee = attendance.getShiftAssignment().getEmployee();
                     response.setEmployeeName(namesByUser.getOrDefault(
                             employee.getUser().getId(), employee.getUser().getUsername()));
+                    response.setUsername(employee.getUser().getUsername());
                     return response;
                 })
                 .toList();
@@ -281,12 +291,24 @@ public class AttendanceServiceImpl implements AttendanceService {
                         employeeId, from, to,
                         PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "checkInAt")));
 
+        List<AttendanceResponse> data = result.getContent().stream()
+                .map(attendance -> {
+                    AttendanceResponse response = attendanceMapper.toResponse(attendance);
+                    Employee employee = attendance.getShiftAssignment().getEmployee();
+                    response.setUsername(employee.getUser().getUsername());
+                    response.setEmployeeName(userProfileRepository.findByUser_Id(employee.getUser().getId())
+                            .map(UserProfile::getFullName)
+                            .orElse(employee.getUser().getUsername()));
+                    return response;
+                })
+                .toList();
+
         return PagingResponse.<AttendanceResponse>builder()
                 .currentPage(page)
                 .pageSize(result.getSize())
                 .totalPages(result.getTotalPages())
                 .totalElement(result.getTotalElements())
-                .data(result.getContent().stream().map(attendanceMapper::toResponse).toList())
+                .data(data)
                 .build();
     }
 
@@ -326,6 +348,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                     .employeeName(namesByUser.getOrDefault(
                             employee.getUser().getId(), employee.getUser().getUsername()))
                     .username(employee.getUser().getUsername())
+                    .email(employee.getUser().getEmail())
                     .workDate(workDate)
                     .scheduledStart(shift == null ? null : shift.getStartAt())
                     .scheduledEnd(shift == null ? null : shift.getEndAt())

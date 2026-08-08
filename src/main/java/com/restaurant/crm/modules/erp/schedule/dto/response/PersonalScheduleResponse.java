@@ -21,6 +21,7 @@ public class PersonalScheduleResponse {
     String id;
     String employeeId;
     String employeeName;
+    String employeeFullName;
     String branchId;
     String branchName;
     LocalDate workDate;

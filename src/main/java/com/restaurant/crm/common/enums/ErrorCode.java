@@ -111,6 +111,12 @@ public enum ErrorCode {
         ORGANIZATION_BRANCH_NOT_FOUND("BRANCH_1000", "Organization branch not found", HttpStatus.NOT_FOUND),
         ORGANIZATION_BRANCH_INACTIVE("BRANCH_1002", "Organization branch is inactive", HttpStatus.BAD_REQUEST),
         ORGANIZATION_BRANCH_EXISTS("BRANCH_1003", "Organization branch already exists", HttpStatus.BAD_REQUEST),
+        BRANCH_MANAGER_NOT_FOUND("BRANCH_MANAGER_1000", "Branch manager not found", HttpStatus.NOT_FOUND),
+        BRANCH_MANAGER_INACTIVE("BRANCH_MANAGER_1002", "Branch manager is inactive", HttpStatus.BAD_REQUEST),
+        BRANCH_MANAGER_INVALID_REQUEST("BRANCH_MANAGER_1003", "Branch manager id is required", HttpStatus.BAD_REQUEST),
+        BRANCH_MANAGER_INVALID_BRANCH("BRANCH_MANAGER_1004", "Branch manager must belong to the target branch", HttpStatus.BAD_REQUEST),
+        BRANCH_MANAGER_INVALID_ROLE("BRANCH_MANAGER_1005", "Employee must have MANAGER role", HttpStatus.BAD_REQUEST),
+        BRANCH_MANAGER_EXPIRED("BRANCH_MANAGER_1006", "Branch manager employment has ended", HttpStatus.BAD_REQUEST),
         BRANCH_NOT_FOUND("BRANCH_1004", "Branch not found", HttpStatus.NOT_FOUND),
 
         // ==== PROJECT ERRORS ====

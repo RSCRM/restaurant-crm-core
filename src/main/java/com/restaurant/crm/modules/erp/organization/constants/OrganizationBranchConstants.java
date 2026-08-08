@@ -8,6 +8,7 @@ public class OrganizationBranchConstants {
 
     //======= OrganizationBranch column name ========
     public static final String COL_ORGANIZATION_ID = "organization_id";
+    public static final String COL_MANAGER_ID = "manager_id";
     public static final String COL_BRANCH_NAME = "branch_name";
     public static final String COL_ADDRESS = "address";
     public static final String COL_PHONE = "phone";

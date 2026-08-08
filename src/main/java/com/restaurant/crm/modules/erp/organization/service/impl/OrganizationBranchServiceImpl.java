@@ -9,8 +9,10 @@ import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizatio
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationBranchMapper;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationBranchService;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
@@ -24,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -34,6 +37,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
 
     OrganizationBranchRepository organizationBranchRepository;
     OrganizationRepository organizationRepository;
+    EmployeeRepository employeeRepository;
     OrganizationBranchMapper organizationBranchMapper;
 
     @Override
@@ -61,7 +65,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
         OrganizationBranch savedOrganizationBranch =
                 organizationBranchRepository.save(organizationBranch);
 
-        return organizationBranchMapper.toOrganizationBranchResponse(savedOrganizationBranch);
+        return toResponse(savedOrganizationBranch);
     }
 
     @Override
@@ -73,7 +77,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
 
-        return organizationBranchMapper.toOrganizationBranchResponse(organizationBranch);
+        return toResponse(organizationBranch);
     }
 
     @Override
@@ -140,7 +144,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
             .data(
                 organizationBranchPage.getContent()
                     .stream()
-                    .map(organizationBranchMapper::toOrganizationBranchResponse)
+                    .map(this::toResponse)
                     .toList()
             )
             .build();
@@ -166,7 +170,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
         OrganizationBranch updatedOrganizationBranch =
                 organizationBranchRepository.save(organizationBranch);
 
-        return organizationBranchMapper.toOrganizationBranchResponse(updatedOrganizationBranch);
+        return toResponse(updatedOrganizationBranch);
     }
 
     @Override
@@ -179,5 +183,24 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                                 new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
 
         organizationBranchRepository.delete(organizationBranch);
+    }
+
+    private OrganizationBranchResponse toResponse(OrganizationBranch branch) {
+        OrganizationBranchResponse response = organizationBranchMapper.toOrganizationBranchResponse(branch);
+        if (!StringUtils.hasText(branch.getManagerId())) {
+            return response;
+        }
+        employeeRepository.findById(branch.getManagerId()).ifPresent(manager -> populateManager(response, manager));
+        return response;
+    }
+
+    private void populateManager(OrganizationBranchResponse response, Employee manager) {
+        response.setManagerId(manager.getId());
+        if (manager.getUser() != null) {
+            response.setManagerUserId(manager.getUser().getId());
+            response.setManagerName(manager.getUser().getUsername());
+            response.setManagerUsername(manager.getUser().getUsername());
+            response.setManagerEmail(manager.getUser().getEmail());
+        }
     }
 }

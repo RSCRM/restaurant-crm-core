@@ -5,8 +5,10 @@ import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
+import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
+import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.EmployeeService;
 import jakarta.validation.Valid;
@@ -33,6 +35,36 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmployeeController {
 
     EmployeeService employeeService;
+
+    @GetMapping("/{branchId}/manager")
+    @PreAuthorize("hasAuthority('" + EmployeeConstants.BRANCH_MANAGER_ASSIGN + "')")
+    public ResponseEntity<ApiResponse<EmployeeBranchAssignmentResponse>> getBranchManager(@PathVariable String branchId) {
+        return ResponseEntity.ok(ApiResponse.<EmployeeBranchAssignmentResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(employeeService.getBranchManager(branchId))
+                .build());
+    }
+
+    @PutMapping("/{branchId}/manager")
+    @PreAuthorize("hasAuthority('" + EmployeeConstants.BRANCH_MANAGER_ASSIGN + "')")
+    public ResponseEntity<ApiResponse<EmployeeBranchAssignmentResponse>> assignManagerToBranch(
+            @PathVariable String branchId,
+            @Valid @RequestBody EmployeeBranchAssignmentRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.<EmployeeBranchAssignmentResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(employeeService.assignToBranch(branchId, request))
+                .build());
+    }
+
+    @DeleteMapping("/{branchId}/manager")
+    @PreAuthorize("hasAuthority('" + EmployeeConstants.BRANCH_MANAGER_ASSIGN + "')")
+    public ResponseEntity<ApiResponse<EmployeeBranchAssignmentResponse>> removeBranchManager(@PathVariable String branchId) {
+        return ResponseEntity.ok(ApiResponse.<EmployeeBranchAssignmentResponse>builder()
+                .success(ApiConstant.SUCCESS)
+                .data(employeeService.removeBranchManager(branchId))
+                .build());
+    }
 
     @GetMapping("/employees")
     @PreAuthorize("hasAuthority('" + EmployeeConstants.EMPLOYEE_VIEW + "')")

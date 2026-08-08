@@ -22,6 +22,7 @@ public class EmployeeAttendanceResponse {
     String employeeId;
     String employeeName;
     String username;
+    String email;
     LocalDate workDate;
     Instant scheduledStart;
     Instant scheduledEnd;
