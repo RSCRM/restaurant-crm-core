@@ -7,6 +7,7 @@ import com.restaurant.crm.modules.erp.organization.constants.StartDefinedOrgPerm
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
+import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationBranchService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -45,13 +46,17 @@ public class OrganizationBranchController {
     @PreAuthorize("hasRole('ADMIN') or @employeeAccessChecker.canManage('" + StartDefinedOrgPermission.ORGANIZATION_BRANCH_VIEW + "')")
     public ResponseEntity<ApiResponse<PagingResponse<OrganizationBranchResponse>>> getOrganizationBranches(
         @RequestParam(value = "page", defaultValue = "1") int page,
-        @RequestParam(value = "size", defaultValue = "10") int size
+        @RequestParam(value = "size", defaultValue = "10") int size,
+        @RequestParam(value = "keyword", required = false) String keyword,
+        @RequestParam(value = "status", required = false) OrganizationBranchStatus status
     ) {
 
         PagingResponse<OrganizationBranchResponse> response =
             organizationBranchService.getOrganizationBranches(
                 page,
-                size
+                size,
+                keyword,
+                status
             );
 
         return ResponseEntity.ok(
@@ -67,13 +72,17 @@ public class OrganizationBranchController {
     public ResponseEntity<ApiResponse<PagingResponse<OrganizationBranchResponse>>> getOrganizationBranchesByOrganization(
             @PathVariable String organizationId,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "status", required = false) OrganizationBranchStatus status
     ) {
         PagingResponse<OrganizationBranchResponse> response =
                 organizationBranchService.getOrganizationBranchesByOrganization(
                         organizationId,
                         page,
-                        size
+                        size,
+                        keyword,
+                        status
                 );
 
         return ResponseEntity.ok(

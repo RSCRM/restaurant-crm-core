@@ -40,6 +40,24 @@ public interface OrganizationBranchRepository extends JpaRepository<Organization
             Pageable pageable
     );
 
+    @Query("""
+            select branch
+            from OrganizationBranch branch
+            where (:organizationId is null or branch.organization.id = :organizationId)
+              and (:status is null or branch.status = :status)
+              and (
+                    lower(branch.branchName) like :keywordPattern
+                    or lower(branch.address) like :keywordPattern
+                    or lower(branch.phone) like :keywordPattern
+              )
+            """)
+    Page<OrganizationBranch> search(
+            @Param("organizationId") String organizationId,
+            @Param("keywordPattern") String keywordPattern,
+            @Param("status") OrganizationBranchStatus status,
+            Pageable pageable
+    );
+
     boolean existsByOrganizationIdAndBranchName(
             String organizationId,
             String branchName
