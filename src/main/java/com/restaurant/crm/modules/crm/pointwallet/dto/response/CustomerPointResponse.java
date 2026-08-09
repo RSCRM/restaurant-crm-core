@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.crm.pointwallet.dto.response;
 
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +22,7 @@ public class CustomerPointResponse {
     String customerId;
     String customerPhone;
     String organizationId;
+    CustomerStatus status;
     Integer currentPoints;
     Integer lifetimePoints;
     Instant updatedAt;

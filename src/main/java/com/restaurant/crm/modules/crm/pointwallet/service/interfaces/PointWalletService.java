@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.crm.pointwallet.service.interfaces;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.crm.pointwallet.dto.request.UpdateWalletStatusRequest;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
 
@@ -10,6 +11,8 @@ public interface PointWalletService {
     PagingResponse<CustomerPointHistoryResponse> getHistory(String customerId, String organizationId, int page, int size);
     CustomerPointResponse earnPoints(String customerId, String organizationId, int points, String orderId);
     CustomerPointResponse deductPoints(String customerId, String organizationId, int points, String referenceId);
+    CustomerPointResponse updateWalletStatus(String customerId, UpdateWalletStatusRequest request);
+
     PagingResponse<CustomerPointResponse> getOrganizationCustomers(
             String organizationId,
             String searchPhone,

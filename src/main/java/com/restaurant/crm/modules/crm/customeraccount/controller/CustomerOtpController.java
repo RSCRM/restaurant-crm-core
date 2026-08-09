@@ -84,7 +84,7 @@ public class CustomerOtpController {
             @RequestParam String branchId,
             @RequestParam String tabledId,
             @RequestParam String otpCode,
-            @RequestParam String restaurantId
+            @RequestParam String organizationId
     ){
 //        verify OTP -> fail -> throw E & stop here
         customerOtpService.verify(phone, branchId, tabledId, otpCode);
@@ -92,7 +92,7 @@ public class CustomerOtpController {
 //        verify OTP -> true -> save user and create point wallet
         CustomerIdentifyRequest identifyRequest = CustomerIdentifyRequest.builder()
                 .phone(phone)
-                .restaurantId(restaurantId)
+                .organizationId(organizationId)
                 .build();
 
 //        save customer wallet -> db

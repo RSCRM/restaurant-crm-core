@@ -12,4 +12,7 @@ public class CustomerConstants {
 
     public static final int MIN_CHARS_PHONE = 9;
     public static final int MAX_CHARS_PHONE = 15;
+
+    //error
+    public static final String CUSTOMER_STATUS_REQUIRE = "CUSTOMER_STATUS_REQUIRE";
 }
