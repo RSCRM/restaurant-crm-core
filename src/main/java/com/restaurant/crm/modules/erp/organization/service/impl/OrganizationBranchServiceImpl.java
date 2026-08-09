@@ -5,6 +5,7 @@ import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.erp.organization.dto.request.BranchSearchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
@@ -14,6 +15,9 @@ import com.restaurant.crm.modules.erp.organization.specification.BranchSpecifica
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
+import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationBranchMapper;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
@@ -30,7 +34,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -49,6 +52,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
     public OrganizationBranchResponse createOrganizationBranch(
             CreateOrganizationBranchRequest request
     ) {
+        validateOrganizationAccess(request.getOrganizationId());
 
         Organization organization = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() ->
@@ -80,6 +84,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                 organizationBranchRepository.findById(id)
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        validateBranchAccess(organizationBranch);
 
         return toResponse(organizationBranch);
     }
@@ -88,20 +93,24 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
     @Transactional(readOnly = true)
     public PagingResponse<OrganizationBranchResponse> getOrganizationBranches(
         int page,
-        int size
+        int size,
+        String keyword,
+        OrganizationBranchStatus status
     ) {
 
         Pageable pageable = PageRequest.of(
             page - GlobalVariableConstant.PAGE_SIZE_INDEX,
             size
         );
+        String normalizedKeyword = normalizeKeyword(keyword);
+        String keywordPattern = toKeywordPattern(normalizedKeyword);
 
         Page<OrganizationBranch> organizationBranchPage;
 
         if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
 
             organizationBranchPage =
-                organizationBranchRepository.findAll(pageable);
+                findBranches(null, keywordPattern, status, pageable);
 
         } else {
 
@@ -110,8 +119,10 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                 case ORGANIZATION ->
 
                     organizationBranchPage =
-                        organizationBranchRepository.findByOrganizationId(
+                        findBranches(
                             AuthUtils.getOrganizationId(),
+                            keywordPattern,
+                            status,
                             pageable
                         );
 
@@ -123,9 +134,11 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                             )
                             .map(branch ->
                                 new PageImpl<>(
-                                    List.of(branch),
+                                    matchesFilters(branch, normalizedKeyword, status)
+                                        ? List.of(branch)
+                                        : List.of(),
                                     pageable,
-                                    1
+                                    matchesFilters(branch, normalizedKeyword, status) ? 1 : 0
                                 )
                             )
                             .orElseThrow(() ->
@@ -140,18 +153,52 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
             }
         }
 
-        return PagingResponse.<OrganizationBranchResponse>builder()
-            .currentPage(page)
-            .pageSize(organizationBranchPage.getSize())
-            .totalPages(organizationBranchPage.getTotalPages())
-            .totalElement(organizationBranchPage.getTotalElements())
-            .data(
-                organizationBranchPage.getContent()
-                    .stream()
-                    .map(this::toResponse)
-                    .toList()
-            )
-            .build();
+        return toPagingResponse(page, organizationBranchPage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<OrganizationBranchResponse> getOrganizationBranchesByOrganization(
+            String organizationId,
+            int page,
+            int size,
+            String keyword,
+            OrganizationBranchStatus status
+    ) {
+        validateOrganizationAccess(organizationId);
+
+        Pageable pageable = PageRequest.of(
+                page - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                size
+        );
+        String normalizedKeyword = normalizeKeyword(keyword);
+        String keywordPattern = toKeywordPattern(normalizedKeyword);
+
+        Page<OrganizationBranch> organizationBranchPage;
+        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)
+                || AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION) {
+            organizationBranchPage = findBranches(
+                    organizationId,
+                    keywordPattern,
+                    status,
+                    pageable
+            );
+        } else {
+            organizationBranchPage =
+                    organizationBranchRepository.findById(AuthUtils.getBranchId())
+                            .filter(branch -> organizationId.equals(branch.getOrganization().getId()))
+                            .map(branch -> {
+                                boolean matches = matchesFilters(branch, normalizedKeyword, status);
+                                return new PageImpl<>(
+                                        matches ? List.of(branch) : List.of(),
+                                        pageable,
+                                        matches ? 1 : 0
+                                );
+                            })
+                            .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        }
+
+        return toPagingResponse(page, organizationBranchPage);
     }
 
     @Override
@@ -165,6 +212,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                 organizationBranchRepository.findById(id)
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        validateBranchAccess(organizationBranch);
 
         organizationBranchMapper.updateOrganizationBranch(
                 request,
@@ -185,45 +233,36 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                 organizationBranchRepository.findById(id)
                         .orElseThrow(() ->
                                 new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        validateBranchAccess(organizationBranch);
 
         organizationBranchRepository.delete(organizationBranch);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public PagingResponse<OrganizationBranchResponse> searchBranchesByOrgId(
-            String orgId, BranchSearchRequest searchRequest, PagingRequest pagingRequest) {
-
-        if (!organizationRepository.existsById(orgId)) {
-            throw new AppException(ErrorCode.ORGANIZATION_NOT_FOUND);
-        }
-
-        Pageable pageable = PageRequest.of(
-                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
-                pagingRequest.getPageSize(),
-                PagingUtil.createSort(pagingRequest)
-        );
-
-        Page<OrganizationBranch> branchPage = organizationBranchRepository.findAll(
-                BranchSpecification.build(orgId, searchRequest), pageable);
-
+    private PagingResponse<OrganizationBranchResponse> toPagingResponse(
+            int page,
+            Page<OrganizationBranch> organizationBranchPage
+    ) {
         return PagingResponse.<OrganizationBranchResponse>builder()
-                .currentPage(pagingRequest.getPage())
-                .pageSize(branchPage.getSize())
-                .totalPages(branchPage.getTotalPages())
-                .totalElement(branchPage.getTotalElements())
-                .data(branchPage.getContent().stream()
-                        .map(this::toResponse)
-                        .toList())
+                .currentPage(page)
+                .pageSize(organizationBranchPage.getSize())
+                .totalPages(organizationBranchPage.getTotalPages())
+                .totalElement(organizationBranchPage.getTotalElements())
+                .data(
+                        organizationBranchPage.getContent()
+                                .stream()
+                                .map(this::toResponse)
+                                .toList()
+                )
                 .build();
     }
 
     private OrganizationBranchResponse toResponse(OrganizationBranch branch) {
         OrganizationBranchResponse response = organizationBranchMapper.toOrganizationBranchResponse(branch);
-        if (!StringUtils.hasText(branch.getManagerId())) {
-            return response;
-        }
-        employeeRepository.findById(branch.getManagerId()).ifPresent(manager -> populateManager(response, manager));
+        employeeRepository.findFirstByBranch_IdAndStatusAndOrgRole_RoleNameOrderByCreatedAtAsc(
+                branch.getId(),
+                EmployeeStatus.ACTIVE,
+                EmployeeConstants.MANAGER_ROLE_NAME
+        ).ifPresent(manager -> populateManager(response, manager));
         return response;
     }
 
@@ -235,5 +274,111 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
             response.setManagerUsername(manager.getUser().getUsername());
             response.setManagerEmail(manager.getUser().getEmail());
         }
+    }
+
+    private void validateOrganizationAccess(String organizationId) {
+        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
+            return;
+        }
+
+        switch (AuthUtils.getDataScope()) {
+            case ORGANIZATION -> {
+                if (!organizationId.equals(AuthUtils.getOrganizationId())) {
+                    throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+                }
+            }
+            case BRANCH -> {
+                OrganizationBranch currentBranch = organizationBranchRepository.findById(AuthUtils.getBranchId())
+                        .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+                if (!organizationId.equals(currentBranch.getOrganization().getId())) {
+                    throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+                }
+            }
+            default -> throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
+
+    private void validateBranchAccess(OrganizationBranch branch) {
+        validateOrganizationAccess(branch.getOrganization().getId());
+
+        if (!AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)
+                && AuthUtils.getDataScope() == OrgDataScope.BRANCH
+                && !branch.getId().equals(AuthUtils.getBranchId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        return keyword.trim();
+    }
+
+    private String toKeywordPattern(String keyword) {
+        return keyword == null ? null : "%" + keyword.toLowerCase() + "%";
+    }
+
+    private Page<OrganizationBranch> findBranches(
+            String organizationId,
+            String keywordPattern,
+            OrganizationBranchStatus status,
+            Pageable pageable
+    ) {
+        if (keywordPattern != null) {
+            return organizationBranchRepository.search(
+                    organizationId,
+                    keywordPattern,
+                    status,
+                    pageable
+            );
+        }
+
+        if (organizationId != null && status != null) {
+            return organizationBranchRepository.findByOrganizationIdAndStatus(
+                    organizationId,
+                    status,
+                    pageable
+            );
+        }
+
+        if (organizationId != null) {
+            return organizationBranchRepository.findByOrganizationId(
+                    organizationId,
+                    pageable
+            );
+        }
+
+        if (status != null) {
+            return organizationBranchRepository.findByStatus(
+                    status,
+                    pageable
+            );
+        }
+
+        return organizationBranchRepository.findAll(pageable);
+    }
+
+    private boolean matchesFilters(
+            OrganizationBranch branch,
+            String keyword,
+            OrganizationBranchStatus status
+    ) {
+        if (status != null && branch.getStatus() != status) {
+            return false;
+        }
+
+        if (keyword == null) {
+            return true;
+        }
+
+        String normalizedKeyword = keyword.toLowerCase();
+        return containsIgnoreCase(branch.getBranchName(), normalizedKeyword)
+                || containsIgnoreCase(branch.getAddress(), normalizedKeyword)
+                || containsIgnoreCase(branch.getPhone(), normalizedKeyword);
+    }
+
+    private boolean containsIgnoreCase(String value, String normalizedKeyword) {
+        return value != null && value.toLowerCase().contains(normalizedKeyword);
     }
 }

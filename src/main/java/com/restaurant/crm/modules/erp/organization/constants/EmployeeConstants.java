@@ -10,7 +10,6 @@ public class EmployeeConstants {
     public static final String EMPLOYEE_DELETE = "EMPLOYEE_DELETE";
     public static final String EMPLOYEE_ROLE_ASSIGN = "EMPLOYEE_ROLE_ASSIGN";
     public static final String EMPLOYEE_ROLE_REVOKE = "EMPLOYEE_ROLE_REVOKE";
-    public static final String BRANCH_MANAGER_ASSIGN = "BRANCH_MANAGER_ASSIGN";
     public static final String MANAGER_ROLE_NAME = "MANAGER";
 
     //======= Employee table name ========

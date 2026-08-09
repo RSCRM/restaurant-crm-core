@@ -6,6 +6,7 @@ import com.restaurant.crm.modules.erp.organization.dto.request.BranchSearchReque
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
+import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 
 public interface OrganizationBranchService {
 
@@ -17,7 +18,17 @@ public interface OrganizationBranchService {
 
     PagingResponse<OrganizationBranchResponse> getOrganizationBranches(
             int page,
-            int size
+            int size,
+            String keyword,
+            OrganizationBranchStatus status
+    );
+
+    PagingResponse<OrganizationBranchResponse> getOrganizationBranchesByOrganization(
+            String organizationId,
+            int page,
+            int size,
+            String keyword,
+            OrganizationBranchStatus status
     );
 
     OrganizationBranchResponse updateOrganizationBranch(

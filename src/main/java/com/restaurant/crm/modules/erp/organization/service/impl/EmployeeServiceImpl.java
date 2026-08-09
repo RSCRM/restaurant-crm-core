@@ -3,15 +3,12 @@ package com.restaurant.crm.modules.erp.organization.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
-import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
-import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
-import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
@@ -38,9 +35,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,74 +55,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     PasswordEncoder passwordEncoder;
     EmployeeBranchGuard employeeBranchGuard;
     UserProfileRepository userProfileRepository;
-
-    @Override
-    @Transactional(readOnly = true)
-    public EmployeeBranchAssignmentResponse getBranchManager(String branchId) {
-        OrganizationBranch branch = findManageableBranch(branchId);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(findBranchManager(branch));
-    }
-
-    @Override
-    @Transactional
-    public EmployeeBranchAssignmentResponse assignToBranch(String branchId, EmployeeBranchAssignmentRequest request) {
-        OrganizationBranch branch = findManageableBranch(branchId);
-        Employee manager = employeeRepository.findByIdAndBranch_Id(request.getManagerId(), branchId)
-                .orElseThrow(() -> new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND));
-
-        if (manager.getOrgRole() == null
-                || !EmployeeConstants.MANAGER_ROLE_NAME.equals(manager.getOrgRole().getRoleName())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_ROLE);
-        }
-        if (manager.getStatus() != EmployeeStatus.ACTIVE
-                || manager.getUser() == null
-                || !manager.getUser().isEnabled()
-                || manager.getUser().getStatus() != UserStatus.ACTIVE) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
-        }
-        if (manager.getEndDate() != null && manager.getEndDate().isBefore(LocalDate.now())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_EXPIRED);
-        }
-
-        branchRepository.findByManagerId(manager.getId()).stream()
-                .filter(current -> !current.getId().equals(branchId))
-                .forEach(current -> {
-                    current.setManagerId(null);
-                    branchRepository.save(current);
-                });
-        branch.setManagerId(manager.getId());
-        branchRepository.save(branch);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(manager);
-    }
-
-    @Override
-    @Transactional
-    public EmployeeBranchAssignmentResponse removeBranchManager(String branchId) {
-        OrganizationBranch branch = findManageableBranch(branchId);
-        Employee manager = findBranchManager(branch);
-        branch.setManagerId(null);
-        branchRepository.save(branch);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(manager);
-    }
-
-    private OrganizationBranch findManageableBranch(String branchId) {
-        OrganizationBranch branch = branchRepository.findById(branchId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
-        employeeBranchGuard.validateBranchAccess(branchId);
-        if (StringUtils.hasText(AuthUtils.getOrganizationId())
-                && !AuthUtils.getOrganizationId().equals(branch.getOrganization().getId())) {
-            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-        }
-        return branch;
-    }
-
-    private Employee findBranchManager(OrganizationBranch branch) {
-        if (!StringUtils.hasText(branch.getManagerId())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND);
-        }
-        return employeeRepository.findByIdAndBranch_Id(branch.getManagerId(), branch.getId())
-                .orElseThrow(() -> new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND));
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -246,7 +173,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .phone(request.getPhone())
                 .build());
 
-        // Gan role di duong rieng (assignRole), sau do moi activate qua updateEmployee.
         Employee employee = Employee.builder()
                 .user(user)
                 .branch(branch)
@@ -323,5 +249,4 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee = employeeRepository.save(employee);
         return toResponse(employee);
     }
-
 }

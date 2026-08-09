@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public enum ErrorCode {
         SERVER_UNCATEGORIZED_EXCEPTION("SERVER_9999", "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
+        VALIDATION_FAILED("VALIDATION_1000", "Validation failed", HttpStatus.BAD_REQUEST),
 
         // ==== AUTHENTICATION ERRORS ====
         AUTH_UNAUTHENTICATED("AUTH_1000", "Unauthenticated", HttpStatus.UNAUTHORIZED),

@@ -42,6 +42,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
     List<Employee> findByBranch_Organization_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
             String organizationId, EmployeeStatus status, String excludedRole);
 
+    Optional<Employee> findFirstByBranch_IdAndStatusAndOrgRole_RoleNameOrderByCreatedAtAsc(
+            String branchId, EmployeeStatus status, String roleName);
+
     Optional<Employee> findByIdAndBranch_IdAndOrgRole_RoleNameNot(
             String id, String branchId, String excludedRole);
 }

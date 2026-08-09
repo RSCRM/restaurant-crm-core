@@ -10,8 +10,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Objects;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler extends RuntimeException{
     @ExceptionHandler(value = RuntimeException.class)
@@ -56,8 +54,15 @@ public class GlobalExceptionHandler extends RuntimeException{
     //handling MethodArgumentNotValidException
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<Object>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
-        String enumKey = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
-        ErrorCode errorCode = ErrorCode.valueOf(enumKey);
+        ErrorCode errorCode = ErrorCode.VALIDATION_FAILED;
+        if (exception.getFieldError() != null) {
+            String enumKey = exception.getFieldError().getDefaultMessage();
+            try {
+                errorCode = ErrorCode.valueOf(enumKey);
+            } catch (IllegalArgumentException | NullPointerException ignored) {
+                errorCode = ErrorCode.VALIDATION_FAILED;
+            }
+        }
         ApiResponse<Object> response = ApiResponse.builder()
                 .success(ApiConstant.FAILURE)
                 .errorMessage(ErrorMessage.builder()

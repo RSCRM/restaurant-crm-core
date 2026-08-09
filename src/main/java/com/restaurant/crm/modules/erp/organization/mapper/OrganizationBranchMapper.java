@@ -16,9 +16,7 @@ public interface OrganizationBranchMapper {
 
     // Set manually in service
     @Mapping(target = "organization", ignore = true)
-
     @Mapping(target = "status", ignore = true)
-
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -36,7 +34,6 @@ public interface OrganizationBranchMapper {
     OrganizationBranchResponse toOrganizationBranchResponse(
             OrganizationBranch branch
     );
-
 
     @Mapping(target = "id", ignore = true)
 

@@ -131,13 +131,13 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<OrganizationResponse> getOrganizations(
-        int page,
-        int size
+            int page,
+            int size
     ) {
 
         Pageable pageable = PageRequest.of(
-            page - GlobalVariableConstant.PAGE_SIZE_INDEX,
-            size
+                page - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                size
         );
 
         Page<Organization> organizationPage;
@@ -154,40 +154,40 @@ public class OrganizationServiceImpl implements OrganizationService {
 
                 case ORGANIZATION ->
 
-                    organizationPage = organizationRepository.findById(
-                            AuthUtils.getOrganizationId()
-                        )
-                        .map(organization ->
-                            new PageImpl<>(
-                                List.of(organization),
-                                pageable,
-                                1
-                            )
-                        )
-                        .orElseThrow(() ->
-                            new AppException(
-                                ErrorCode.ORGANIZATION_NOT_FOUND
-                            )
-                        );
+                        organizationPage = organizationRepository.findById(
+                                        AuthUtils.getOrganizationId()
+                                )
+                                .map(organization ->
+                                        new PageImpl<>(
+                                                List.of(organization),
+                                                pageable,
+                                                1
+                                        )
+                                )
+                                .orElseThrow(() ->
+                                        new AppException(
+                                                ErrorCode.ORGANIZATION_NOT_FOUND
+                                        )
+                                );
 
                 case BRANCH -> {
 
                     OrganizationBranch branch =
-                        organizationBranchRepository.findById(
-                                AuthUtils.getBranchId()
-                            )
-                            .orElseThrow(() ->
-                                new AppException(
-                                    ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND
-                                )
-                            );
+                            organizationBranchRepository.findById(
+                                            AuthUtils.getBranchId()
+                                    )
+                                    .orElseThrow(() ->
+                                            new AppException(
+                                                    ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND
+                                            )
+                                    );
 
                     organizationPage =
-                        new PageImpl<>(
-                            List.of(branch.getOrganization()),
-                            pageable,
-                            1
-                        );
+                            new PageImpl<>(
+                                    List.of(branch.getOrganization()),
+                                    pageable,
+                                    1
+                            );
                 }
 
                 case SELF -> {
@@ -211,22 +211,22 @@ public class OrganizationServiceImpl implements OrganizationService {
                 }
 
                 default ->
-                    throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+                        throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
             }
         }
 
         return PagingResponse.<OrganizationResponse>builder()
-            .currentPage(page)
-            .pageSize(organizationPage.getSize())
-            .totalPages(organizationPage.getTotalPages())
-            .totalElement(organizationPage.getTotalElements())
-            .data(
-                organizationPage.getContent()
-                    .stream()
-                    .map(organizationMapper::toOrganizationResponse)
-                    .toList()
-            )
-            .build();
+                .currentPage(page)
+                .pageSize(organizationPage.getSize())
+                .totalPages(organizationPage.getTotalPages())
+                .totalElement(organizationPage.getTotalElements())
+                .data(
+                        organizationPage.getContent()
+                                .stream()
+                                .map(organizationMapper::toOrganizationResponse)
+                                .toList()
+                )
+                .build();
     }
 
     @Override

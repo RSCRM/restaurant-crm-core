@@ -1,6 +1,5 @@
 package com.restaurant.crm.modules.identity.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -20,7 +19,6 @@ import lombok.experimental.FieldDefaults;
 public class AuthenticationRequest {
     @NotNull
     @NotBlank
-    @Email
     String email;
 
     @NotNull
