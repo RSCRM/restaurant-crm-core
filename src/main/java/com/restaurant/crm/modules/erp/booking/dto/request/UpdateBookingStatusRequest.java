@@ -1,5 +1,6 @@
 package com.restaurant.crm.modules.erp.booking.dto.request;
 
+import com.restaurant.crm.modules.erp.booking.constants.BookingConstants;
 import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -18,6 +19,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateBookingStatusRequest {
 
-    @NotNull(message = "BOOKING_STATUS_REQUIRED")
+    @NotNull(message = BookingConstants.BOOKING_STATUS_REQUIRE)
     BookingStatus status;
 }

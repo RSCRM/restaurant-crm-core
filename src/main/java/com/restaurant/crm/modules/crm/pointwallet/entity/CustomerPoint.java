@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.crm.pointwallet.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
 import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
 import com.restaurant.crm.modules.crm.pointwallet.constants.CustomerPointConstants;
 
 import jakarta.persistence.Column;
@@ -52,4 +53,8 @@ public class CustomerPoint extends BaseEntity {
     @Builder.Default
     @Column(name = CustomerPointConstants.COL_LIFETIME_POINTS, nullable = false)
     Integer lifetimePoints = 0;
+
+    @Builder.Default
+    @Column(name = "status", nullable = false)
+    CustomerStatus status = CustomerStatus.ACTIVE;
 }

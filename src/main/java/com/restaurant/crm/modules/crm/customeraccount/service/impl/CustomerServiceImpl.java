@@ -12,6 +12,7 @@ import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerReposit
 import com.restaurant.crm.modules.crm.customeraccount.service.interfaces.CustomerService;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
 
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,6 +31,7 @@ public class CustomerServiceImpl implements CustomerService {
     CustomerRepository customerRepository;
     CustomerMapper customerMapper;
     PointWalletService pointWalletService;
+    OrganizationRepository organizationRepository;
 
     @Override
     @Transactional
@@ -50,7 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         // 2. initialize wallet for the customer(for the restaurant)
-        pointWalletService.initializeWallet(customer.getId(), request.getRestaurantId());
+        pointWalletService.initializeWallet(customer.getId(), request.getOrganizationId());
 
         return customerMapper.toCustomerResponse(customer);
     }
@@ -76,4 +78,5 @@ public class CustomerServiceImpl implements CustomerService {
                 .data(customerPage.getContent().stream().map(customerMapper::toCustomerResponse).toList())
                 .build();
     }
+
 }

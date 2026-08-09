@@ -4,6 +4,7 @@ import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.modules.erp.booking.dto.request.CreateBookingRequest;
 import com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingStatusRequest;
+import com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingRequest;
 import com.restaurant.crm.modules.erp.booking.dto.response.BookingResponse;
 import com.restaurant.crm.modules.erp.booking.service.interfaces.BookingService;
 import jakarta.validation.Valid;
@@ -12,14 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/crm/bookings")
@@ -76,15 +70,6 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
     }
 
-    @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
-    public ResponseEntity<ApiResponse<BookingResponse>> updateBookingStatus(
-            @PathVariable String id,
-            @Valid @RequestBody UpdateBookingStatusRequest request
-    ) {
-        BookingResponse response = bookingService.updateBookingStatus(id, request);
-        return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
-    }
 
     @PostMapping("/search")
     @PreAuthorize("hasAuthority('BOOKING_READ')")
@@ -97,11 +82,21 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.<PagingResponse<BookingResponse>>builder().data(response).build());
     }
 
-    @org.springframework.web.bind.annotation.PutMapping("/{id}")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
+    public ResponseEntity<ApiResponse<BookingResponse>> updateBookingStatus(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateBookingStatusRequest request
+    ) {
+        BookingResponse response = bookingService.updateBookingStatus(id, request);
+        return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());
+    }
+
+    @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     public ResponseEntity<ApiResponse<BookingResponse>> updateBooking(
             @PathVariable String id,
-            @Valid @RequestBody com.restaurant.crm.modules.erp.booking.dto.request.UpdateBookingRequest request
+            @Valid @RequestBody UpdateBookingRequest request
     ) {
         BookingResponse response = bookingService.updateBooking(id, request);
         return ResponseEntity.ok(ApiResponse.<BookingResponse>builder().data(response).build());

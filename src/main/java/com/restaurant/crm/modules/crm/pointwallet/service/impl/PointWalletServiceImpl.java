@@ -4,7 +4,9 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.crm.customeraccount.entity.Customer;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
 import com.restaurant.crm.modules.crm.customeraccount.repository.CustomerRepository;
+import com.restaurant.crm.modules.crm.pointwallet.dto.request.UpdateWalletStatusRequest;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
 import com.restaurant.crm.modules.crm.pointwallet.entity.CustomerPoint;
@@ -14,7 +16,9 @@ import com.restaurant.crm.modules.crm.pointwallet.mapper.CustomerPointMapper;
 import com.restaurant.crm.modules.crm.pointwallet.repository.CustomerPointHistoryRepository;
 import com.restaurant.crm.modules.crm.pointwallet.repository.CustomerPointRepository;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +40,8 @@ public class PointWalletServiceImpl implements PointWalletService {
     CustomerPointRepository customerPointRepository;
     CustomerPointHistoryRepository customerPointHistoryRepository;
     CustomerRepository customerRepository;
-    OrganizationBranchRepository branchRepository;
     CustomerPointMapper customerPointMapper;
+    OrganizationRepository organizationRepository;
 
     private void validateOrganizationAccess(String targetOrgId) {
         org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -196,7 +200,7 @@ public class PointWalletServiceImpl implements PointWalletService {
         Specification<CustomerPoint> spec = (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
             predicates.add(cb.equal(root.get("organizationId"), organizationId));
-            
+
             if (searchPhone != null && !searchPhone.trim().isEmpty()) {
                 predicates.add(cb.like(root.join("customer").get("phone"), "%" + searchPhone.trim() + "%"));
             }
@@ -227,4 +231,23 @@ public class PointWalletServiceImpl implements PointWalletService {
                         .toList())
                 .build();
     }
+
+    @Override
+    public CustomerPointResponse updateWalletStatus(String customerId, UpdateWalletStatusRequest request){
+        if (!customerRepository.existsById(customerId)) {
+            throw new AppException(ErrorCode.CUSTOMER_NOT_FOUND);
+        }
+        if (!organizationRepository.existsById(request.getOrganizationId())){
+            throw new AppException(ErrorCode.ORGANIZATION_NOT_FOUND);
+        }
+
+        CustomerPoint wallet = customerPointRepository.findByCustomerIdAndOrganizationId(customerId, request.getOrganizationId())
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_POINT_NOT_FOUND));
+
+        wallet.setStatus(request.getStatus());
+        CustomerPoint updateWallet = customerPointRepository.save(wallet);
+        return customerPointMapper.toCustomerPointResponse(updateWallet);
+    }
+
 }
+

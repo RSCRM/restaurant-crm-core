@@ -23,5 +23,5 @@ public class CustomerIdentifyRequest {
     String phone;
 
     @NotBlank(message = "RESTAURANT_ID_REQUIRED")
-    String restaurantId;
+    String organizationId;
 }

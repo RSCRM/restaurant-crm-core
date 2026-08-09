@@ -2,20 +2,19 @@ package com.restaurant.crm.modules.crm.pointwallet.controller;
 
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.crm.customeraccount.dto.response.CustomerResponse;
+import com.restaurant.crm.modules.crm.pointwallet.dto.request.UpdateWalletStatusRequest;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
 import com.restaurant.crm.modules.crm.pointwallet.service.interfaces.PointWalletService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/crm/wallets")
@@ -79,5 +78,19 @@ public class PointWalletController {
                 .success(true)
                 .data(response)
                 .build());
+    }
+    @PutMapping("/status")
+    @PreAuthorize("hasAuthority('CUSTOMER_POINT_UPDATE')")
+    public ResponseEntity<ApiResponse<CustomerPointResponse>> updateCustomerStatus(
+            @PathVariable String customerId,
+            @Valid @RequestBody UpdateWalletStatusRequest request
+    ) {
+        CustomerPointResponse response = pointWalletService.updateWalletStatus(customerId, request);
+
+        return ResponseEntity.ok(ApiResponse.<CustomerPointResponse>builder()
+                .success(true)
+                .data(response)
+                .build());
+//        CustomerResponse response = customerService.getCustomerById()
     }
 }
