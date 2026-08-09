@@ -12,16 +12,24 @@ import com.restaurant.crm.modules.erp.organization.dto.request.OrganizationSearc
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.entity.OrgPermission;
+import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
+import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationMapper;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrgPermissionRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrgRoleRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationService;
 import com.restaurant.crm.modules.erp.organization.specification.OrganizationSpecification;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
+import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +42,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +56,9 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrganizationBranchRepository organizationBranchRepository;
     OrganizationMapper organizationMapper;
     EmployeeRepository employeeRepository;
+    OrgRoleRepository orgRoleRepository;
+    OrgPermissionRepository orgPermissionRepository;
+    UserRepository userRepository;
 
     @Override
     @Transactional
@@ -56,8 +70,32 @@ public class OrganizationServiceImpl implements OrganizationService {
         }
 
         Organization organization = organizationMapper.toOrganization(request);
-
         organization = organizationRepository.save(organization);
+
+        // Create OWNER role with all permissions for this organization
+        OrgRole ownerRole = OrgRole.builder()
+                .organization(organization)
+                .roleName(OrgRoleConstants.OWNER_ROLE)
+                .dataScope(OrgDataScope.ORGANIZATION)
+                .build();
+        Set<OrgPermission> allPermissions =
+                new HashSet<>(orgPermissionRepository.findAll());
+        ownerRole.setOrgPermissions(allPermissions);
+        ownerRole = orgRoleRepository.save(ownerRole);
+
+        User currentUser = userRepository.findById(request.getOwnerId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        Employee ownerEmployee = Employee.builder()
+                .user(currentUser)
+                .orgRole(ownerRole)
+                .organization(organization)
+                .branch(null)
+                .status(EmployeeStatus.ACTIVE)
+                .email(currentUser.getEmail())
+                .startDate(LocalDate.now())
+                .build();
+        employeeRepository.save(ownerEmployee);
 
         return organizationMapper.toOrganizationResponse(organization);
     }
@@ -315,6 +353,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .orElseThrow(() ->
                         new AppException(ErrorCode.ORGANIZATION_NOT_FOUND));
 
-        organizationRepository.delete(organization);
+        organization.setStatus(OrganizationStatus.DELETED);
+        organizationRepository.save(organization);
     }
 }
