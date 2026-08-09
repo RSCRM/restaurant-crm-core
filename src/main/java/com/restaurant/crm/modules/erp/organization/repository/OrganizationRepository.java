@@ -14,10 +14,6 @@ import java.util.Optional;
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, String>, JpaSpecificationExecutor<Organization> {
 
-    Optional<Organization> findByIdAndOwnerId(String id, String ownerId);
-
-    boolean existsByOwnerId(String ownerId);
-
     List<Organization> findByStatus(OrganizationStatus status);
 
     Page<Organization> findByStatus(
