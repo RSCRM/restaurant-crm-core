@@ -1,12 +1,16 @@
 package com.restaurant.crm.modules.erp.organization.service.impl;
 
 import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
+import com.restaurant.crm.modules.erp.organization.dto.request.BranchSearchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
+import com.restaurant.crm.modules.erp.organization.specification.BranchSpecification;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
@@ -183,6 +187,35 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
                                 new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
 
         organizationBranchRepository.delete(organizationBranch);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<OrganizationBranchResponse> searchBranchesByOrgId(
+            String orgId, BranchSearchRequest searchRequest, PagingRequest pagingRequest) {
+
+        if (!organizationRepository.existsById(orgId)) {
+            throw new AppException(ErrorCode.ORGANIZATION_NOT_FOUND);
+        }
+
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest)
+        );
+
+        Page<OrganizationBranch> branchPage = organizationBranchRepository.findAll(
+                BranchSpecification.build(orgId, searchRequest), pageable);
+
+        return PagingResponse.<OrganizationBranchResponse>builder()
+                .currentPage(pagingRequest.getPage())
+                .pageSize(branchPage.getSize())
+                .totalPages(branchPage.getTotalPages())
+                .totalElement(branchPage.getTotalElements())
+                .data(branchPage.getContent().stream()
+                        .map(this::toResponse)
+                        .toList())
+                .build();
     }
 
     private OrganizationBranchResponse toResponse(OrganizationBranch branch) {
