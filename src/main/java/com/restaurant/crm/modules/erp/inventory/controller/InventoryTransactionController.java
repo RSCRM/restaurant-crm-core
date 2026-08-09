@@ -5,6 +5,7 @@ import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.erp.inventory.dto.request.CreateBatchInventoryTransactionRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryTransactionRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.InventoryTransactionSearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryTransactionResponse;
@@ -106,6 +107,19 @@ public class InventoryTransactionController {
                     )
                 )
                 .build()
+        );
+    }
+
+    @PostMapping("/batch")
+    @PreAuthorize("hasAuthority('INVENTORY_TRANSACTION_MANAGE')")
+    public ResponseEntity<ApiResponse<Void>> createBatchTransactions(
+        @Valid @RequestBody CreateBatchInventoryTransactionRequest request
+    ) {
+
+        inventoryTransactionService.createBatchTransactions(request);
+
+        return ResponseEntity.ok(
+            ApiResponse.<Void>builder().build()
         );
     }
 }

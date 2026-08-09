@@ -6,6 +6,7 @@ import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.common.utils.PagingUtil;
+import com.restaurant.crm.modules.erp.inventory.dto.request.CreateBatchInventoryTransactionRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryTransactionRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.InventoryTransactionSearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryTransactionResponse;
@@ -31,6 +32,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -120,8 +127,6 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                 inventory.getMinimumQuantity()
             )
         );
-
-        inventoryRepository.save(inventory);
     }
 
     private InventoryStatus calculateStatus(
@@ -229,5 +234,77 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                     .toList()
             )
             .build();
+    }
+
+    @Override
+    @Transactional
+    public List<InventoryTransactionResponse> createBatchTransactions(
+        CreateBatchInventoryTransactionRequest request
+    ) {
+        String branchId = AuthUtils.getBranchId();
+        String employeeId = AuthUtils.getEmployeeId();
+
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+
+        Set<String> inventoryIds = request.getTransactions()
+            .stream()
+            .map(CreateInventoryTransactionRequest::getInventoryId)
+            .collect(Collectors.toSet());
+
+        Map<String, Inventory> inventoryMap =
+            inventoryRepository
+                .findByIdInAndBranchId(inventoryIds, branchId)
+                .stream()
+                .collect(Collectors.toMap(
+                    Inventory::getId,
+                    Function.identity()
+                ));
+
+        List<InventoryTransaction> transactions = new ArrayList<>();
+        List<Inventory> inventoriesToUpdate = new ArrayList<>();
+
+        for (CreateInventoryTransactionRequest item : request.getTransactions()) {
+
+            if (!item.getTransactionType().isValidDirection(item.getTransactionDirection())) {
+                throw new AppException(ErrorCode.INVENTORY_INVALID_TRANSACTION_TYPE_DIRECTION);
+            }
+
+            Inventory inventory = inventoryMap.get(item.getInventoryId());
+
+            if (inventory == null) {
+                throw new AppException(ErrorCode.INVENTORY_NOT_FOUND);
+            }
+
+            if (inventory.getStatus() == InventoryStatus.INACTIVE) {
+                throw new AppException(ErrorCode.INVENTORY_INACTIVE);
+            }
+
+            updateInventoryQuantity(
+                inventory,
+                item.getTransactionDirection(),
+                item.getQuantity()
+            );
+
+            inventoriesToUpdate.add(inventory);
+
+            InventoryTransaction transaction =
+                transactionMapper.toInventoryTransaction(item);
+
+            transaction.setInventory(inventory);
+            transaction.setEmployee(employee);
+            transaction.setTransactionTime(Instant.now());
+
+            transactions.add(transaction);
+        }
+
+        inventoryRepository.saveAll(inventoriesToUpdate);
+
+        List<InventoryTransaction> savedTransactions =
+            transactionRepository.saveAll(transactions);
+
+        return savedTransactions.stream()
+            .map(transactionMapper::toInventoryTransactionResponse)
+            .toList();
     }
 }
