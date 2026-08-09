@@ -4,12 +4,14 @@ import com.restaurant.crm.common.constant.GlobalVariableConstant;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationBranchMapper;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
@@ -27,7 +29,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -231,10 +232,11 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
 
     private OrganizationBranchResponse toResponse(OrganizationBranch branch) {
         OrganizationBranchResponse response = organizationBranchMapper.toOrganizationBranchResponse(branch);
-        if (!StringUtils.hasText(branch.getManagerId())) {
-            return response;
-        }
-        employeeRepository.findById(branch.getManagerId()).ifPresent(manager -> populateManager(response, manager));
+        employeeRepository.findFirstByBranch_IdAndStatusAndOrgRole_RoleNameOrderByCreatedAtAsc(
+                branch.getId(),
+                EmployeeStatus.ACTIVE,
+                EmployeeConstants.MANAGER_ROLE_NAME
+        ).ifPresent(manager -> populateManager(response, manager));
         return response;
     }
 
