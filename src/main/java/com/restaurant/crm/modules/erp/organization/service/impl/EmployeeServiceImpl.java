@@ -1,17 +1,13 @@
 package com.restaurant.crm.modules.erp.organization.service.impl;
 
-import com.restaurant.crm.common.constant.GlobalVariableConstant;
-import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
-import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.AssignRoleRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateEmployeeRequest;
-import com.restaurant.crm.modules.erp.organization.dto.request.EmployeeBranchAssignmentRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.SalaryConfigRequest;
-import com.restaurant.crm.modules.erp.organization.dto.request.ProfileUpdateAccessRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateEmployeeRequest;
-import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeBranchAssignmentResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.EmployeeResponse;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.OrgRole;
@@ -22,7 +18,10 @@ import com.restaurant.crm.modules.erp.organization.mapper.EmployeeMapper;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrgRoleRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.security.EmployeeBranchGuard;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.EmployeeService;
+import com.restaurant.crm.modules.profile.entity.UserProfile;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.entity.Role;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -30,24 +29,15 @@ import com.restaurant.crm.modules.identity.enums.UserStatus;
 import com.restaurant.crm.modules.identity.repository.RoleRepository;
 import com.restaurant.crm.modules.identity.repository.UserRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
-import com.restaurant.crm.modules.profile.entity.UserProfile;
-import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,261 +52,146 @@ public class EmployeeServiceImpl implements EmployeeService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     OrgRoleRepository orgRoleRepository;
-    UserProfileRepository userProfileRepository;
     PasswordEncoder passwordEncoder;
+    EmployeeBranchGuard employeeBranchGuard;
+    UserProfileRepository userProfileRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponse<EmployeeResponse> getEmployees(
-            String organizationId,
-            String branchId,
-            String keyword,
-            String role,
-            String status,
-            int page,
-            int size,
-            String field,
-            String direction
-    ) {
-        String resolvedOrganizationId = resolveOrganizationId(organizationId);
-        String resolvedBranchId = resolveBranchId(branchId);
-        EmployeeStatus employeeStatus = parseEmployeeStatus(status);
-        Pageable pageable = PageRequest.of(page - GlobalVariableConstant.PAGE_SIZE_INDEX, size);
+    public List<EmployeeResponse> listEmployees() {
+        OrgDataScope scope = AuthUtils.getDataScope();
+        List<Employee> employees;
+        if (scope == OrgDataScope.ORGANIZATION) {
+            employees = new java.util.ArrayList<>(
+                    employeeRepository.findByBranch_Organization_Id(AuthUtils.getOrganizationId()));
+            // Owner Employee has branch=null, query separately by organization
+            employees.addAll(employeeRepository.findByOrganization_Id(AuthUtils.getOrganizationId()));
+        } else {
+            employees = employeeRepository.findByBranch_Id(AuthUtils.getBranchId());
+        }
+        String currentEmployeeId = AuthUtils.getEmployeeId();
 
-        Page<Employee> employeePage = employeeRepository.searchByOrganization(
-                resolvedOrganizationId,
-                resolvedBranchId,
-                normalizeFilter(keyword),
-                normalizeFilter(role),
-                employeeStatus,
-                pageable
-        );
+        List<Employee> visible = employees.stream()
+                .filter(employee -> !employee.getId().equals(currentEmployeeId))
+                .filter(employee -> employee.getOrgRole() == null
+                        || !OrgRoleConstants.OWNER_ROLE.equals(employee.getOrgRole().getRoleName()))
+                .toList();
 
-        return PagingResponse.<EmployeeResponse>builder()
-                .currentPage(page)
-                .pageSize(employeePage.getSize())
-                .totalPages(employeePage.getTotalPages())
-                .totalElement(employeePage.getTotalElements())
-                .data(toEmployeeResponses(employeePage.getContent()))
-                .build();
+        List<String> userIds = visible.stream()
+                .map(employee -> employee.getUser().getId())
+                .toList();
+        Map<String, String> fullNameByUserId = userProfileRepository.findByUser_IdIn(userIds).stream()
+                .filter(profile -> profile.getFullName() != null)
+                .collect(Collectors.toMap(
+                        profile -> profile.getUser().getId(),
+                        UserProfile::getFullName,
+                        (existing, ignored) -> existing));
+
+        return visible.stream()
+                .map(employee -> {
+                    EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
+                    response.setFullName(fullNameByUserId.get(employee.getUser().getId()));
+                    return response;
+                })
+                .toList();
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public EmployeeResponse getEmployee(String employeeId) {
-        Employee employee = findEmployeeForCurrentContext(employeeId);
-        return toEmployeeResponse(employee);
+    @Transactional
+    public EmployeeResponse updateEmployee(String employeeId, UpdateEmployeeRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
+
+        User user = employee.getUser();
+        UserProfile profile = userProfileRepository.findByUser_Id(user.getId())
+                .orElseGet(() -> UserProfile.builder().user(user).build());
+
+        if (request.getFullName() != null) {
+            profile.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null) {
+            if (!request.getPhone().equals(profile.getPhone())
+                    && userProfileRepository.existsByPhone(request.getPhone())) {
+                throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
+            }
+            profile.setPhone(request.getPhone());
+            employee.setPhone(request.getPhone());
+        }
+        if (request.getStatus() != null) {
+            // Chi activate duoc khi da co org role, neu khong selectContext se fail sau do
+            if (request.getStatus() == EmployeeStatus.ACTIVE && employee.getOrgRole() == null) {
+                throw new AppException(ErrorCode.EMPLOYEE_ACTIVATE_REQUIRES_ORG_ROLE);
+            }
+            employee.setStatus(request.getStatus());
+        }
+        if (request.getStartDate() != null) {
+            employee.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            employee.setEndDate(request.getEndDate());
+        }
+
+        userProfileRepository.save(profile);
+        return toResponse(employeeRepository.save(employee));
     }
 
     @Override
     @Transactional
     public EmployeeResponse addEmployee(CreateEmployeeRequest request) {
-        OrganizationBranch branch = resolveBranchForCreateOrUpdate(request.getBranchId());
-        OrgRole orgRole = findOrgRole(request.getOrgRoleId());
-        validateProfilePhoneAvailable(request.getPhone(), null);
+        employeeBranchGuard.validateBranchAccess(request.getBranchId());
 
-        String username = cleanRequired(request.getUsername(), ErrorCode.EMPLOYEE_USERNAME_REQUIRED);
-        String email = cleanRequired(request.getEmail(), ErrorCode.EMPLOYEE_EMAIL_REQUIRED);
-        String password = cleanRequired(request.getPassword(), ErrorCode.USER_PASSWORD_INVALID);
-        String phone = cleanRequired(request.getPhone(), ErrorCode.EMPLOYEE_PHONE_REQUIRED);
-        String firstName = cleanRequired(request.getFirstName(), ErrorCode.USER_FULL_NAME_INVALID);
-        String lastName = cleanRequired(request.getLastName(), ErrorCode.USER_FULL_NAME_INVALID);
-
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsername(request.getUsername())) {
             throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
+        if (request.getPhone() != null && userProfileRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
+        }
+
+        OrganizationBranch branch = branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
 
         Role userRole = roleRepository.findByRoleName(PredefinedRole.USER_ROLE)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         User user = User.builder()
-                .username(username)
-                .email(email)
-                .password(passwordEncoder.encode(password))
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(EmployeeAccountConstants.DEFAULT_PASSWORD))
                 .status(UserStatus.ACTIVE)
                 .enabled(true)
                 .roles(Set.of(userRole))
                 .build();
         user = userRepository.save(user);
 
-        UserProfile profile = UserProfile.builder()
+        userProfileRepository.save(UserProfile.builder()
                 .user(user)
-                .fullName(buildFullName(firstName, lastName))
-                .phone(phone)
-                .build();
-        profile = userProfileRepository.save(profile);
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
+                .build());
 
         Employee employee = Employee.builder()
                 .user(user)
                 .branch(branch)
-                .orgRole(orgRole)
-                .firstName(firstName)
-                .lastName(lastName)
-                .email(email)
-                .phone(phone)
+                .email(request.getEmail())
+                .phone(request.getPhone())
                 .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
                 .salary(request.getSalary())
-                .status(request.getStatus() == null ? EmployeeStatus.ACTIVE : request.getStatus())
+                .status(EmployeeAccountConstants.DEFAULT_STATUS)
                 .build();
         employee = employeeRepository.save(employee);
 
-        return toEmployeeResponse(employee, profile);
+        return toResponse(employee);
     }
 
-    @Override
-    @Transactional
-    public EmployeeResponse updateEmployee(String employeeId, UpdateEmployeeRequest request) {
-        Employee employee = findEmployeeForCurrentContext(employeeId);
-        OrganizationBranch branch = resolveBranchForCreateOrUpdate(request.getBranchId());
-        OrgRole orgRole = findOrgRole(request.getOrgRoleId());
-
-        UserProfile profile = userProfileRepository.findByUser_Id(employee.getUser().getId())
-                .orElseGet(() -> UserProfile.builder().user(employee.getUser()).build());
-        validateProfilePhoneAvailable(request.getPhone(), profile.getId());
-
-        String username = cleanRequired(request.getUsername(), ErrorCode.EMPLOYEE_USERNAME_REQUIRED);
-        String email = cleanRequired(request.getEmail(), ErrorCode.EMPLOYEE_EMAIL_REQUIRED);
-        String phone = cleanRequired(request.getPhone(), ErrorCode.EMPLOYEE_PHONE_REQUIRED);
-        String firstName = cleanRequired(request.getFirstName(), ErrorCode.USER_FULL_NAME_INVALID);
-        String lastName = cleanRequired(request.getLastName(), ErrorCode.USER_FULL_NAME_INVALID);
-
-        if (!employee.getUser().getUsername().equals(username)
-                && userRepository.existsByUsername(username)) {
-            throw new AppException(ErrorCode.USER_USERNAME_ALREADY_EXISTS);
-        }
-        if (!employee.getUser().getEmail().equals(email)
-                && userRepository.existsByEmail(email)) {
-            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
-
-        if (StringUtils.hasText(request.getPassword())) {
-            employee.getUser().setPassword(passwordEncoder.encode(request.getPassword().trim()));
-        }
-
-        employee.getUser().setUsername(username);
-        employee.getUser().setEmail(email);
-        employee.setFirstName(firstName);
-        employee.setLastName(lastName);
-        employee.setEmail(email);
-        employee.setPhone(phone);
-        employee.setBranch(branch);
-        employee.setOrgRole(orgRole);
-        employee.setStartDate(request.getStartDate());
-        employee.setEndDate(request.getEndDate());
-        employee.setSalary(request.getSalary());
-        if (request.getStatus() != null) {
-            employee.setStatus(request.getStatus());
-        }
-
-        userRepository.save(employee.getUser());
-        profile.setFullName(buildFullName(firstName, lastName));
-        profile.setPhone(phone);
-        profile = userProfileRepository.save(profile);
-        return toEmployeeResponse(employeeRepository.save(employee), profile);
-    }
-
-    @Override
-    @Transactional
-    public EmployeeResponse deleteEmployee(String employeeId) {
-        Employee employee = findEmployeeForCurrentContext(employeeId);
-        employee.setStatus(EmployeeStatus.TERMINATED);
-        employee.setEndDate(LocalDate.now());
-        if (employee.getUser() != null) {
-            employee.getUser().setEnabled(false);
-            employee.getUser().setStatus(UserStatus.BLOCKED);
-            userRepository.save(employee.getUser());
-        }
-        clearManagerFromOtherBranch(employee.getId(), null);
-        return toEmployeeResponse(employeeRepository.save(employee));
-    }
-
-    @Override
-    @Transactional
-    public EmployeeResponse enableEmployee(String employeeId) {
-        Employee employee = findEmployeeForCurrentContext(employeeId);
-        employee.getUser().setEnabled(true);
-        employee.getUser().setStatus(UserStatus.ACTIVE);
-        employee.setStatus(EmployeeStatus.ACTIVE);
-        userRepository.save(employee.getUser());
-        return toEmployeeResponse(employeeRepository.save(employee));
-    }
-
-    @Override
-    @Transactional
-    public EmployeeResponse disableEmployee(String employeeId) {
-        Employee employee = findEmployeeForCurrentContext(employeeId);
-        employee.getUser().setEnabled(false);
-        employee.getUser().setStatus(UserStatus.BLOCKED);
-        if (EmployeeStatus.ACTIVE.equals(employee.getStatus())) {
-            employee.setStatus(EmployeeStatus.INACTIVE);
-        }
-        clearManagerFromOtherBranch(employee.getId(), null);
-        userRepository.save(employee.getUser());
-        return toEmployeeResponse(employeeRepository.save(employee));
-    }
-
-    private void validateBranchAccess(String targetBranchId) {
-        findBranchForCurrentContext(targetBranchId);
-    }
-
-    private OrganizationBranch resolveBranchForCreateOrUpdate(String requestedBranchId) {
-        OrgDataScope dataScope = AuthUtils.getDataScope();
-        if (OrgDataScope.BRANCH.equals(dataScope)) {
-            String contextBranchId = AuthUtils.getBranchId();
-            if (!StringUtils.hasText(contextBranchId)) {
-                throw new AppException(ErrorCode.EMPLOYEE_BRANCH_REQUIRED);
-            }
-            if (StringUtils.hasText(requestedBranchId) && !contextBranchId.equals(requestedBranchId)) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            return findBranchForCurrentContext(contextBranchId);
-        }
-
-        if (!StringUtils.hasText(requestedBranchId)) {
-            throw new AppException(ErrorCode.EMPLOYEE_BRANCH_REQUIRED);
-        }
-
-        return findBranchForCurrentContext(requestedBranchId);
-    }
-
-    private OrgRole findOrgRole(String orgRoleId) {
-        if (!StringUtils.hasText(orgRoleId)) {
-            throw new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_REQUIRED);
-        }
-        return orgRoleRepository.findById(orgRoleId.trim())
-                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_ORG_ROLE_NOT_FOUND));
-    }
-
-    private void validateProfilePhoneAvailable(String phone, String currentProfileId) {
-        if (!StringUtils.hasText(phone)) {
-            throw new AppException(ErrorCode.EMPLOYEE_PHONE_REQUIRED);
-        }
-        if (!userProfileRepository.existsByPhone(phone.trim())) {
-            return;
-        }
-        if (!StringUtils.hasText(currentProfileId)) {
-            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
-        }
-        UserProfile profile = userProfileRepository.findById(currentProfileId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (!phone.trim().equals(profile.getPhone())) {
-            throw new AppException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
-        }
-    }
-
-    private String cleanRequired(String value, ErrorCode errorCode) {
-        if (!StringUtils.hasText(value)) {
-            throw new AppException(errorCode);
-        }
-        return value.trim();
-    }
-
-    private String buildFullName(String firstName, String lastName) {
-        return (firstName.trim() + " " + lastName.trim()).trim();
+    private EmployeeResponse toResponse(Employee employee) {
+        EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
+        userProfileRepository.findByUser_Id(employee.getUser().getId())
+                .ifPresent(profile -> response.setFullName(profile.getFullName()));
+        return response;
     }
 
     private void rejectSelfRoleChange(Employee employee) {
@@ -331,7 +206,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        validateBranchAccess(employee.getBranch().getId());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
         rejectSelfRoleChange(employee);
 
         OrgRole orgRole = orgRoleRepository.findById(request.getOrgRoleId())
@@ -339,7 +214,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employee.setOrgRole(orgRole);
         employee = employeeRepository.save(employee);
-        return toEmployeeResponse(employee);
+        return toResponse(employee);
     }
 
     @Override
@@ -348,13 +223,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        validateBranchAccess(employee.getBranch().getId());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
         rejectSelfRoleChange(employee);
 
         // idempotent: neu da khong co role thi tra ve binh thuong
         employee.setOrgRole(null);
+        // ACTIVE luon phai di kem org role, go role thi ha xuong INACTIVE.
+        // TERMINATED giu nguyen vi day la trang thai cuoi, khong ha xuong INACTIVE.
+        if (employee.getStatus() == EmployeeStatus.ACTIVE) {
+            employee.setStatus(EmployeeStatus.INACTIVE);
+        }
         employee = employeeRepository.save(employee);
-        return toEmployeeResponse(employee);
+        return toResponse(employee);
     }
 
     @Override
@@ -363,305 +243,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
-        validateBranchAccess(employee.getBranch().getId());
+        employeeBranchGuard.validateBranchAccess(employee.getBranch().getId());
 
         employee.setSalary(request.getSalary());
         employee = employeeRepository.save(employee);
-        return toEmployeeResponse(employee);
-    }
-
-    @Override
-    @Transactional
-    public EmployeeResponse setProfileUpdateAccess(
-            String employeeId, ProfileUpdateAccessRequest request) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
-        validateBranchAccess(employee.getBranch().getId());
-        employee.setProfileUpdateEnabled(request.getEnabled());
-        return toEmployeeResponse(employeeRepository.save(employee));
-    }
-
-    @Override
-    @Transactional
-    public EmployeeBranchAssignmentResponse assignToBranch(String branchId, EmployeeBranchAssignmentRequest request) {
-        OrganizationBranch targetBranch = findBranchForCurrentContext(branchId);
-        Employee branchManager = findManagerEmployee(
-                request.getManagerId(),
-                targetBranch.getId(),
-                targetBranch.getOrganization().getId()
-        );
-
-        validateManagerForBranch(branchManager, targetBranch);
-
-        String managerEmployeeId = branchManager.getId();
-        if (managerEmployeeId.equals(targetBranch.getManagerId())) {
-            return employeeMapper.toEmployeeBranchAssignmentResponse(targetBranch, branchManager);
-        }
-
-        clearManagerFromOtherBranch(managerEmployeeId, targetBranch.getId());
-
-        targetBranch.setManagerId(managerEmployeeId);
-
-        OrganizationBranch savedBranch = branchRepository.saveAndFlush(targetBranch);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(savedBranch, branchManager);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EmployeeBranchAssignmentResponse getBranchManager(String branchId) {
-        OrganizationBranch branch = findBranchForCurrentContext(branchId);
-        Employee manager = findBranchManager(branch.getManagerId());
-        if (manager == null) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND);
-        }
-        return employeeMapper.toEmployeeBranchAssignmentResponse(branch, manager);
-    }
-
-    @Override
-    @Transactional
-    public EmployeeBranchAssignmentResponse removeBranchManager(String branchId) {
-        OrganizationBranch branch = findBranchForCurrentContext(branchId);
-        Employee manager = findBranchManager(branch.getManagerId());
-        if (manager == null) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND);
-        }
-        branch.setManagerId(null);
-        OrganizationBranch savedBranch = branchRepository.saveAndFlush(branch);
-        return employeeMapper.toEmployeeBranchAssignmentResponse(savedBranch, manager);
-    }
-
-    private Employee findManagerEmployee(String managerId, String branchId, String organizationId) {
-        if (!StringUtils.hasText(managerId)) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_REQUEST);
-        }
-        List<Employee> managers = employeeRepository.findAllByUserIdAndBranchIdAndOrganizationIdWithDetails(
-                managerId,
-                branchId,
-                organizationId
-        );
-
-        if (managers.isEmpty()) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_NOT_FOUND);
-        }
-        if (managers.size() > 1) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_REQUEST);
-        }
-
-        return managers.get(0);
-    }
-
-    private OrganizationBranch findBranch(String branchId, String ownerId) {
-        return branchRepository.findByIdAndOwnerIdWithManager(branchId, ownerId)
-                .orElseThrow(() -> new AppException(ErrorCode.BRANCH_NOT_FOUND));
-    }
-
-    private Employee findBranchManager(String managerEmployeeId) {
-        if (!StringUtils.hasText(managerEmployeeId)) {
-            return null;
-        }
-        return employeeRepository.findByIdWithUserRoleAndBranch(managerEmployeeId)
-                .orElse(null);
-    }
-
-    private OrganizationBranch findBranchForCurrentContext(String branchId) {
-        if (!StringUtils.hasText(branchId)) {
-            throw new AppException(ErrorCode.EMPLOYEE_BRANCH_REQUIRED);
-        }
-        String currentUserId = AuthUtils.getCurrentUserId();
-        if (StringUtils.hasText(currentUserId)) {
-            Optional<OrganizationBranch> ownerBranch =
-                    branchRepository.findByIdAndOwnerIdWithManager(branchId, currentUserId);
-            if (ownerBranch.isPresent()) {
-                return ownerBranch.get();
-            }
-        }
-
-        OrganizationBranch branch = branchRepository.findById(branchId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
-
-        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
-            return branch;
-        }
-
-        OrgDataScope dataScope = AuthUtils.getDataScope();
-        if (OrgDataScope.ORGANIZATION.equals(dataScope)
-                && branch.getOrganization() != null
-                && branch.getOrganization().getId().equals(AuthUtils.getOrganizationId())) {
-            return branch;
-        }
-        if (OrgDataScope.BRANCH.equals(dataScope) && branchId.equals(AuthUtils.getBranchId())) {
-            return branch;
-        }
-
-        throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-    }
-
-    private void validateManagerForBranch(Employee employee, OrganizationBranch targetBranch) {
-        if (employee.getBranch() == null || employee.getBranch().getOrganization() == null) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_BRANCH);
-        }
-        if (!targetBranch.getId().equals(employee.getBranch().getId())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_BRANCH);
-        }
-        if (!targetBranch.getOrganization().getId().equals(employee.getBranch().getOrganization().getId())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_BRANCH);
-        }
-        if (!isManagerRole(employee)) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INVALID_ROLE);
-        }
-        if (!EmployeeStatus.ACTIVE.equals(employee.getStatus())
-                || employee.getUser() == null
-                || !employee.getUser().isEnabled()
-                || !UserStatus.ACTIVE.equals(employee.getUser().getStatus())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_INACTIVE);
-        }
-        if (employee.getEndDate() != null && employee.getEndDate().isBefore(LocalDate.now())) {
-            throw new AppException(ErrorCode.BRANCH_MANAGER_EXPIRED);
-        }
-    }
-
-    private boolean isManagerRole(Employee employee) {
-        return employee.getOrgRole() != null
-                && EmployeeConstants.MANAGER_ROLE_NAME.equals(employee.getOrgRole().getRoleName());
-    }
-
-    private void clearManagerFromOtherBranch(String employeeId, String targetBranchId) {
-        branchRepository.findByManagerId(employeeId).forEach(currentBranch -> {
-            if (targetBranchId == null || !targetBranchId.equals(currentBranch.getId())) {
-                currentBranch.setManagerId(null);
-                branchRepository.saveAndFlush(currentBranch);
-            }
-        });
-    }
-
-    private Employee findEmployeeForCurrentContext(String employeeId) {
-        Employee employee = employeeRepository.findByIdWithUserRoleAndBranch(employeeId)
-                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
-        validateBranchAccess(employee.getBranch().getId());
-        return employee;
-    }
-
-    private String resolveOrganizationId(String organizationId) {
-        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)) {
-            if (!StringUtils.hasText(organizationId)) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            return organizationId;
-        }
-
-        OrgDataScope dataScope = AuthUtils.getDataScope();
-        if (OrgDataScope.ORGANIZATION.equals(dataScope)) {
-            String contextOrganizationId = AuthUtils.getOrganizationId();
-            if (StringUtils.hasText(organizationId) && !organizationId.equals(contextOrganizationId)) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            return contextOrganizationId;
-        }
-        if (OrgDataScope.BRANCH.equals(dataScope)) {
-            OrganizationBranch branch = branchRepository.findById(AuthUtils.getBranchId())
-                    .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
-            if (StringUtils.hasText(organizationId) && !organizationId.equals(branch.getOrganization().getId())) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            return branch.getOrganization().getId();
-        }
-
-        throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-    }
-
-    private String resolveBranchId(String branchId) {
-        if (AuthUtils.hasRole(PredefinedRole.ADMIN_ROLE)
-                || OrgDataScope.ORGANIZATION.equals(AuthUtils.getDataScope())) {
-            return normalizeFilter(branchId);
-        }
-
-        if (OrgDataScope.BRANCH.equals(AuthUtils.getDataScope())) {
-            String contextBranchId = AuthUtils.getBranchId();
-            if (StringUtils.hasText(branchId) && !branchId.equals(contextBranchId)) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            return contextBranchId;
-        }
-
-        throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-    }
-
-    private EmployeeStatus parseEmployeeStatus(String status) {
-        if (!StringUtils.hasText(status)) {
-            return null;
-        }
-        try {
-            return EmployeeStatus.valueOf(status);
-        } catch (IllegalArgumentException exception) {
-            throw new AppException(ErrorCode.EMPLOYEE_NOT_FOUND);
-        }
-    }
-
-    private String normalizeFilter(String value) {
-        return StringUtils.hasText(value) ? value.trim() : null;
-    }
-
-    private List<EmployeeResponse> toEmployeeResponses(Collection<Employee> employees) {
-        List<String> userIds = employees.stream()
-                .map(Employee::getUser)
-                .filter(user -> user != null && StringUtils.hasText(user.getId()))
-                .map(User::getId)
-                .toList();
-        Map<String, UserProfile> profilesByUserId = userIds.isEmpty()
-                ? Map.of()
-                : userProfileRepository.findByUser_IdIn(userIds).stream()
-                        .collect(Collectors.toMap(
-                                profile -> profile.getUser().getId(),
-                                profile -> profile,
-                                (first, ignored) -> first));
-
-        return employees.stream()
-                .map(employee -> toEmployeeResponse(
-                        employee,
-                        employee.getUser() == null ? null : profilesByUserId.get(employee.getUser().getId())))
-                .toList();
-    }
-
-    private EmployeeResponse toEmployeeResponse(Employee employee) {
-        UserProfile profile = employee.getUser() == null
-                ? null
-                : userProfileRepository.findByUser_Id(employee.getUser().getId()).orElse(null);
-        return toEmployeeResponse(employee, profile);
-    }
-
-    private EmployeeResponse toEmployeeResponse(Employee employee, UserProfile profile) {
-        EmployeeResponse response = employeeMapper.toEmployeeResponse(employee);
-        if (StringUtils.hasText(employee.getFirstName())) {
-            response.setFirstName(employee.getFirstName().trim());
-        }
-        if (StringUtils.hasText(employee.getLastName())) {
-            response.setLastName(employee.getLastName().trim());
-        }
-        if (StringUtils.hasText(response.getFirstName()) || StringUtils.hasText(response.getLastName())) {
-            response.setFullName(buildOptionalFullName(response.getFirstName(), response.getLastName()));
-        }
-        if (profile == null || !StringUtils.hasText(profile.getFullName())) {
-            return response;
-        }
-        String fullName = profile.getFullName().trim();
-        if (!StringUtils.hasText(response.getFullName())) {
-            response.setFullName(fullName);
-        }
-        if (!StringUtils.hasText(response.getFirstName()) && !StringUtils.hasText(response.getLastName())) {
-            String[] nameParts = fullName.split("\\s+", 2);
-            response.setFirstName(nameParts[0]);
-            response.setLastName(nameParts.length > 1 ? nameParts[1] : "");
-        }
-        if (!StringUtils.hasText(response.getPhone())) {
-            response.setPhone(profile.getPhone());
-        }
-        return response;
-    }
-
-    private String buildOptionalFullName(String firstName, String lastName) {
-        return List.of(firstName, lastName).stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .collect(Collectors.joining(" "));
+        return toResponse(employee);
     }
 }

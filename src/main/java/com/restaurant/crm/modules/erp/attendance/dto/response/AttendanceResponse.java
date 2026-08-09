@@ -22,6 +22,7 @@ public class AttendanceResponse {
     String id;
     String employeeId;
     String employeeName;
+    String username;
     String branchId;
     String shiftAssignmentId;
     LocalDate workDate;

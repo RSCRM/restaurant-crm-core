@@ -15,4 +15,5 @@ public interface CustomerVoucherService {
     PagingResponse<CustomerVoucherResponse> getCustomerVouchers(String customerId, String branchId, String status, int page, int size);
     List<CustomerVoucherApplicableResponse> getApplicableVouchers(String customerId, String branchId, BigDecimal subtotal);
     void releaseVoucher(String orderId);
+    void giveVoucherBulk(List<String> customerIds, String branchId, String voucherId);
 }

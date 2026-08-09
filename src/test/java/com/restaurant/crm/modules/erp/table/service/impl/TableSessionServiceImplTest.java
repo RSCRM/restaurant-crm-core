@@ -2,9 +2,12 @@ package com.restaurant.crm.modules.erp.table.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.booking.entity.Booking;
+import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.order.enums.OrderStatus;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.table.dto.request.TableSessionCreationRequest;
 import com.restaurant.crm.modules.erp.table.dto.response.TableSessionResponse;
@@ -26,10 +29,12 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -49,6 +54,8 @@ class TableSessionServiceImplTest {
     @Mock
     OrderRepository orderRepository;
     @Mock
+    BookingRepository bookingRepository;
+    @Mock
     TableSessionMapper tableSessionMapper;
 
     TableSessionServiceImpl tableSessionService;
@@ -61,6 +68,7 @@ class TableSessionServiceImplTest {
                 tableSessionRepository,
                 tableTransferHistoryRepository,
                 orderRepository,
+                bookingRepository,
                 tableSessionMapper
         );
     }
@@ -88,6 +96,8 @@ class TableSessionServiceImplTest {
             assertEquals("session-1", response.getId());
             assertEquals(RestaurantTableStatus.OCCUPIED, table.getStatus());
             verify(restaurantTableRepository).save(table);
+            verify(orderRepository).save(argThat(order ->
+                    "table-1".equals(order.getTableId()) && order.getStatus() == OrderStatus.PENDING));
         }
     }
 
@@ -99,6 +109,24 @@ class TableSessionServiceImplTest {
             authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
             when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(activeBranch()));
             when(restaurantTableRepository.findByIdForUpdate("table-1")).thenReturn(Optional.of(table));
+
+            AppException exception = assertThrows(AppException.class, () -> tableSessionService.create(request(2)));
+
+            assertEquals(ErrorCode.TABLE_NOT_AVAILABLE, exception.getErrorCode());
+            verify(tableSessionRepository, never()).save(any());
+        }
+    }
+
+    @Test
+    void create_rejectsTableLockedForUpcomingBooking() {
+        RestaurantTable table = table(RestaurantTableStatus.AVAILABLE, 4);
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(activeBranch()));
+            when(restaurantTableRepository.findByIdForUpdate("table-1")).thenReturn(Optional.of(table));
+            when(bookingRepository.findFirstByTables_IdAndStatusInOrderByBookingTimeAsc(any(), any()))
+                    .thenReturn(Optional.of(Booking.builder().bookingTime(Instant.now().plusSeconds(30 * 60)).build()));
 
             AppException exception = assertThrows(AppException.class, () -> tableSessionService.create(request(2)));
 

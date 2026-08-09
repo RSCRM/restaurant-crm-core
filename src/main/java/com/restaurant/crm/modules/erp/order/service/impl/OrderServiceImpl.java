@@ -305,6 +305,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderCookingStatusResponse getActiveOrderCookingStatusByTable(String tableId) {
         RestaurantTable table = restaurantTableRepository.findById(tableId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_TABLE_NOT_FOUND));
@@ -314,7 +315,16 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order activeOrder = orderRepository.findFirstByTableIdAndStatusOrderByCreatedAtDesc(tableId, OrderStatus.PENDING)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+                .orElseGet(() -> orderRepository.save(Order.builder()
+                        .branchId(table.getArea().getBranchId())
+                        .tableId(tableId)
+                        .orderCode(generateOrderCode())
+                        .orderType(OrderType.DINE_IN)
+                        .status(OrderStatus.PENDING)
+                        .subtotal(BigDecimal.ZERO)
+                        .discountAmount(BigDecimal.ZERO)
+                        .totalAmount(BigDecimal.ZERO)
+                        .build()));
 
         return getOrderCookingStatus(activeOrder.getId());
     }

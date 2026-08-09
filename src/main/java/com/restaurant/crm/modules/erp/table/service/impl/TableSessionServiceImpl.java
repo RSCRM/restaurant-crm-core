@@ -2,11 +2,15 @@ package com.restaurant.crm.modules.erp.table.service.impl;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.modules.erp.booking.enums.BookingStatus;
+import com.restaurant.crm.modules.erp.booking.repository.BookingRepository;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.order.entity.Order;
+import com.restaurant.crm.modules.erp.order.constants.OrderConstants;
 import com.restaurant.crm.modules.erp.order.enums.OrderStatus;
+import com.restaurant.crm.modules.erp.order.enums.OrderType;
 import com.restaurant.crm.modules.erp.order.repository.OrderRepository;
 import com.restaurant.crm.modules.erp.table.dto.request.TableSessionCreationRequest;
 import com.restaurant.crm.modules.erp.table.dto.request.TableSessionTransferRequest;
@@ -28,7 +32,10 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +47,7 @@ public class TableSessionServiceImpl implements TableSessionService {
     TableSessionRepository tableSessionRepository;
     TableTransferHistoryRepository tableTransferHistoryRepository;
     OrderRepository orderRepository;
+    BookingRepository bookingRepository;
     TableSessionMapper tableSessionMapper;
 
     @Override
@@ -53,6 +61,9 @@ public class TableSessionServiceImpl implements TableSessionService {
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_NOT_FOUND));
 
         if (table.getStatus() != RestaurantTableStatus.AVAILABLE) {
+            throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
+        }
+        if (isBookingLocked(table.getId())) {
             throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
         }
         if (tableSessionRepository.existsByTableIdAndStatus(table.getId(), TableSessionStatus.ACTIVE)) {
@@ -74,6 +85,21 @@ public class TableSessionServiceImpl implements TableSessionService {
                 .status(TableSessionStatus.ACTIVE)
                 .startedAt(Instant.now())
                 .note(request.getNote())
+                .build());
+
+        orderRepository.save(Order.builder()
+                .branchId(branchId)
+                .tableId(table.getId())
+                .orderCode(OrderConstants.ORDER_CODE_PREFIX
+                        + UUID.randomUUID().toString().substring(0, OrderConstants.ORDER_CODE_RANDOM_LENGTH).toUpperCase())
+                .orderType(OrderType.DINE_IN)
+                .status(OrderStatus.PENDING)
+                .customerName(request.getGuestName().trim())
+                .customerPhone(request.getGuestPhone())
+                .note(request.getNote())
+                .subtotal(BigDecimal.ZERO)
+                .discountAmount(BigDecimal.ZERO)
+                .totalAmount(BigDecimal.ZERO)
                 .build());
         return tableSessionMapper.toResponse(session);
     }
@@ -111,7 +137,8 @@ public class TableSessionServiceImpl implements TableSessionService {
                 .filter(candidate -> branchId.equals(candidate.getArea().getBranchId()))
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_NOT_FOUND));
         if (targetTable.getStatus() != RestaurantTableStatus.AVAILABLE
-                || tableSessionRepository.existsByTableIdAndStatus(targetTable.getId(), TableSessionStatus.ACTIVE)) {
+                || tableSessionRepository.existsByTableIdAndStatus(targetTable.getId(), TableSessionStatus.ACTIVE)
+                || isBookingLocked(targetTable.getId())) {
             throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
         }
 
@@ -139,6 +166,14 @@ public class TableSessionServiceImpl implements TableSessionService {
                 .transferredAt(Instant.now())
                 .build());
         return tableSessionMapper.toResponse(session);
+    }
+
+    private boolean isBookingLocked(String tableId) {
+        return bookingRepository
+                .findFirstByTables_IdAndStatusInOrderByBookingTimeAsc(
+                        tableId, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED))
+                .filter(booking -> !booking.getBookingTime().isAfter(Instant.now().plusSeconds(15 * 60)))
+                .isPresent();
     }
 
     @Override

@@ -31,4 +31,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
 
     Page<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDate(
             String branchId, String employeeId, LocalDate workDate, Pageable pageable);
+
+    Page<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentWorkDateBetween(
+            String branchId, LocalDate from, LocalDate to, Pageable pageable);
+
+    Page<Attendance> findByShiftAssignmentBranchIdAndShiftAssignmentEmployeeIdAndShiftAssignmentWorkDateBetween(
+            String branchId, String employeeId, LocalDate from, LocalDate to, Pageable pageable);
 }

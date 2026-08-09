@@ -1,10 +1,11 @@
 package com.restaurant.crm.modules.erp.inventory.constants;
 
-public final class IngredientCategoryConstants {
+public final class InventoryCategoryConstants {
 
-    private IngredientCategoryConstants() {}
+    private InventoryCategoryConstants() {}
 
-    public static final String TABLE_INGREDIENT_CATEGORY = "ingredient_categories";
+    public static final String TABLE_INVENTORY_CATEGORY = "inventory_categories";
+    public static final String COL_STATUS = "status";
 
     public static final String COL_BRANCH_ID = "branch_id";
     public static final String COL_CATEGORY_NAME = "category_name";
@@ -15,4 +16,5 @@ public final class IngredientCategoryConstants {
 
     public static final int MAX_CHARS_CATEGORY_NAME = 100;
     public static final int MAX_CHARS_DESCRIPTION = 255;
+    public static final String STATUS_DEFINITION = "varchar(20)";
 }

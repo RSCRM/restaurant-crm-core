@@ -7,7 +7,6 @@ public class OrganizationConstants {
     public static final String TABLE_ORGANIZATION = "organizations";
 
     //======= Organization column name ========
-    public static final String COL_OWNER_ID = "owner_id";
     public static final String COL_ORGANIZATION_NAME = "organization_name";
     public static final String COL_TAX_CODE = "tax_code";
     public static final String COL_ADDRESS = "address";

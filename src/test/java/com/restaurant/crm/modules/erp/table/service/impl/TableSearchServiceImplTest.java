@@ -70,6 +70,7 @@ class TableSearchServiceImplTest {
             when(tableSearchMapper.toResponse(table)).thenReturn(mapped);
 
             PagingResponse<TableSearchResponse> response = tableSearchService.searchTables(
+                    "branch-1",
                     "A",
                     "area-1",
                     RestaurantTableStatus.AVAILABLE,
@@ -96,6 +97,7 @@ class TableSearchServiceImplTest {
             )).thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
             PagingResponse<TableSearchResponse> response = tableSearchService.searchTables(
+                    "branch-1",
                     "not-found",
                     null,
                     null,
@@ -115,6 +117,7 @@ class TableSearchServiceImplTest {
         AppException exception = assertThrows(
                 AppException.class,
                 () -> tableSearchService.searchTables(
+                        "branch-1",
                         null,
                         null,
                         null,
@@ -142,6 +145,7 @@ class TableSearchServiceImplTest {
             AppException exception = assertThrows(
                     AppException.class,
                     () -> tableSearchService.searchTables(
+                            "branch-1",
                             null,
                             null,
                             null,

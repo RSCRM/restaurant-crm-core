@@ -1,9 +1,13 @@
 package com.restaurant.crm.modules.erp.organization.specification;
 
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.dto.request.OrganizationSearchRequest;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationStatus;
+import com.restaurant.crm.modules.licensemanagement.entity.LicenseSubscription;
+import com.restaurant.crm.modules.licensemanagement.enums.SubscriptionStatus;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -54,10 +58,6 @@ public class OrganizationSpecification {
                 }
 
                 // ── Filter fields (AND) ──
-                if (request.getOwnerId() != null && !request.getOwnerId().isBlank()) {
-                    predicates.add(cb.equal(root.get("owner").get("id"), request.getOwnerId()));
-                }
-
                 if (request.getStatus() != null) {
                     predicates.add(cb.equal(root.get("status"), request.getStatus()));
                 }
@@ -70,8 +70,15 @@ public class OrganizationSpecification {
 
             // ── Data scope filters (AND) ──
             if (currentUserId != null) {
-                // SELF scope: user is owner
-                predicates.add(cb.equal(root.get("owner").get("id"), currentUserId));
+                // SELF scope: user is owner → find organizations where user has OWNER Employee
+                Subquery<String> ownerSubquery = query.subquery(String.class);
+                Root<Employee> empRoot = ownerSubquery.from(Employee.class);
+                ownerSubquery.select(empRoot.get("organization").get("id"))
+                        .where(cb.and(
+                                cb.equal(empRoot.get("user").get("id"), currentUserId),
+                                cb.equal(empRoot.get("orgRole").get("roleName"), OrgRoleConstants.OWNER_ROLE)
+                        ));
+                predicates.add(root.get("id").in(ownerSubquery));
             } else if (dataScopeBranchId != null) {
                 // BRANCH scope: organization that contains this branch
                 Subquery<String> subquery = query.subquery(String.class);
@@ -86,5 +93,22 @@ public class OrganizationSpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    /**
+     * Same as {@link #build} but excludes organizations that have an active subscription.
+     */
+    public static Specification<Organization> buildWithoutActiveSubscription(OrganizationSearchRequest request,
+            String dataScopeOrgId, String dataScopeBranchId, String currentUserId) {
+
+        Specification<Organization> base = build(request, dataScopeOrgId, dataScopeBranchId, currentUserId);
+
+        return base.and((root, query, cb) -> {
+            Subquery<String> subquery = query.subquery(String.class);
+            Root<LicenseSubscription> lsRoot = subquery.from(LicenseSubscription.class);
+            subquery.select(lsRoot.get("organizationId"))
+                    .where(cb.equal(lsRoot.get("status"), SubscriptionStatus.ACTIVE));
+            return cb.not(root.get("id").in(subquery));
+        });
     }
 }

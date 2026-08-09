@@ -6,9 +6,11 @@ import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryReque
 import com.restaurant.crm.modules.erp.inventory.dto.request.InventorySearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
-import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
+
+import java.util.List;
 
 public interface InventoryService {
+
     InventoryResponse createInventory(
         CreateInventoryRequest request
     );
@@ -17,13 +19,20 @@ public interface InventoryService {
         String id
     );
 
-    InventoryResponse getInventoryByIngredientId(
-        String ingredientId
-    );
-
     PagingResponse<InventoryResponse> getInventoriesByBranch(
         int page,
         int size
+    );
+
+    PagingResponse<InventoryResponse> getInventoriesByCategory(
+        String categoryId,
+        int page,
+        int size
+    );
+
+    PagingResponse<InventoryResponse> searchInventories(
+        InventorySearchRequest searchRequest,
+        PagingRequest pagingRequest
     );
 
     InventoryResponse updateInventory(
@@ -31,8 +40,7 @@ public interface InventoryService {
         UpdateInventoryRequest request
     );
 
-    PagingResponse<InventoryResponse> searchInventories(
-        InventorySearchRequest searchRequest,
-        PagingRequest pagingRequest
-    );
+    InventoryResponse updateInventoryStatus(String id);
+
+    List<InventoryResponse> getActiveInventories();
 }

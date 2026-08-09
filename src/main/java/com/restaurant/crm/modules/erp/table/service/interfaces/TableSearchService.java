@@ -7,6 +7,7 @@ import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 public interface TableSearchService {
 
     PagingResponse<TableSearchResponse> searchTables(
+            String branchId,
             String keyword,
             String areaId,
             RestaurantTableStatus status,

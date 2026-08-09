@@ -7,17 +7,17 @@ import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
-import com.restaurant.crm.modules.erp.organization.entity.Employee;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.entity.Employee;
+import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.mapper.OrganizationBranchMapper;
-import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
+import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationBranchService;
 import com.restaurant.crm.modules.identity.constants.role.PredefinedRole;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
-import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -234,9 +234,7 @@ public class OrganizationBranchServiceImpl implements OrganizationBranchService 
         if (!StringUtils.hasText(branch.getManagerId())) {
             return response;
         }
-
-        employeeRepository.findByIdWithUserRoleAndBranch(branch.getManagerId())
-                .ifPresent(manager -> populateManager(response, manager));
+        employeeRepository.findById(branch.getManagerId()).ifPresent(manager -> populateManager(response, manager));
         return response;
     }
 

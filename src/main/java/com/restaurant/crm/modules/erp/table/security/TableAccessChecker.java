@@ -8,10 +8,14 @@ import org.springframework.stereotype.Component;
 @Component("tableAccessChecker")
 public class TableAccessChecker {
 
-    // owner-context (token khong co employeeId) -> qua cong; nguoc lai phai co authority = permission
+    // Owner manages directly; manager must also hold the requested granular permission.
     public boolean canManage(String permission) {
-        if (AuthUtils.getEmployeeId() == null) {
+        String role = AuthUtils.getOrgRole();
+        if ("OWNER".equals(role)) {
             return true;
+        }
+        if (!"MANAGER".equals(role)) {
+            return false;
         }
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getAuthorities().stream()

@@ -26,4 +26,6 @@ public class CheckoutRequestDto {
     PaymentMethod paymentMethod;
 
     String note;
+
+    String voucherCode;
 }

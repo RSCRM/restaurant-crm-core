@@ -23,7 +23,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
             where p.user.id in (
                 select e.user.id from Employee e where e.branch.organization.id = :organizationId
             ) or p.user.id in (
-                select o.owner.id from Organization o where o.id = :organizationId
+                select e.user.id from Employee e where e.organization.id = :organizationId and e.orgRole.roleName = 'OWNER'
             )
             """)
     Page<UserProfile> findByOrganizationId(String organizationId, Pageable pageable);
@@ -42,7 +42,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
                 p.user.id in (
                     select e.user.id from Employee e where e.branch.organization.id = :organizationId
                 ) or p.user.id in (
-                    select o.owner.id from Organization o where o.id = :organizationId
+                    select e.user.id from Employee e where e.organization.id = :organizationId and e.orgRole.roleName = 'OWNER'
                 )
             )
             """)

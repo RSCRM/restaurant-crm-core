@@ -14,8 +14,13 @@ public interface InventoryMapper {
     @Mapping(target = "id", ignore = true)
 
     // Set manually in service
-    @Mapping(target = "ingredient", ignore = true)
+    @Mapping(target = "branch", ignore = true)
+    @Mapping(target = "inventoryCategory", ignore = true)
+
+    // Initialized by the entity/service
+    @Mapping(target = "quantity", ignore = true)
     @Mapping(target = "status", ignore = true)
+
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -25,24 +30,24 @@ public interface InventoryMapper {
         CreateInventoryRequest request
     );
 
-    @Mapping(
-        source = "ingredient.id",
-        target = "ingredientId"
-    )
-    @Mapping(
-        source = "ingredient.ingredientName",
-        target = "ingredientName"
-    )
+    @Mapping(source = "branch.id", target = "branchId")
+    @Mapping(source = "inventoryCategory.id", target = "inventoryCategoryId")
+    @Mapping(source = "inventoryCategory.categoryName", target = "inventoryCategoryName")
+    @Mapping(source = "inventoryCategory.status", target = "inventoryCategoryStatus")
     InventoryResponse toInventoryResponse(
         Inventory inventory
     );
 
     @Mapping(target = "id", ignore = true)
 
-    // Quantity should only change through transactions
+    // Relationships updated manually
+    @Mapping(target = "branch", ignore = true)
+    @Mapping(target = "inventoryCategory", ignore = true)
+
+    // Stock is only updated through InventoryTransaction
     @Mapping(target = "quantity", ignore = true)
-    @Mapping(target = "ingredient", ignore = true)
     @Mapping(target = "status", ignore = true)
+
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

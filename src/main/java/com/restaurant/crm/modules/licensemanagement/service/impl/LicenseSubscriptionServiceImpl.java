@@ -1,8 +1,13 @@
 package com.restaurant.crm.modules.licensemanagement.service.impl;
 
+import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
+import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
+import com.restaurant.crm.common.utils.PagingUtil;
 import com.restaurant.crm.modules.licensemanagement.dto.request.GrantSubscriptionRequest;
+import com.restaurant.crm.modules.licensemanagement.dto.request.SubscriptionSearchRequest;
 import com.restaurant.crm.modules.licensemanagement.dto.response.SubscriptionResponse;
 import com.restaurant.crm.modules.licensemanagement.entity.License;
 import com.restaurant.crm.modules.licensemanagement.entity.LicenseSubscription;
@@ -12,16 +17,23 @@ import com.restaurant.crm.modules.licensemanagement.mapper.LicenseSubscriptionMa
 import com.restaurant.crm.modules.licensemanagement.repository.LicenseRepository;
 import com.restaurant.crm.modules.licensemanagement.repository.LicenseSubscriptionRepository;
 import com.restaurant.crm.modules.licensemanagement.service.interfaces.LicenseSubscriptionService;
+import com.restaurant.crm.modules.licensemanagement.specification.LicenseSubscriptionSpecification;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +90,7 @@ public class LicenseSubscriptionServiceImpl implements LicenseSubscriptionServic
         // 7. Save (catch race condition via Unique Index)
         try {
             LicenseSubscription saved = subscriptionRepository.save(subscription);
-            return licenseSubscriptionMapper.toSubscriptionResponse(saved);
+            return licenseSubscriptionMapper.toSubscriptionResponse(saved, license);
         } catch (DataIntegrityViolationException e) {
             throw new AppException(ErrorCode.ACTIVE_SUBSCRIPTION_EXISTS);
         }
@@ -108,7 +120,9 @@ public class LicenseSubscriptionServiceImpl implements LicenseSubscriptionServic
         }
         LicenseSubscription saved = subscriptionRepository.save(subscription);
 
-        return licenseSubscriptionMapper.toSubscriptionResponse(saved);
+        License license = licenseRepository.findById(saved.getLicenseId())
+                .orElse(null);
+        return licenseSubscriptionMapper.toSubscriptionResponse(saved, license);
     }
 
     @Override
@@ -124,6 +138,42 @@ public class LicenseSubscriptionServiceImpl implements LicenseSubscriptionServic
         subscription.setStatus(SubscriptionStatus.REVOKED);
         LicenseSubscription saved = subscriptionRepository.save(subscription);
 
-        return licenseSubscriptionMapper.toSubscriptionResponse(saved);
+        License license = licenseRepository.findById(saved.getLicenseId())
+                .orElse(null);
+        return licenseSubscriptionMapper.toSubscriptionResponse(saved, license);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<SubscriptionResponse> searchSubscriptionsByOrganization(
+            String organizationId, SubscriptionSearchRequest searchRequest, PagingRequest pagingRequest) {
+
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest)
+        );
+
+        Page<LicenseSubscription> subscriptionPage = subscriptionRepository.findAll(
+                LicenseSubscriptionSpecification.build(organizationId, searchRequest), pageable);
+
+        // Batch fetch licenses for the page
+        List<String> licenseIds = subscriptionPage.getContent().stream()
+                .map(LicenseSubscription::getLicenseId)
+                .distinct()
+                .toList();
+        Map<String, License> licenseMap = licenseRepository.findByIdInAndDeletedAtIsNull(licenseIds).stream()
+                .collect(Collectors.toMap(License::getId, l -> l));
+
+        return PagingResponse.<SubscriptionResponse>builder()
+                .currentPage(pagingRequest.getPage())
+                .pageSize(subscriptionPage.getSize())
+                .totalPages(subscriptionPage.getTotalPages())
+                .totalElement(subscriptionPage.getTotalElements())
+                .data(subscriptionPage.getContent().stream()
+                        .map(sub -> licenseSubscriptionMapper.toSubscriptionResponse(
+                                sub, licenseMap.get(sub.getLicenseId())))
+                        .toList())
+                .build();
     }
 }

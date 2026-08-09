@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.erp.organization.entity;
 
 import com.restaurant.crm.common.entity.BaseEntity;
+import com.restaurant.crm.modules.erp.organization.constants.EmployeeAccountConstants;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.identity.entity.User;
@@ -47,21 +48,17 @@ public class Employee extends BaseEntity {
     OrgRole orgRole;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = EmployeeConstants.COL_ORGANIZATION_ID)
+    Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = EmployeeConstants.COL_BRANCH_ID)
     OrganizationBranch branch;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = EmployeeConstants.COL_STATUS, nullable = false)
-    EmployeeStatus status = EmployeeStatus.ACTIVE;
-
-    @Column(name = EmployeeConstants.COL_FIRST_NAME)
-    @Size(max = EmployeeConstants.MAX_CHARS_NAME)
-    String firstName;
-
-    @Column(name = EmployeeConstants.COL_LAST_NAME)
-    @Size(max = EmployeeConstants.MAX_CHARS_NAME)
-    String lastName;
+    EmployeeStatus status = EmployeeAccountConstants.DEFAULT_STATUS;
 
     @NotNull
     @Column(name = EmployeeConstants.COL_EMAIL,

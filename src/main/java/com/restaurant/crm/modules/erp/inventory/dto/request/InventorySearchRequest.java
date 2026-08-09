@@ -16,9 +16,11 @@ import java.time.Instant;
 public class InventorySearchRequest {
 
     // Search
-    String ingredientName;
+    String inventoryName;
 
     // Filter
+    String inventoryCategoryId;
+
     InventoryStatus status;
 
     BigDecimal quantityFrom;

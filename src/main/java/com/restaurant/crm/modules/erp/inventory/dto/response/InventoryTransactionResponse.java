@@ -18,8 +18,9 @@ import java.time.Instant;
 public class InventoryTransactionResponse {
     String id;
     String inventoryId;
-    String ingredientName;
+    String inventoryName;
     String employeeId;
+    String employeeName;
     InventoryTransactionType transactionType;
     InventoryTransactionDirection transactionDirection;
     BigDecimal quantity;

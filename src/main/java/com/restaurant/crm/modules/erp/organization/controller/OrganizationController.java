@@ -87,6 +87,31 @@ public class OrganizationController {
         );
     }
 
+    @PostMapping("/search-without-active-subscription")
+    public ResponseEntity<ApiResponse<PagingResponse<OrganizationResponse>>> searchOrganizationsWithoutActiveSubscription(
+            @RequestBody OrganizationSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        return ResponseEntity.ok(
+                ApiResponse.<PagingResponse<OrganizationResponse>>builder()
+                        .success(ApiConstant.SUCCESS)
+                        .data(organizationService.searchOrganizationsWithoutActiveSubscription(searchRequest, pagingRequest))
+                        .build()
+        );
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
     public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationById(
@@ -95,22 +120,6 @@ public class OrganizationController {
 
         OrganizationResponse response =
                 organizationService.getOrganizationById(id);
-
-        return ResponseEntity.ok(
-                ApiResponse.<OrganizationResponse>builder()
-                        .data(response)
-                        .build()
-        );
-    }
-
-    @GetMapping("/owner/{ownerId}")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
-    public ResponseEntity<ApiResponse<OrganizationResponse>> getOrganizationByOwnerId(
-            @PathVariable String ownerId
-    ) {
-
-        OrganizationResponse response =
-                organizationService.getOrganizationByOwnerId(ownerId);
 
         return ResponseEntity.ok(
                 ApiResponse.<OrganizationResponse>builder()

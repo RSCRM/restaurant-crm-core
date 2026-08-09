@@ -83,9 +83,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional(readOnly = true)
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        String login = request.getEmail().trim();
-        User user = userRepository.findByEmail(login)
-                .or(() -> userRepository.findByUsername(login))
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_USERNAME_NOT_FOUND));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
@@ -101,19 +99,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(this::buildContextResponse)
                 .toList());
 
-        // Load owner contexts. A user can own more than one organization.
-//        organizationRepository.findAllByOwnerId(user.getId())
-//                .forEach(organization -> contexts.add(buildOwnerContextResponse(organization)));
-
-        // Load owner context (user is owner of an organization)
-//         organizationRepository.findByOwnerId(user.getId())
-//                 .ifPresent(organization -> contexts.addAll(
-//                         organizationBranchRepository
-//                                 .findByOrganizationIdAndStatus(organization.getId(), OrganizationBranchStatus.ACTIVE)
-//                                 .stream()
-//                                 .map(branch -> buildOwnerContextResponse(organization, branch))
-//                                 .toList()));
-
+        // Load owner contexts (owner is now an Employee with orgRole=OWNER, branch=null)
+        employeeRepository.findByUser_IdAndOrgRole_RoleName(user.getId(), OWNER_ROLE)
+                .forEach(employee -> contexts.add(buildContextResponse(employee)));
 
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
@@ -142,24 +130,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String userId = extractClaim(signedJWT, JwtClaimSetConstant.CLAIM_USER_ID);
 
-        // Owner path: no employeeId, just organizationId
-        if (request.getEmployeeId() == null) {
-            if (request.getBranchId() == null || request.getBranchId().isBlank()) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            OrganizationBranch branch = organizationBranchRepository
-                    .findByIdAndOrganization_OwnerId(request.getBranchId(), userId)
-                    .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-            if (!branch.getOrganization().getId().equals(request.getOrganizationId())) {
-                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-            }
-            String contextToken = generateOwnerContextToken(userId, request.getOrganizationId(), branch.getId());
-            return ContextSelectionResponse.builder()
-                    .contextToken(contextToken)
-                    .build();
-        }
-
-        // Employee path: verify employee belongs to user
+        // All contexts (including owner) go through employee path
         Employee employee = employeeRepository.findByIdAndUserId(request.getEmployeeId(), userId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
@@ -267,8 +238,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         OrganizationBranch branch = employee.getBranch();
         String branchId = branch != null ? branch.getId() : null;
-        String organizationId = branch != null && branch.getOrganization() != null
-                ? branch.getOrganization().getId() : null;
+        // Owner Employee: branch=null, organization from employee.organization
+        // Regular Employee: organization derived from branch.organization
+        String organizationId;
+        if (branch != null && branch.getOrganization() != null) {
+            organizationId = branch.getOrganization().getId();
+        } else if (employee.getOrganization() != null) {
+            organizationId = employee.getOrganization().getId();
+        } else {
+            organizationId = null;
+        }
 
         JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(employee.getEmail())
@@ -292,28 +271,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return signToken(jwsHeader, claimsBuilder.build());
     }
 
-    private String generateOwnerContextToken(String userId, String organizationId, String branchId) {
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-        Set<String> permissions = orgRoleRepository.findByRoleName(OWNER_ROLE)
-                .map(this::buildOrgPermissions)
-                .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
-
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(userId)
-                .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(CONTEXT_TOKEN_EXPIRY_HOURS, ChronoUnit.HOURS)))
-                .jwtID(UUID.randomUUID().toString())
-                .claim(JwtClaimSetConstant.CLAIM_USER_ID, userId)
-                .claim(JwtClaimSetConstant.CLAIM_TYPE, TOKEN_TYPE_CONTEXT)
-                .claim(JwtClaimSetConstant.CLAIM_ORGANIZATION_ID, organizationId)
-                .claim(JwtClaimSetConstant.CLAIM_BRANCH_ID, branchId)
-                .claim(JwtClaimSetConstant.CLAIM_ORG_ROLE, OWNER_ROLE)
-                .claim(JwtClaimSetConstant.CLAIM_DATA_SCOPE, OrgDataScope.ORGANIZATION.name())
-                .claim(JwtClaimSetConstant.CLAIM_PERMISSION, permissions)
-                .build();
-
-        return signToken(jwsHeader, jwtClaimsSet);
-    }
 
     private String signToken(JWSHeader jwsHeader, JWTClaimsSet jwtClaimsSet) {
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(jwtClaimsSet.toJSONObject()));
@@ -360,10 +317,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         OrganizationBranch branch = employee.getBranch();
         String branchId = branch != null ? branch.getId() : null;
         String branchName = branch != null ? branch.getBranchName() : null;
-        String organizationId = branch != null && branch.getOrganization() != null
-                ? branch.getOrganization().getId() : null;
-        String organizationName = branch != null && branch.getOrganization() != null
-                ? branch.getOrganization().getOrganizationName() : null;
+        // Owner Employee: branch=null, organization from employee.organization
+        // Regular Employee: organization derived from branch.organization
+        String organizationId;
+        String organizationName;
+        if (branch != null && branch.getOrganization() != null) {
+            organizationId = branch.getOrganization().getId();
+            organizationName = branch.getOrganization().getOrganizationName();
+        } else if (employee.getOrganization() != null) {
+            organizationId = employee.getOrganization().getId();
+            organizationName = employee.getOrganization().getOrganizationName();
+        } else {
+            organizationId = null;
+            organizationName = null;
+        }
         String roleName = employee.getOrgRole() != null ? employee.getOrgRole().getRoleName() : null;
 
         return ContextResponse.builder()
@@ -373,19 +340,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .branchId(branchId)
                 .branchName(branchName)
                 .role(roleName)
-                .build();
-    }
-
-    private ContextResponse buildOwnerContextResponse(
-            Organization organization,
-            OrganizationBranch branch) {
-        return ContextResponse.builder()
-                .employeeId(null)
-                .organizationId(organization.getId())
-                .organizationName(organization.getOrganizationName())
-                .branchId(branch.getId())
-                .branchName(branch.getBranchName())
-                .role("OWNER")
                 .build();
     }
 

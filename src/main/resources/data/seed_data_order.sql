@@ -14,7 +14,7 @@ INSERT INTO orders (id, version, branch_id, table_id, reservation_id, order_code
 
 -- Order 2: Bàn 05 (t005) - Sushi Tokyo - Đang chờ xử lý (PENDING)
 INSERT INTO orders (id, version, branch_id, table_id, reservation_id, order_code, order_type, status, customer_name, customer_phone, note, subtotal, discount_amount, total_amount, created_by, created_at, updated_at) VALUES
-    ('ord00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000003', 't0000000-0000-0000-0000-000000000005', NULL, 'ORD-20260801-002', 'DINE_IN', 'PENDING', 'Trần Thị B', '0912345678', 'Sashimi cá hồi kèm sake nóng', 350000.00, 0.00, 350000.00, 'f0000000-0000-0000-0000-000000000002', NOW(), NOW())
+    ('ord00000-0000-0000-0000-000000000002', 0, 'e0000000-0000-0000-0000-000000000001', 't0000000-0000-0000-0000-000000000005', NULL, 'ORD-20260801-002', 'DINE_IN', 'PENDING', 'Trần Thị B', '0912345678', 'Sashimi cá hồi kèm sake nóng', 350000.00, 0.00, 350000.00, 'f0000000-0000-0000-0000-000000000001', NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
 -- Order 3: Bàn 01 (t001) - Phở Việt Q1 - Đã thanh toán (PAID)

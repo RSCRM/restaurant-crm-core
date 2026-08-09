@@ -42,4 +42,9 @@ public class VoucherUpdateRequest {
 
     @NotNull(message = "VOUCHER_ACTIVE_REQUIRED")
     Short isActive;
+
+    java.time.Instant startAt;
+    java.time.Instant endAt;
+    String voucherCode;
+    Integer usageLimit;
 }

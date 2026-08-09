@@ -15,7 +15,6 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrganizationResponse {
     String id;
-    String ownerId;
     String organizationName;
     String taxCode;
     String address;

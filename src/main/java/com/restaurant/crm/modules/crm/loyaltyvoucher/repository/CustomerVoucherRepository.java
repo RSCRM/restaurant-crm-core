@@ -20,4 +20,5 @@ public interface CustomerVoucherRepository extends JpaRepository<CustomerVoucher
     Optional<CustomerVoucher> findByOrderId(String orderId);
     List<CustomerVoucher> findByCustomerIdAndBranchId(String customerId, String branchId);
     boolean existsByCustomerIdAndVoucherId(String customerId, String voucherId);
+    long countByVoucherIdAndStatus(String voucherId, CustomerVoucherStatus status);
 }

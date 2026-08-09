@@ -10,14 +10,17 @@ import com.restaurant.crm.modules.erp.inventory.dto.request.CreateInventoryReque
 import com.restaurant.crm.modules.erp.inventory.dto.request.InventorySearchRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.request.UpdateInventoryRequest;
 import com.restaurant.crm.modules.erp.inventory.dto.response.InventoryResponse;
-import com.restaurant.crm.modules.erp.inventory.entity.Ingredient;
 import com.restaurant.crm.modules.erp.inventory.entity.Inventory;
+import com.restaurant.crm.modules.erp.inventory.entity.InventoryCategory;
+import com.restaurant.crm.modules.erp.inventory.enums.InventoryCategoryStatus;
 import com.restaurant.crm.modules.erp.inventory.enums.InventoryStatus;
 import com.restaurant.crm.modules.erp.inventory.mapper.InventoryMapper;
-import com.restaurant.crm.modules.erp.inventory.repository.IngredientRepository;
+import com.restaurant.crm.modules.erp.inventory.repository.InventoryCategoryRepository;
 import com.restaurant.crm.modules.erp.inventory.repository.InventoryRepository;
 import com.restaurant.crm.modules.erp.inventory.service.interfaces.InventoryService;
 import com.restaurant.crm.modules.erp.inventory.specification.InventorySpecification;
+import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,16 +28,21 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InventoryServiceImpl implements InventoryService {
+
     InventoryRepository inventoryRepository;
-    IngredientRepository ingredientRepository;
+    InventoryCategoryRepository inventoryCategoryRepository;
+    OrganizationBranchRepository organizationBranchRepository;
     InventoryMapper inventoryMapper;
 
     @Override
@@ -42,28 +50,39 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryResponse createInventory(
         CreateInventoryRequest request
     ) {
+
         String branchId = AuthUtils.getBranchId();
 
-        if (inventoryRepository.existsByIngredientIdAndIngredientBranchId(
-            request.getIngredientId(),
-            branchId
-        )) {
-            throw new AppException(
-                ErrorCode.INVENTORY_EXISTS
-            );
+        OrganizationBranch branch =
+            organizationBranchRepository.findById(branchId)
+                .orElseThrow(() ->
+                    new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+
+        InventoryCategory category =
+            inventoryCategoryRepository
+                .findByIdAndBranchId(
+                    request.getInventoryCategoryId(),
+                    branchId
+                )
+                .orElseThrow(() ->
+                    new AppException(ErrorCode.INVENTORY_CATEGORY_NOT_FOUND));
+
+        if (category.getStatus() == InventoryCategoryStatus.INACTIVE) {
+            throw new AppException(ErrorCode.INVENTORY_CATEGORY_INACTIVE);
         }
 
-        Ingredient ingredient =
-            ingredientRepository
-                .findByIdAndBranchId(request.getIngredientId(), branchId)
-                .orElseThrow(() ->
-                    new AppException(ErrorCode.INGREDIENT_NOT_FOUND)
-                );
+        if (inventoryRepository.existsByBranchIdAndInventoryName(
+            branchId,
+            request.getInventoryName()
+        )) {
+            throw new AppException(ErrorCode.INVENTORY_EXISTS);
+        }
 
         Inventory inventory =
             inventoryMapper.toInventory(request);
 
-        inventory.setIngredient(ingredient);
+        inventory.setBranch(branch);
+        inventory.setInventoryCategory(category);
 
         inventory.setStatus(
             calculateStatus(
@@ -72,45 +91,25 @@ public class InventoryServiceImpl implements InventoryService {
             )
         );
 
-        Inventory saved =
+        inventory =
             inventoryRepository.save(inventory);
-
-        return inventoryMapper.toInventoryResponse(saved);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public InventoryResponse getInventoryById(String id) {
-        String branchId = AuthUtils.getBranchId();
-
-        Inventory inventory =
-            inventoryRepository.findByIdAndIngredientBranchId(id, branchId)
-                .orElseThrow(() ->
-                    new AppException(
-                        ErrorCode.INVENTORY_NOT_FOUND
-                    )
-                );
 
         return inventoryMapper.toInventoryResponse(inventory);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public InventoryResponse getInventoryByIngredientId(
-        String ingredientId
+    public InventoryResponse getInventoryById(
+        String id
     ) {
+
         String branchId = AuthUtils.getBranchId();
 
         Inventory inventory =
-            inventoryRepository.findByIngredientIdAndIngredientBranchId(
-                    ingredientId,
-                    branchId
-                )
+            inventoryRepository
+                .findByIdAndBranchId(id, branchId)
                 .orElseThrow(() ->
-                    new AppException(
-                        ErrorCode.INVENTORY_NOT_FOUND
-                    )
-                );
+                    new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
         return inventoryMapper.toInventoryResponse(inventory);
     }
@@ -121,6 +120,7 @@ public class InventoryServiceImpl implements InventoryService {
         int page,
         int size
     ) {
+
         String branchId = AuthUtils.getBranchId();
 
         Pageable pageable =
@@ -130,7 +130,7 @@ public class InventoryServiceImpl implements InventoryService {
             );
 
         Page<Inventory> inventoryPage =
-            inventoryRepository.findByIngredientBranchId(
+            inventoryRepository.findByBranchId(
                 branchId,
                 pageable
             );
@@ -155,31 +155,134 @@ public class InventoryServiceImpl implements InventoryService {
         String id,
         UpdateInventoryRequest request
     ) {
+
         String branchId = AuthUtils.getBranchId();
 
         Inventory inventory =
             inventoryRepository
-                .findByIdAndIngredientBranchId(id, branchId)
+                .findByIdAndBranchId(id, branchId)
                 .orElseThrow(() ->
-                    new AppException(ErrorCode.INVENTORY_NOT_FOUND)
-                );
+                    new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+
+        if (request.getInventoryCategoryId() != null) {
+
+            InventoryCategory category =
+                inventoryCategoryRepository
+                    .findByIdAndBranchId(
+                        request.getInventoryCategoryId(),
+                        branchId
+                    )
+                    .orElseThrow(() ->
+                        new AppException(ErrorCode.INVENTORY_CATEGORY_NOT_FOUND));
+
+            inventory.setInventoryCategory(category);
+        }
+
+        if (request.getInventoryName() != null
+            && !request.getInventoryName().equals(inventory.getInventoryName())
+            && inventoryRepository.existsByBranchIdAndInventoryName(
+            branchId,
+            request.getInventoryName()
+        )) {
+
+            throw new AppException(ErrorCode.INVENTORY_EXISTS);
+        }
 
         inventoryMapper.updateInventory(
             request,
             inventory
         );
 
-        inventory.setStatus(
-            calculateStatus(
-                inventory.getQuantity(),
-                inventory.getMinimumQuantity()
-            )
-        );
+        if (inventory.getStatus() != InventoryStatus.INACTIVE) {
+            inventory.setStatus(
+                calculateStatus(
+                    inventory.getQuantity(),
+                    inventory.getMinimumQuantity()
+                )
+            );
+        }
 
-        Inventory updated =
+        inventory =
             inventoryRepository.save(inventory);
 
-        return inventoryMapper.toInventoryResponse(updated);
+        return inventoryMapper.toInventoryResponse(inventory);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<InventoryResponse> getInventoriesByCategory(
+        String categoryId,
+        int page,
+        int size
+    ) {
+        String branchId = AuthUtils.getBranchId();
+
+        Pageable pageable = PageRequest.of(
+            page - GlobalVariableConstant.PAGE_SIZE_INDEX,
+            size
+        );
+
+        Page<Inventory> inventoryPage =
+            inventoryRepository.findByInventoryCategoryIdAndBranchId(
+                categoryId,
+                branchId,
+                pageable
+            );
+
+        return PagingResponse.<InventoryResponse>builder()
+            .currentPage(page)
+            .pageSize(inventoryPage.getSize())
+            .totalPages(inventoryPage.getTotalPages())
+            .totalElement(inventoryPage.getTotalElements())
+            .data(
+                inventoryPage.getContent()
+                    .stream()
+                    .map(inventoryMapper::toInventoryResponse)
+                    .toList()
+            )
+            .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<InventoryResponse> searchInventories(
+        InventorySearchRequest searchRequest,
+        PagingRequest pagingRequest
+    ) {
+
+        String branchId = AuthUtils.getBranchId();
+
+        Pageable pageable =
+            PageRequest.of(
+                pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                Sort.by(
+                    Sort.Order.asc("inventoryCategory.categoryName"),
+                    Sort.Order.asc("inventoryName")
+                )
+            );
+
+        Page<Inventory> inventoryPage =
+            inventoryRepository.findAll(
+                InventorySpecification.build(
+                    branchId,
+                    searchRequest
+                ),
+                pageable
+            );
+
+        return PagingResponse.<InventoryResponse>builder()
+            .currentPage(pagingRequest.getPage())
+            .pageSize(inventoryPage.getSize())
+            .totalPages(inventoryPage.getTotalPages())
+            .totalElement(inventoryPage.getTotalElements())
+            .data(
+                inventoryPage.getContent()
+                    .stream()
+                    .map(inventoryMapper::toInventoryResponse)
+                    .toList()
+            )
+            .build();
     }
 
     private InventoryStatus calculateStatus(
@@ -199,36 +302,54 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public PagingResponse<InventoryResponse> searchInventories(
-        InventorySearchRequest searchRequest,
-        PagingRequest pagingRequest
-    ) {
-
-        Pageable pageable = PageRequest.of(
-            pagingRequest.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
-            pagingRequest.getPageSize(),
-            PagingUtil.createSort(pagingRequest)
-        );
+    @Transactional
+    public InventoryResponse updateInventoryStatus(String id) {
 
         String branchId = AuthUtils.getBranchId();
 
-        Page<Inventory> inventoryPage = inventoryRepository.findAll(
-            InventorySpecification.build(branchId, searchRequest),
-            pageable
-        );
+        Inventory inventory = inventoryRepository
+            .findByIdAndBranchId(id, branchId)
+            .orElseThrow(() ->
+                new AppException(ErrorCode.INVENTORY_NOT_FOUND)
+            );
 
-        return PagingResponse.<InventoryResponse>builder()
-            .currentPage(pagingRequest.getPage())
-            .pageSize(inventoryPage.getSize())
-            .totalPages(inventoryPage.getTotalPages())
-            .totalElement(inventoryPage.getTotalElements())
-            .data(
-                inventoryPage.getContent()
-                    .stream()
-                    .map(inventoryMapper::toInventoryResponse)
-                    .toList()
+        if (inventory.getStatus() == InventoryStatus.INACTIVE) {
+
+            if (inventory.getInventoryCategory().getStatus() == InventoryCategoryStatus.INACTIVE) {
+                throw new AppException(ErrorCode.INVENTORY_CATEGORY_INACTIVE);
+            }
+
+            inventory.setStatus(
+                calculateStatus(
+                    inventory.getQuantity(),
+                    inventory.getMinimumQuantity()
+                )
+            );
+
+        } else {
+
+            inventory.setStatus(InventoryStatus.INACTIVE);
+
+        }
+
+        inventory = inventoryRepository.save(inventory);
+
+        return inventoryMapper.toInventoryResponse(inventory);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryResponse> getActiveInventories() {
+
+        String branchId = AuthUtils.getBranchId();
+
+        return inventoryRepository
+            .findByBranchIdAndStatusNotOrderByInventoryNameAsc(
+                branchId,
+                InventoryStatus.INACTIVE
             )
-            .build();
+            .stream()
+            .map(inventoryMapper::toInventoryResponse)
+            .toList();
     }
 }

@@ -10,6 +10,7 @@ import com.restaurant.crm.modules.crm.loyaltyvoucher.entity.Voucher;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.mapper.VoucherMapper;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.repository.VoucherRepository;
 import com.restaurant.crm.modules.crm.loyaltyvoucher.service.interfaces.VoucherService;
+import com.restaurant.crm.modules.erp.organization.constants.OrgRoleConstants;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import lombok.AccessLevel;
@@ -21,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -36,9 +39,11 @@ public class VoucherServiceImpl implements VoucherService {
         if (!(authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken)) {
             return;
         }
-        String actorUserId = AuthUtils.getCurrentUserId();
-        if (AuthUtils.getEmployeeId() == null) {
-            branchRepository.findByIdAndOrganization_OwnerId(targetBranchId, actorUserId)
+        if (OrgRoleConstants.OWNER_ROLE.equals(AuthUtils.getOrgRole())) {
+            // Owner: verify branch belongs to their organization
+            branchRepository.findById(targetBranchId)
+                    .filter(b -> b.getOrganization() != null
+                            && AuthUtils.getOrganizationId().equals(b.getOrganization().getId()))
                     .orElseThrow(() -> new AppException(ErrorCode.AUTHZ_UNAUTHORIZED));
         } else if (!targetBranchId.equals(AuthUtils.getBranchId())) {
             throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
@@ -51,7 +56,12 @@ public class VoucherServiceImpl implements VoucherService {
         validateBranchAccess(request.getBranchId());
 
         Voucher voucher = voucherMapper.toVoucher(request);
+        validateDateRange(voucher.getStartAt(), voucher.getEndAt());
+
         voucher.setIsActive((short) 1); // default
+        if (voucher.getEndAt() != null) {
+            voucher.setExpiredAt(voucher.getEndAt());
+        }
         voucher = voucherRepository.save(voucher);
         return voucherMapper.toVoucherResponse(voucher);
     }
@@ -65,8 +75,19 @@ public class VoucherServiceImpl implements VoucherService {
         validateBranchAccess(voucher.getBranchId());
 
         voucherMapper.updateVoucher(request, voucher);
+        validateDateRange(voucher.getStartAt(), voucher.getEndAt());
+
+        if (voucher.getEndAt() != null) {
+            voucher.setExpiredAt(voucher.getEndAt());
+        }
         voucher = voucherRepository.save(voucher);
         return voucherMapper.toVoucherResponse(voucher);
+    }
+
+    private void validateDateRange(Instant startAt, Instant endAt) {
+        if (startAt != null && endAt != null && startAt.isAfter(endAt)) {
+            throw new AppException(ErrorCode.VOUCHER_DATE_RANGE_INVALID);
+        }
     }
 
     @Override
