@@ -6,10 +6,13 @@ import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.request.SortRequest;
 import com.restaurant.crm.common.dto.response.ApiResponse;
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.erp.organization.dto.request.BranchSearchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.OrganizationSearchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationRequest;
+import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationResponse;
+import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationBranchService;
 import com.restaurant.crm.modules.erp.organization.service.interfaces.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class OrganizationController {
 
     OrganizationService organizationService;
+    OrganizationBranchService organizationBranchService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_MANAGE')")
@@ -141,6 +145,49 @@ public class OrganizationController {
         return ResponseEntity.ok(
                 ApiResponse.<OrganizationResponse>builder()
                         .data(response)
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_MANAGE')")
+    public ResponseEntity<ApiResponse<Void>> deleteOrganization(
+            @PathVariable String id
+    ) {
+
+        organizationService.deleteOrganization(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .build()
+        );
+    }
+
+    @PostMapping("/{orgId}/branches/search")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ORGANIZATION_VIEW')")
+    public ResponseEntity<ApiResponse<PagingResponse<OrganizationBranchResponse>>> searchBranchesByOrgId(
+            @PathVariable String orgId,
+            @RequestBody BranchSearchRequest searchRequest,
+            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = PaginationConstant.DESC) String direction,
+            @RequestParam(required = false, defaultValue = "createdAt") String field
+    ) {
+
+        PagingRequest pagingRequest = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(SortRequest.builder()
+                        .direction(direction)
+                        .field(field)
+                        .build())
+                .build();
+
+        return ResponseEntity.ok(
+                ApiResponse.<PagingResponse<OrganizationBranchResponse>>builder()
+                        .success(ApiConstant.SUCCESS)
+                        .data(organizationBranchService.searchBranchesByOrgId(
+                                orgId, searchRequest, pagingRequest))
                         .build()
         );
     }

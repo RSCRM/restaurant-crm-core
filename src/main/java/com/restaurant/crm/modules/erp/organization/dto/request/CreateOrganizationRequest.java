@@ -2,6 +2,7 @@ package com.restaurant.crm.modules.erp.organization.dto.request;
 
 import com.restaurant.crm.modules.erp.organization.constants.OrganizationConstants;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,6 +13,9 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateOrganizationRequest {
+
+    @NotNull
+    String ownerId;
 
     @Size(
             max = OrganizationConstants.MAX_CHARS_ORGANIZATION_NAME

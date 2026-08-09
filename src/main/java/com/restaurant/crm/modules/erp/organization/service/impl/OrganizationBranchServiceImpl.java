@@ -1,13 +1,17 @@
 package com.restaurant.crm.modules.erp.organization.service.impl;
 
 import com.restaurant.crm.common.constant.GlobalVariableConstant;
+import com.restaurant.crm.common.dto.request.PagingRequest;
 import com.restaurant.crm.common.dto.response.PagingResponse;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.constants.EmployeeConstants;
+import com.restaurant.crm.common.utils.PagingUtil;
+import com.restaurant.crm.modules.erp.organization.dto.request.BranchSearchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.CreateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.request.UpdateOrganizationBranchRequest;
 import com.restaurant.crm.modules.erp.organization.dto.response.OrganizationBranchResponse;
+import com.restaurant.crm.modules.erp.organization.specification.BranchSpecification;
 import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.entity.Employee;
