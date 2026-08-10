@@ -99,6 +99,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(this::buildContextResponse)
                 .toList());
 
+//        // Load owner contexts (owner is now an Employee with orgRole=OWNER, branch=null)
+//        employeeRepository.findByUser_IdAndOrgRole_RoleName(user.getId(), OWNER_ROLE)
+//                .forEach(employee -> contexts.add(buildContextResponse(employee)));
+
         // System roles from User.roles (identity module roles)
         Set<String> systemRoles = buildSystemRoles(user);
 

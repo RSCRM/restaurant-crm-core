@@ -1,4 +1,4 @@
-package com.restaurant.crm.common.config;
+package com.restaurant.crm.common.security;
 
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;

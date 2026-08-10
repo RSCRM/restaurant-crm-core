@@ -1,4 +1,4 @@
-package com.restaurant.crm.common.config;
+package com.restaurant.crm.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restaurant.crm.common.constant.ApiConstant;
