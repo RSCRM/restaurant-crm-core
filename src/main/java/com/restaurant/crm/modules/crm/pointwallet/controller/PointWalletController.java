@@ -61,6 +61,7 @@ public class PointWalletController {
     public ResponseEntity<ApiResponse<PagingResponse<CustomerPointResponse>>> getOrganizationCustomers(
             @PathVariable String organizationId,
             @RequestParam(value = "searchPhone", required = false) String searchPhone,
+            @RequestParam(value = "status", required = false) com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus status,
             @RequestParam(value = "minPoints", required = false) Integer minPoints,
             @RequestParam(value = "maxPoints", required = false) Integer maxPoints,
             @RequestParam(value = "minLifetimePoints", required = false) Integer minLifetimePoints,
@@ -71,7 +72,7 @@ public class PointWalletController {
             @RequestParam(value = "sortDirection", required = false, defaultValue = "DESC") String sortDirection
     ) {
         PagingResponse<CustomerPointResponse> response = pointWalletService.getOrganizationCustomers(
-                organizationId, searchPhone, minPoints, maxPoints, minLifetimePoints, maxLifetimePoints,
+                organizationId, searchPhone, status, minPoints, maxPoints, minLifetimePoints, maxLifetimePoints,
                 page, size, sortBy, sortDirection
         );
         return ResponseEntity.ok(ApiResponse.<PagingResponse<CustomerPointResponse>>builder()
@@ -79,8 +80,8 @@ public class PointWalletController {
                 .data(response)
                 .build());
     }
-    @PutMapping("/status")
-    @PreAuthorize("hasAuthority('CUSTOMER_POINT_UPDATE')")
+    @PutMapping("/{customerId}/status")
+    @PreAuthorize("hasAuthority('CUSTOMER_POINT_UPDATE') or hasAuthority('CUSTOMER_READ') or hasAuthority('POINT_WALLET_READ')")
     public ResponseEntity<ApiResponse<CustomerPointResponse>> updateCustomerStatus(
             @PathVariable String customerId,
             @Valid @RequestBody UpdateWalletStatusRequest request
@@ -91,6 +92,5 @@ public class PointWalletController {
                 .success(true)
                 .data(response)
                 .build());
-//        CustomerResponse response = customerService.getCustomerById()
     }
 }

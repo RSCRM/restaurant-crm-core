@@ -181,6 +181,7 @@ public class PointWalletServiceImpl implements PointWalletService {
     public PagingResponse<CustomerPointResponse> getOrganizationCustomers(
             String organizationId,
             String searchPhone,
+            CustomerStatus status,
             Integer minPoints,
             Integer maxPoints,
             Integer minLifetimePoints,
@@ -203,6 +204,9 @@ public class PointWalletServiceImpl implements PointWalletService {
 
             if (searchPhone != null && !searchPhone.trim().isEmpty()) {
                 predicates.add(cb.like(root.join("customer").get("phone"), "%" + searchPhone.trim() + "%"));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
             }
             if (minPoints != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("currentPoints"), minPoints));
@@ -233,7 +237,10 @@ public class PointWalletServiceImpl implements PointWalletService {
     }
 
     @Override
+    @Transactional
     public CustomerPointResponse updateWalletStatus(String customerId, UpdateWalletStatusRequest request){
+        validateOrganizationAccess(request.getOrganizationId());
+
         if (!customerRepository.existsById(customerId)) {
             throw new AppException(ErrorCode.CUSTOMER_NOT_FOUND);
         }
