@@ -1,6 +1,7 @@
 package com.restaurant.crm.modules.crm.pointwallet.service.interfaces;
 
 import com.restaurant.crm.common.dto.response.PagingResponse;
+import com.restaurant.crm.modules.crm.customeraccount.enums.CustomerStatus;
 import com.restaurant.crm.modules.crm.pointwallet.dto.request.UpdateWalletStatusRequest;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointHistoryResponse;
 import com.restaurant.crm.modules.crm.pointwallet.dto.response.CustomerPointResponse;
@@ -16,6 +17,7 @@ public interface PointWalletService {
     PagingResponse<CustomerPointResponse> getOrganizationCustomers(
             String organizationId,
             String searchPhone,
+            CustomerStatus status,
             Integer minPoints,
             Integer maxPoints,
             Integer minLifetimePoints,

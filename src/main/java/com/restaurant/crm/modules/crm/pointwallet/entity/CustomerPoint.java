@@ -7,6 +7,8 @@ import com.restaurant.crm.modules.crm.pointwallet.constants.CustomerPointConstan
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -55,6 +57,7 @@ public class CustomerPoint extends BaseEntity {
     Integer lifetimePoints = 0;
 
     @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     CustomerStatus status = CustomerStatus.ACTIVE;
 }

@@ -469,7 +469,7 @@ INSERT INTO bookings (id, branch_id, table_id, customer_id, booking_time, guest_
     ON CONFLICT (id) DO NOTHING;
 
 -- 16.5. Customer Point Wallet (WBS 70 - Chain-wide Organization ID: d0000000-0000-0000-0000-000000000001)
-INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
+INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, status, created_at, updated_at)
 VALUES (
            'cp000000-0000-0000-0000-000000000001',
            0,
@@ -477,6 +477,7 @@ VALUES (
            'd0000000-0000-0000-0000-000000000001',
            500,
            1000,
+           'ACTIVE',
            NOW(),
            NOW()
        )

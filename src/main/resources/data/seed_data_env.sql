@@ -422,10 +422,10 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Customer Point Wallets for Phở Việt Organization ('d0000000-0000-0000-0000-000000000001')
-INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
+INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, status, created_at, updated_at)
 VALUES
-    ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW()),
-    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
+    ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, 'ACTIVE', NOW(), NOW()),
+    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 200, 200, 'ACTIVE', NOW(), NOW())
 ON CONFLICT (customer_id, organization_id) DO NOTHING;
 
 -- Seed Customer Vouchers

@@ -15,6 +15,7 @@ public class BookingConstants {
     public static final int MIN_GUEST_COUNT = 1;
     public static final int MAX_NOTE_LENGTH = 255;
 
+    public static final String COL_NOTE = "note";
     //error
     public static final String BOOKING_STATUS_REQUIRE = "BOOKING_STATUS_REQUIRE";
 }
