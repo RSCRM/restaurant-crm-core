@@ -8,12 +8,14 @@ import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.schedule.dto.response.PersonalScheduleResponse;
 import com.restaurant.crm.modules.erp.schedule.entity.WorkSchedule;
 import com.restaurant.crm.modules.erp.schedule.mapper.WorkScheduleMapper;
 import com.restaurant.crm.modules.erp.schedule.repository.WorkScheduleRepository;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import com.restaurant.crm.modules.identity.entity.User;
+import com.restaurant.crm.modules.profile.repository.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,9 +39,13 @@ class ScheduleServiceImplTest {
     @Mock
     EmployeeRepository employeeRepository;
     @Mock
+    OrganizationBranchRepository organizationBranchRepository;
+    @Mock
     WorkScheduleRepository workScheduleRepository;
     @Mock
     WorkScheduleMapper workScheduleMapper;
+    @Mock
+    UserProfileRepository userProfileRepository;
 
     ScheduleServiceImpl scheduleService;
 
@@ -47,8 +53,10 @@ class ScheduleServiceImplTest {
     void setUp() {
         scheduleService = new ScheduleServiceImpl(
                 employeeRepository,
+                organizationBranchRepository,
                 workScheduleRepository,
-                workScheduleMapper
+                workScheduleMapper,
+                userProfileRepository
         );
     }
 
@@ -56,8 +64,9 @@ class ScheduleServiceImplTest {
     void getPersonalSchedule_returnsAuthenticatedEmployeeSchedule() {
         LocalDate from = LocalDate.of(2026, 7, 20);
         LocalDate to = LocalDate.of(2026, 7, 26);
-        Employee employee = Employee.builder().id("employee-1").status(EmployeeStatus.ACTIVE).build();
-        List<WorkSchedule> schedules = List.of(WorkSchedule.builder().id("schedule-1").build());
+        User user = User.builder().id("user-1").build();
+        Employee employee = Employee.builder().id("employee-1").user(user).status(EmployeeStatus.ACTIVE).build();
+        List<WorkSchedule> schedules = List.of(WorkSchedule.builder().id("schedule-1").employee(employee).build());
         List<PersonalScheduleResponse> expected =
                 List.of(PersonalScheduleResponse.builder().id("schedule-1").build());
 
@@ -140,7 +149,7 @@ class ScheduleServiceImplTest {
 
             AppException exception = assertThrows(
                     AppException.class,
-                    () -> scheduleService.getStaffSchedule("employee-2", date, date)
+                    () -> scheduleService.getStaffSchedule("employee-2", date, date, null)
             );
             assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
         }
@@ -149,8 +158,8 @@ class ScheduleServiceImplTest {
     @Test
     void getManagedSchedules_usesManagerBranchScope() {
         LocalDate date = LocalDate.of(2026, 8, 2);
-        Employee manager = Employee.builder().id("manager-1").build();
-        Employee staff = Employee.builder().id("employee-1").build();
+        Employee manager = Employee.builder().id("manager-1").user(User.builder().id("user-manager").build()).build();
+        Employee staff = Employee.builder().id("employee-1").user(User.builder().id("user-1").build()).build();
         WorkSchedule managerSchedule = WorkSchedule.builder().id("schedule-manager").employee(manager).build();
         WorkSchedule staffSchedule = WorkSchedule.builder().id("schedule-1").employee(staff).build();
         List<WorkSchedule> schedules = List.of(managerSchedule, staffSchedule);
@@ -166,7 +175,29 @@ class ScheduleServiceImplTest {
                     "branch-1", date, date)).thenReturn(schedules);
             when(workScheduleMapper.toResponseList(staffSchedules)).thenReturn(expected);
 
-            assertEquals(expected, scheduleService.getManagedSchedules(date, date));
+            assertEquals(expected, scheduleService.getManagedSchedules(date, date, null));
+        }
+    }
+
+    @Test
+    void getManagedSchedules_filtersOwnersOrganizationByRequestedBranch() {
+        LocalDate date = LocalDate.of(2026, 8, 3);
+        Organization organization = Organization.builder().id("organization-1").build();
+        OrganizationBranch branch = OrganizationBranch.builder()
+                .id("branch-2")
+                .organization(organization)
+                .build();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("organization-1");
+            when(organizationBranchRepository.findById("branch-2")).thenReturn(Optional.of(branch));
+            when(workScheduleRepository.findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                    "branch-2", date, date)).thenReturn(List.of());
+            when(workScheduleMapper.toResponseList(List.of())).thenReturn(List.of());
+
+            assertEquals(List.of(), scheduleService.getManagedSchedules(date, date, "branch-2"));
+            verify(workScheduleRepository).findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
+                    "branch-2", date, date);
         }
     }
 
@@ -188,7 +219,7 @@ class ScheduleServiceImplTest {
                     "employee-2", date, date)).thenReturn(List.of());
             when(workScheduleMapper.toResponseList(List.of())).thenReturn(List.of());
 
-            assertEquals(List.of(), scheduleService.getStaffSchedule("employee-2", date, date));
+            assertEquals(List.of(), scheduleService.getStaffSchedule("employee-2", date, date, null));
         }
     }
 
@@ -213,7 +244,7 @@ class ScheduleServiceImplTest {
                     "branch-1", EmployeeStatus.ACTIVE, "MANAGER"))
                     .thenReturn(List.of(employee));
 
-            assertEquals("chef_q1", scheduleService.getManagedEmployees().getFirst().getName());
+            assertEquals("chef_q1", scheduleService.getManagedEmployees(null).getFirst().getName());
         }
     }
 }

@@ -139,12 +139,11 @@ class TableSessionCloseServiceImplTest {
 
         try (MockedStatic<AuthUtils> auth = mockStatic(AuthUtils.class)) {
             auth.when(AuthUtils::getBranchId).thenReturn("branch-1");
-            when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(activeBranch()));
             when(tableSessionRepository.findByIdForUpdate("session-1")).thenReturn(Optional.of(session));
 
             AppException exception = assertThrows(AppException.class, () -> service.close("session-1"));
 
-            assertEquals(ErrorCode.TABLE_SESSION_NOT_FOUND, exception.getErrorCode());
+            assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
         }
     }
 

@@ -7,6 +7,7 @@ import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
 import com.restaurant.crm.modules.erp.organization.enums.EmployeeStatus;
 import com.restaurant.crm.modules.erp.organization.enums.OrgDataScope;
 import com.restaurant.crm.modules.erp.organization.repository.EmployeeRepository;
+import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.schedule.constants.WorkScheduleConstants;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleCreationRequest;
 import com.restaurant.crm.modules.erp.schedule.dto.request.ScheduleUpdateRequest;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class ScheduleServiceImpl implements ScheduleService {
 
     EmployeeRepository employeeRepository;
+    OrganizationBranchRepository organizationBranchRepository;
     WorkScheduleRepository workScheduleRepository;
     WorkScheduleMapper workScheduleMapper;
     UserProfileRepository userProfileRepository;
@@ -63,9 +65,14 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PersonalScheduleResponse> getStaffSchedule(String employeeId, LocalDate from, LocalDate to) {
+    public List<PersonalScheduleResponse> getStaffSchedule(
+            String employeeId, LocalDate from, LocalDate to, String requestedBranchId) {
         validateDateRange(from, to);
         Employee employee = getManagedEmployee(employeeId);
+        String branchId = resolveManagedBranchId(requestedBranchId);
+        if (branchId != null && !Objects.equals(employee.getBranch().getId(), branchId)) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
 
         return mapAndPopulate(workScheduleRepository.findByEmployeeIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
                 employee.getId(),
@@ -76,13 +83,15 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PersonalScheduleResponse> getManagedSchedules(LocalDate from, LocalDate to) {
+    public List<PersonalScheduleResponse> getManagedSchedules(
+            LocalDate from, LocalDate to, String requestedBranchId) {
         validateDateRange(from, to);
-        List<WorkSchedule> schedules = AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION
+        String branchId = resolveManagedBranchId(requestedBranchId);
+        List<WorkSchedule> schedules = branchId == null
                 ? workScheduleRepository.findByBranchOrganizationIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
                         AuthUtils.getOrganizationId(), from, to)
                 : workScheduleRepository.findByBranchIdAndWorkDateBetweenOrderByWorkDateAscStartTimeAsc(
-                        AuthUtils.getBranchId(), from, to);
+                        branchId, from, to);
         String currentEmployeeId = AuthUtils.getEmployeeId();
         List<WorkSchedule> filtered = schedules.stream()
                 .filter(schedule -> !Objects.equals(schedule.getEmployee().getId(), currentEmployeeId))
@@ -92,12 +101,13 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduleEmployeeResponse> getManagedEmployees() {
-        List<Employee> employees = AuthUtils.getDataScope() == OrgDataScope.ORGANIZATION
+    public List<ScheduleEmployeeResponse> getManagedEmployees(String requestedBranchId) {
+        String branchId = resolveManagedBranchId(requestedBranchId);
+        List<Employee> employees = branchId == null
                 ? employeeRepository.findByBranch_Organization_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
                         AuthUtils.getOrganizationId(), EmployeeStatus.ACTIVE, "MANAGER")
                 : employeeRepository.findByBranch_IdAndStatusAndOrgRole_RoleNameNotOrderByUser_UsernameAsc(
-                        AuthUtils.getBranchId(), EmployeeStatus.ACTIVE, "MANAGER");
+                        branchId, EmployeeStatus.ACTIVE, "MANAGER");
 
         Map<String, String> namesByUser = userProfileRepository
                 .findByUser_IdIn(employees.stream()
@@ -202,6 +212,26 @@ public class ScheduleServiceImpl implements ScheduleService {
                     && Objects.equals(branch.getOrganization().getId(), AuthUtils.getOrganizationId());
         }
         return Objects.equals(branch.getId(), AuthUtils.getBranchId());
+    }
+
+    private String resolveManagedBranchId(String requestedBranchId) {
+        String contextBranchId = AuthUtils.getBranchId();
+        if (contextBranchId != null) {
+            if (requestedBranchId != null && !contextBranchId.equals(requestedBranchId)) {
+                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+            }
+            return contextBranchId;
+        }
+        if (requestedBranchId == null || requestedBranchId.isBlank()) {
+            return null;
+        }
+        OrganizationBranch branch = organizationBranchRepository.findById(requestedBranchId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
+        if (branch.getOrganization() == null
+                || !Objects.equals(branch.getOrganization().getId(), AuthUtils.getOrganizationId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+        return branch.getId();
     }
 
     private void validateTimeRange(java.time.LocalTime startTime, java.time.LocalTime endTime) {

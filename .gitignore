@@ -32,6 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 .env
+/src/main/resources/data/data_local.sql
 
 ### Claude Code / AI tooling ###
 .claude/
