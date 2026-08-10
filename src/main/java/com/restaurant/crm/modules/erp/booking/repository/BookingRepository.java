@@ -40,4 +40,6 @@ public interface BookingRepository extends JpaRepository<Booking, String>, JpaSp
             String tableId,
             List<BookingStatus> statuses
     );
+
+    boolean existsByTables_IdAndStatusIn(String tableId, List<BookingStatus> statuses);
 }

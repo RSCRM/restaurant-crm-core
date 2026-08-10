@@ -126,7 +126,7 @@ class TableSessionServiceImplTest {
             when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(activeBranch()));
             when(restaurantTableRepository.findByIdForUpdate("table-1")).thenReturn(Optional.of(table));
             when(bookingRepository.findFirstByTables_IdAndStatusInOrderByBookingTimeAsc(any(), any()))
-                    .thenReturn(Optional.of(Booking.builder().bookingTime(Instant.now().plusSeconds(30 * 60)).build()));
+                    .thenReturn(Optional.of(Booking.builder().bookingTime(Instant.now().plusSeconds(10 * 60)).build()));
 
             AppException exception = assertThrows(AppException.class, () -> tableSessionService.create(request(2)));
 
@@ -160,12 +160,11 @@ class TableSessionServiceImplTest {
 
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
-            when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(activeBranch()));
             when(restaurantTableRepository.findByIdForUpdate("table-1")).thenReturn(Optional.of(table));
 
             AppException exception = assertThrows(AppException.class, () -> tableSessionService.create(request(2)));
 
-            assertEquals(ErrorCode.TABLE_NOT_FOUND, exception.getErrorCode());
+            assertEquals(ErrorCode.AUTHZ_UNAUTHORIZED, exception.getErrorCode());
         }
     }
 

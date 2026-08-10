@@ -36,6 +36,7 @@ import com.restaurant.crm.modules.erp.table.entity.TableSession;
 import com.restaurant.crm.modules.erp.table.enums.RestaurantTableStatus;
 import com.restaurant.crm.modules.erp.table.enums.TableSessionStatus;
 import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -97,6 +98,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.PENDING);
 
         Booking savedBooking = bookingRepository.save(booking);
+        syncTableStatus(table);
         return bookingMapper.toBookingResponse(savedBooking);
     }
 
@@ -236,7 +238,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking updatedBooking = bookingRepository.save(booking);
-
+        syncTableStatus(booking.getTables());
         return bookingMapper.toBookingResponse(updatedBooking);
     }
 
@@ -313,7 +315,43 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(request.getStatus());
         }
 
+        RestaurantTable oldTable = booking.getTables();
         Booking updatedBooking = bookingRepository.save(booking);
+
+        syncTableStatus(oldTable);
+        if (updatedBooking.getTables() != null && (oldTable == null || !oldTable.getId().equals(updatedBooking.getTables().getId()))) {
+            syncTableStatus(updatedBooking.getTables());
+        }
+
         return bookingMapper.toBookingResponse(updatedBooking);
+    }
+
+    private void syncTableStatus(RestaurantTable table) {
+        if (table == null) return;
+
+        // If there is an active session, the table must remain OCCUPIED
+        if (tableSessionRepository.existsByTableIdAndStatus(table.getId(), TableSessionStatus.ACTIVE)) {
+            if (table.getStatus() != RestaurantTableStatus.OCCUPIED) {
+                table.setStatus(RestaurantTableStatus.OCCUPIED);
+                tableRepository.save(table);
+            }
+            return;
+        }
+
+        // Check if there are any other pending or confirmed bookings for this table
+        boolean hasActiveBookings = bookingRepository.existsByTables_IdAndStatusIn(
+                table.getId(), List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED));
+
+        if (hasActiveBookings) {
+            if (table.getStatus() != RestaurantTableStatus.RESERVED) {
+                table.setStatus(RestaurantTableStatus.RESERVED);
+                tableRepository.save(table);
+            }
+        } else {
+            if (table.getStatus() == RestaurantTableStatus.RESERVED) {
+                table.setStatus(RestaurantTableStatus.AVAILABLE);
+                tableRepository.save(table);
+            }
+        }
     }
 }

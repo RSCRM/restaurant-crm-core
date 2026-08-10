@@ -161,6 +161,9 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
                                                                                        ('p0000000-0000-0000-0000-000000000006', 0, 'PAYMENT_CREATE',  NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000007', 0, 'MENU_MANAGE',     NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000008', 0, 'TABLE_MANAGE',    NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000104', 0, 'RESTAURANT_TABLE_ADD',    NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000105', 0, 'RESTAURANT_TABLE_UPDATE', NOW(), NOW()),
+                                                                                       ('p0000000-0000-0000-0000-000000000106', 0, 'RESTAURANT_TABLE_DELETE', NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000009', 0, 'REPORT_VIEW',     NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000010', 0, 'STAFF_MANAGE',    NOW(), NOW()),
                                                                                        ('p0000000-0000-0000-0000-000000000011', 0, 'BRANCH_MANAGE',   NOW(), NOW()),
@@ -253,6 +256,7 @@ WHERE r.role_name = 'MANAGER'
                             'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
                             'PAYMENT_READ', 'PAYMENT_CREATE',
                             'MENU_MANAGE', 'TABLE_MANAGE', 'REPORT_VIEW',
+                            'RESTAURANT_TABLE_ADD', 'RESTAURANT_TABLE_UPDATE', 'RESTAURANT_TABLE_DELETE',
                             'SCHEDULE_STAFF_READ', 'SCHEDULE_MANAGE', 'ATTENDANCE_SELF_READ',
                             'EMPLOYEE_DELETE', 'EMPLOYEE_ROLE_ASSIGN', 'EMPLOYEE_ROLE_REVOKE',
                             'TABLE_MAP_READ', 'TABLE_SEARCH_READ',
@@ -417,7 +421,8 @@ VALUES (
            1,
            NOW(),
            NOW()
-       );
+        )
+ON CONFLICT (area_id) DO NOTHING;
 
 -- 16.1. Table Areas
 INSERT INTO table_areas (area_id, branch_id, area_name, version) VALUES
@@ -469,12 +474,13 @@ INSERT INTO bookings (id, branch_id, table_id, customer_id, booking_time, guest_
     ON CONFLICT (id) DO NOTHING;
 
 -- 16.5. Customer Point Wallet (WBS 70 - Chain-wide Organization ID: d0000000-0000-0000-0000-000000000001)
-INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
+INSERT INTO customer_point (id, version, customer_id, organization_id, status, current_points, lifetime_points, created_at, updated_at)
 VALUES (
            'cp000000-0000-0000-0000-000000000001',
            0,
            'c0000000-0000-0000-0000-000000000099',
            'd0000000-0000-0000-0000-000000000001',
+           0,
            500,
            1000,
            NOW(),
@@ -603,7 +609,8 @@ INSERT INTO inventory_categories (
     version,
     branch_id,
     category_name,
-    description
+    description,
+    status
 )
 VALUES
     (
@@ -611,22 +618,30 @@ VALUES
         0,
         'e0000000-0000-0000-0000-000000000001',
         'Vegetables',
-        'Fresh vegetables'
+        'Fresh vegetables',
+        'ACTIVE'
     ),
     (
         '22222222-2222-2222-2222-222222222222',
         0,
         'e0000000-0000-0000-0000-000000000001',
         'Meat',
-        'Fresh meat products'
+        'Fresh meat products',
+        'ACTIVE'
     ),
     (
         '33333333-3333-3333-3333-333333333333',
         0,
         'e0000000-0000-0000-0000-000000000001',
         'Beverages',
-        'Drinks and beverages'
-    );
+        'Drinks and beverages',
+        'ACTIVE'
+    )
+ON CONFLICT (id) DO UPDATE
+SET branch_id = EXCLUDED.branch_id,
+    category_name = EXCLUDED.category_name,
+    description = EXCLUDED.description,
+    status = EXCLUDED.status;
 
 -- ==========================================
 -- INVENTORY
@@ -692,7 +707,16 @@ VALUES
         120,
         30,
         'GOOD'
-    );
+    )
+ON CONFLICT (id) DO UPDATE
+SET branch_id = EXCLUDED.branch_id,
+    inventory_category_id = EXCLUDED.inventory_category_id,
+    inventory_name = EXCLUDED.inventory_name,
+    unit = EXCLUDED.unit,
+    description = EXCLUDED.description,
+    quantity = EXCLUDED.quantity,
+    minimum_quantity = EXCLUDED.minimum_quantity,
+    status = EXCLUDED.status;
 
 -- ==========================================
 -- INVENTORY TRANSACTION
@@ -763,4 +787,79 @@ VALUES
         10,
         'Inventory correction',
         NOW()
-    );
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- Waiter operational permissions: serve guests without editing table/area configuration.
+INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at)
+VALUES
+    ('p0000000-0000-0000-0000-000000000103', 0, 'TABLE_SESSION_CREATE', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000301', 0, 'BOOKING_CREATE', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000302', 0, 'BOOKING_READ', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000303', 0, 'BOOKING_UPDATE', NOW(), NOW())
+ON CONFLICT (permission_name) DO NOTHING;
+
+INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
+SELECT role.id, permission.id
+FROM org_roles role
+CROSS JOIN org_permissions permission
+WHERE role.role_name = 'WAITER'
+  AND permission.permission_name IN (
+      'ORDER_READ', 'ORDER_CREATE', 'ORDER_UPDATE',
+      'PAYMENT_READ', 'PAYMENT_CREATE',
+      'TABLE_MANAGE', 'TABLE_MAP_READ', 'TABLE_SEARCH_READ', 'TABLE_SESSION_CREATE',
+      'BOOKING_CREATE', 'BOOKING_READ', 'BOOKING_UPDATE',
+      'ATTENDANCE_SELF_READ', 'ATTENDANCE_SELF_WRITE', 'PROFILE_SELF_UPDATE'
+  )
+ON CONFLICT DO NOTHING;
+
+DELETE FROM org_roles_org_permissions mapping
+USING org_roles role, org_permissions permission
+WHERE mapping.org_role_id = role.id
+  AND mapping.org_permissions_id = permission.id
+  AND role.role_name = 'WAITER'
+  AND permission.permission_name IN (
+      'TABLE_AREA_ADD', 'TABLE_AREA_UPDATE', 'TABLE_AREA_DELETE',
+      'RESTAURANT_TABLE_ADD', 'RESTAURANT_TABLE_UPDATE', 'RESTAURANT_TABLE_DELETE'
+  );
+
+-- Ensure every branch has at least one area before generating test tables.
+INSERT INTO table_areas
+    (area_id, version, branch_id, area_name, description, display_order, created_at, updated_at)
+SELECT
+    'as' || substr(md5(branch.id || ':default-area'), 1, 32),
+    0,
+    branch.id,
+    'Khu mac dinh',
+    'Khu vuc test mac dinh',
+    1,
+    NOW(),
+    NOW()
+FROM organization_branches branch
+WHERE NOT EXISTS (
+    SELECT 1 FROM table_areas area WHERE area.branch_id = branch.id
+)
+ON CONFLICT (branch_id, area_name) DO NOTHING;
+
+-- Add 20 deterministic test tables to every area; safe to run repeatedly.
+INSERT INTO restaurant_tables
+    (table_id, version, area_id, table_number, capacity, status,
+     position_x, position_y, created_at, updated_at)
+SELECT
+    'ts' || substr(md5(area.area_id || ':test-table:' || series.number), 1, 32),
+    0,
+    area.area_id,
+    'TEST-' || lpad(series.number::text, 2, '0'),
+    CASE series.number % 4 WHEN 1 THEN 2 WHEN 2 THEN 4 WHEN 3 THEN 6 ELSE 8 END,
+    'AVAILABLE',
+    (series.number - 1) % 5,
+    (series.number - 1) / 5,
+    NOW(),
+    NOW()
+FROM table_areas area
+CROSS JOIN generate_series(1, 20) AS series(number)
+ON CONFLICT (area_id, table_number) DO UPDATE
+SET capacity = EXCLUDED.capacity,
+    position_x = EXCLUDED.position_x,
+    position_y = EXCLUDED.position_y,
+    updated_at = NOW();

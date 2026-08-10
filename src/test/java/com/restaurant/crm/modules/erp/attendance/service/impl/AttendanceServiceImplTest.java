@@ -36,6 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -367,6 +368,24 @@ class AttendanceServiceImplTest {
                             LocalDate.now(), 1, 10, null));
 
             assertEquals(ErrorCode.EMPLOYEE_NOT_FOUND, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void subscribeValidatesBranchBeforeCreatingEmitter() {
+        SseEmitter emitter = new SseEmitter();
+        try (MockedStatic<AuthUtils> auth = currentContext()) {
+            when(organizationBranchRepository.existsById("branch-1")).thenReturn(true);
+            when(organizationBranchRepository.existsByIdAndOrganizationId(
+                    "branch-1", "organization-1")).thenReturn(true);
+            when(sseEmitterService.createEmitter("branch-1")).thenReturn(emitter);
+
+            SseEmitter result = attendanceService.subscribe(null);
+
+            assertSame(emitter, result);
+            verify(organizationBranchRepository).existsById("branch-1");
+            verify(organizationBranchRepository).existsByIdAndOrganizationId(
+                    "branch-1", "organization-1");
         }
     }
 

@@ -11,11 +11,13 @@ import java.util.List;
 public interface ScheduleService {
     List<PersonalScheduleResponse> getPersonalSchedule(LocalDate from, LocalDate to);
 
-    List<PersonalScheduleResponse> getStaffSchedule(String employeeId, LocalDate from, LocalDate to);
+    List<PersonalScheduleResponse> getStaffSchedule(
+            String employeeId, LocalDate from, LocalDate to, String branchId);
 
-    List<PersonalScheduleResponse> getManagedSchedules(LocalDate from, LocalDate to);
+    List<PersonalScheduleResponse> getManagedSchedules(
+            LocalDate from, LocalDate to, String branchId);
 
-    List<ScheduleEmployeeResponse> getManagedEmployees();
+    List<ScheduleEmployeeResponse> getManagedEmployees(String branchId);
 
     PersonalScheduleResponse createSchedule(ScheduleCreationRequest request);
 

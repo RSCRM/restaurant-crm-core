@@ -37,9 +37,8 @@ public class TableMapServiceImpl implements TableMapService {
 
     @Override
     @Transactional(readOnly = true)
-    public TableMapResponse getTableMap(String areaId) {
-        String branchId = AuthUtils.getBranchId();
-        validateBranch(branchId);
+    public TableMapResponse getTableMap(String areaId, String requestedBranchId) {
+        String branchId = resolveBranch(requestedBranchId);
 
         List<TableArea> areas;
         List<RestaurantTable> tables;
@@ -67,15 +66,36 @@ public class TableMapServiceImpl implements TableMapService {
                 .build();
     }
 
-    private void validateBranch(String branchId) {
-        if (branchId == null || branchId.isBlank()) {
+    private String resolveBranch(String requestedBranchId) {
+        String contextBranchId = AuthUtils.getBranchId();
+        String organizationId = AuthUtils.getOrganizationId();
+        if (organizationId == null || organizationId.isBlank()) {
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
+        }
+        String branchId = contextBranchId == null ? requestedBranchId : contextBranchId;
+        if (contextBranchId != null && requestedBranchId != null
+                && !contextBranchId.equals(requestedBranchId)) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+        if (branchId == null || branchId.isBlank()) {
+            return organizationBranchRepository
+                    .findByOrganizationIdAndStatus(organizationId, OrganizationBranchStatus.ACTIVE)
+                    .stream()
+                    .map(OrganizationBranch::getId)
+                    .sorted()
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
         }
         OrganizationBranch branch = organizationBranchRepository.findById(branchId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
         if (branch.getStatus() != OrganizationBranchStatus.ACTIVE) {
             throw new AppException(ErrorCode.ORGANIZATION_BRANCH_INACTIVE);
         }
+        if (organizationId == null || branch.getOrganization() == null
+                || !organizationId.equals(branch.getOrganization().getId())) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+        return branchId;
     }
 
     private TableAreaMapResponse toAreaResponse(TableArea area, List<RestaurantTable> tables) {
