@@ -363,9 +363,23 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public SseEmitter subscribe(String requestedBranchId) {
-        return sseEmitterService.createEmitter(resolveBranch(requestedBranchId).getId());
+        String organizationId = AuthUtils.getOrganizationId();
+        String contextBranchId = AuthUtils.getBranchId();
+        String branchId = contextBranchId == null ? requestedBranchId : contextBranchId;
+        if (organizationId == null || branchId == null
+                || (contextBranchId != null
+                && requestedBranchId != null
+                && !contextBranchId.equals(requestedBranchId))) {
+            throw new AppException(ErrorCode.ATTENDANCE_QR_CONTEXT_MISMATCH);
+        }
+        if (!organizationBranchRepository.existsById(branchId)) {
+            throw new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND);
+        }
+        if (!organizationBranchRepository.existsByIdAndOrganizationId(branchId, organizationId)) {
+            throw new AppException(ErrorCode.ATTENDANCE_QR_CONTEXT_MISMATCH);
+        }
+        return sseEmitterService.createEmitter(branchId);
     }
 
     private void broadcastAfterCommit(String branchId, String employeeId) {

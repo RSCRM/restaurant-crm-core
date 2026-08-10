@@ -66,7 +66,7 @@ public class CustomerLoyaltyTests {
     public void testIdentifyCustomer_NewCustomer() {
         CustomerIdentifyRequest request = CustomerIdentifyRequest.builder()
                 .phone("0987654321")
-                .restaurantId("rest-1")
+                .organizationId("org-1")
                 .build();
 
         when(customerRepository.findByPhone(request.getPhone())).thenReturn(Optional.empty());
@@ -82,7 +82,7 @@ public class CustomerLoyaltyTests {
 
         assertNotNull(response);
         assertEquals("0987654321", response.getPhone());
-        verify(pointWalletService, times(1)).initializeWallet(any(), eq("rest-1"));
+        verify(pointWalletService, times(1)).initializeWallet(any(), eq("org-1"));
     }
 
     @Test

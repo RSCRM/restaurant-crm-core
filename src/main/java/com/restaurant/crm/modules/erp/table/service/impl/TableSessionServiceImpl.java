@@ -53,12 +53,10 @@ public class TableSessionServiceImpl implements TableSessionService {
     @Override
     @Transactional
     public TableSessionResponse create(TableSessionCreationRequest request) {
-        String branchId = AuthUtils.getBranchId();
-        validateBranch(branchId);
-
         RestaurantTable table = restaurantTableRepository.findByIdForUpdate(request.getTableId())
-                .filter(candidate -> branchId.equals(candidate.getArea().getBranchId()))
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_NOT_FOUND));
+        String branchId = table.getArea().getBranchId();
+        validateBranchAccess(branchId);
 
         if (table.getStatus() != RestaurantTableStatus.AVAILABLE) {
             throw new AppException(ErrorCode.TABLE_NOT_AVAILABLE);
@@ -107,23 +105,19 @@ public class TableSessionServiceImpl implements TableSessionService {
     @Override
     @Transactional(readOnly = true)
     public TableSessionResponse getActiveByTable(String tableId) {
-        String branchId = AuthUtils.getBranchId();
-        validateBranch(branchId);
         TableSession session = tableSessionRepository.findByTableIdAndStatus(tableId, TableSessionStatus.ACTIVE)
-                .filter(candidate -> branchId.equals(candidate.getBranchId()))
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_SESSION_NOT_FOUND));
+        validateBranchAccess(session.getBranchId());
         return tableSessionMapper.toResponse(session);
     }
 
     @Override
     @Transactional
     public TableSessionResponse transfer(String sessionId, TableSessionTransferRequest request) {
-        String branchId = AuthUtils.getBranchId();
-        validateBranch(branchId);
-
         TableSession session = tableSessionRepository.findByIdForUpdate(sessionId)
-                .filter(candidate -> branchId.equals(candidate.getBranchId()))
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_SESSION_NOT_FOUND));
+        String branchId = session.getBranchId();
+        validateBranchAccess(branchId);
         if (session.getStatus() != TableSessionStatus.ACTIVE) {
             throw new AppException(ErrorCode.TABLE_SESSION_NOT_ACTIVE);
         }
@@ -179,12 +173,9 @@ public class TableSessionServiceImpl implements TableSessionService {
     @Override
     @Transactional
     public TableSessionResponse close(String sessionId) {
-        String branchId = AuthUtils.getBranchId();
-        validateBranch(branchId);
-
         TableSession session = tableSessionRepository.findByIdForUpdate(sessionId)
-                .filter(candidate -> branchId.equals(candidate.getBranchId()))
                 .orElseThrow(() -> new AppException(ErrorCode.TABLE_SESSION_NOT_FOUND));
+        validateBranchAccess(session.getBranchId());
         if (session.getStatus() != TableSessionStatus.ACTIVE) {
             throw new AppException(ErrorCode.TABLE_SESSION_NOT_ACTIVE);
         }
@@ -205,14 +196,25 @@ public class TableSessionServiceImpl implements TableSessionService {
         return tableSessionMapper.toResponse(session);
     }
 
-    private void validateBranch(String branchId) {
+    private void validateBranchAccess(String branchId) {
         if (branchId == null || branchId.isBlank()) {
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
+        }
+        String contextBranchId = AuthUtils.getBranchId();
+        if (contextBranchId != null && !contextBranchId.equals(branchId)) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
         }
         OrganizationBranch branch = organizationBranchRepository.findById(branchId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_BRANCH_NOT_FOUND));
         if (branch.getStatus() != OrganizationBranchStatus.ACTIVE) {
             throw new AppException(ErrorCode.ORGANIZATION_BRANCH_INACTIVE);
+        }
+        if (contextBranchId == null) {
+            String organizationId = AuthUtils.getOrganizationId();
+            if (organizationId == null || branch.getOrganization() == null
+                    || !organizationId.equals(branch.getOrganization().getId())) {
+                throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+            }
         }
     }
 }

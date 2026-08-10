@@ -3,6 +3,7 @@ package com.restaurant.crm.modules.erp.table.service.impl;
 import com.restaurant.crm.common.enums.ErrorCode;
 import com.restaurant.crm.common.exception.AppException;
 import com.restaurant.crm.modules.erp.organization.entity.OrganizationBranch;
+import com.restaurant.crm.modules.erp.organization.entity.Organization;
 import com.restaurant.crm.modules.erp.organization.enums.OrganizationBranchStatus;
 import com.restaurant.crm.modules.erp.organization.repository.OrganizationBranchRepository;
 import com.restaurant.crm.modules.erp.table.dto.response.TableAreaMapResponse;
@@ -70,6 +71,7 @@ class TableMapServiceImplTest {
 
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("org-1");
             when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(branch));
             when(tableAreaRepository.findByBranchIdOrderByDisplayOrderAscAreaNameAsc("branch-1"))
                     .thenReturn(List.of(indoor));
@@ -79,7 +81,7 @@ class TableMapServiceImplTest {
             when(tableMapMapper.toAreaResponse(indoor)).thenReturn(areaResponse);
             when(tableMapMapper.toTableResponse(table)).thenReturn(tableResponse);
 
-            TableMapResponse response = tableMapService.getTableMap(null);
+            TableMapResponse response = tableMapService.getTableMap(null, null);
 
             assertEquals("branch-1", response.getBranchId());
             assertEquals(1, response.getAreas().size());
@@ -94,6 +96,7 @@ class TableMapServiceImplTest {
 
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("org-1");
             when(organizationBranchRepository.findById("branch-1"))
                     .thenReturn(Optional.of(activeBranch()));
             when(tableAreaRepository.findByIdAndBranchId("area-1", "branch-1"))
@@ -102,7 +105,7 @@ class TableMapServiceImplTest {
                     .thenReturn(List.of());
             when(tableMapMapper.toAreaResponse(area)).thenReturn(areaResponse);
 
-            tableMapService.getTableMap("area-1");
+            tableMapService.getTableMap("area-1", null);
 
             verify(tableAreaRepository).findByIdAndBranchId("area-1", "branch-1");
         }
@@ -112,6 +115,7 @@ class TableMapServiceImplTest {
     void getTableMap_rejectsAreaFromAnotherBranch() {
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("org-1");
             when(organizationBranchRepository.findById("branch-1"))
                     .thenReturn(Optional.of(activeBranch()));
             when(tableAreaRepository.findByIdAndBranchId("foreign-area", "branch-1"))
@@ -119,7 +123,7 @@ class TableMapServiceImplTest {
 
             AppException exception = assertThrows(
                     AppException.class,
-                    () -> tableMapService.getTableMap("foreign-area")
+                    () -> tableMapService.getTableMap("foreign-area", null)
             );
             assertEquals(ErrorCode.TABLE_AREA_NOT_FOUND, exception.getErrorCode());
         }
@@ -134,19 +138,41 @@ class TableMapServiceImplTest {
 
         try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
             authUtils.when(AuthUtils::getBranchId).thenReturn("branch-1");
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("org-1");
             when(organizationBranchRepository.findById("branch-1")).thenReturn(Optional.of(branch));
 
             AppException exception = assertThrows(
                     AppException.class,
-                    () -> tableMapService.getTableMap(null)
+                    () -> tableMapService.getTableMap(null, null)
             );
             assertEquals(ErrorCode.ORGANIZATION_BRANCH_INACTIVE, exception.getErrorCode());
+        }
+    }
+
+    @Test
+    void getTableMap_usesFirstActiveOrganizationBranchForOwnerContext() {
+        OrganizationBranch branch = activeBranch();
+
+        try (MockedStatic<AuthUtils> authUtils = mockStatic(AuthUtils.class)) {
+            authUtils.when(AuthUtils::getOrganizationId).thenReturn("org-1");
+            when(organizationBranchRepository.findByOrganizationIdAndStatus(
+                    "org-1", OrganizationBranchStatus.ACTIVE)).thenReturn(List.of(branch));
+            when(tableAreaRepository.findByBranchIdOrderByDisplayOrderAscAreaNameAsc("branch-1"))
+                    .thenReturn(List.of());
+            when(restaurantTableRepository
+                    .findByAreaBranchIdOrderByAreaAreaNameAscTableNumberAsc("branch-1"))
+                    .thenReturn(List.of());
+
+            TableMapResponse response = tableMapService.getTableMap(null, null);
+
+            assertEquals("branch-1", response.getBranchId());
         }
     }
 
     private OrganizationBranch activeBranch() {
         return OrganizationBranch.builder()
                 .id("branch-1")
+                .organization(Organization.builder().id("org-1").build())
                 .status(OrganizationBranchStatus.ACTIVE)
                 .build();
     }

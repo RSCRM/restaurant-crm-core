@@ -1,4 +1,6 @@
--- UC-CM-05 and UC-CM-06 local test data. Run after seed_data.sql.
+-- Shared development test data. Run after seed_data.sql and seed_data_menu.sql.
+-- Safe to run repeatedly: the whole script is atomic and uses deterministic IDs.
+BEGIN;
 
 UPDATE users
 SET password = '$2a$10$CsRk2L1Tt5h8.MgskpXgyuwwmFD22yqhq1QPwunLYXAcBMlqGt.ga'
@@ -68,16 +70,23 @@ WHERE mapping.org_role_id = role.id
 -- Waiter Q1 not checked in, plus two days of mixed history.
 DELETE FROM attendances
 WHERE shift_assignment_id IN (
-    'sa000000-0000-0000-0000-000000000008',
-    'sa000000-0000-0000-0000-000000000009',
-    'sa000000-0000-0000-0000-000000000010',
-    'sa000000-0000-0000-0000-000000000108',
-    'sa000000-0000-0000-0000-000000000109',
-    'sa000000-0000-0000-0000-000000000110',
-    'sa000000-0000-0000-0000-000000000208',
-    'sa000000-0000-0000-0000-000000000209',
-    'sa000000-0000-0000-0000-000000000210'
+    SELECT id
+    FROM shift_assignments
+    WHERE employee_id IN (
+        'f0000000-0000-0000-0000-000000000008',
+        'f0000000-0000-0000-0000-000000000009',
+        'f0000000-0000-0000-0000-000000000010'
+    )
+      AND work_date BETWEEN CURRENT_DATE - 4 AND CURRENT_DATE
 );
+
+DELETE FROM shift_assignments
+WHERE employee_id IN (
+    'f0000000-0000-0000-0000-000000000008',
+    'f0000000-0000-0000-0000-000000000009',
+    'f0000000-0000-0000-0000-000000000010'
+)
+  AND work_date BETWEEN CURRENT_DATE - 4 AND CURRENT_DATE;
 
 INSERT INTO shift_assignments
     (id, version, employee_id, branch_id, work_date, start_at, end_at, created_at, updated_at)
@@ -126,6 +135,36 @@ VALUES
      'f0000000-0000-0000-0000-000000000010',
      'e0000000-0000-0000-0000-000000000001',
      CURRENT_DATE - 2, CURRENT_DATE - 2 + INTERVAL '9 hours', CURRENT_DATE - 2 + INTERVAL '17 hours',
+     NOW(), NOW()),
+    ('sa000000-0000-0000-0000-000000000308', 0,
+     'f0000000-0000-0000-0000-000000000008',
+     'e0000000-0000-0000-0000-000000000001',
+     CURRENT_DATE - 3, CURRENT_DATE - 3 + INTERVAL '8 hours', CURRENT_DATE - 3 + INTERVAL '16 hours',
+     NOW(), NOW()),
+    ('sa000000-0000-0000-0000-000000000309', 0,
+     'f0000000-0000-0000-0000-000000000009',
+     'e0000000-0000-0000-0000-000000000001',
+     CURRENT_DATE - 3, CURRENT_DATE - 3 + INTERVAL '14 hours', CURRENT_DATE - 3 + INTERVAL '22 hours',
+     NOW(), NOW()),
+    ('sa000000-0000-0000-0000-000000000310', 0,
+     'f0000000-0000-0000-0000-000000000010',
+     'e0000000-0000-0000-0000-000000000001',
+     CURRENT_DATE - 3, CURRENT_DATE - 3 + INTERVAL '9 hours', CURRENT_DATE - 3 + INTERVAL '17 hours',
+     NOW(), NOW()),
+    ('sa000000-0000-0000-0000-000000000408', 0,
+     'f0000000-0000-0000-0000-000000000008',
+     'e0000000-0000-0000-0000-000000000001',
+     CURRENT_DATE - 4, CURRENT_DATE - 4 + INTERVAL '8 hours', CURRENT_DATE - 4 + INTERVAL '16 hours',
+     NOW(), NOW()),
+    ('sa000000-0000-0000-0000-000000000409', 0,
+     'f0000000-0000-0000-0000-000000000009',
+     'e0000000-0000-0000-0000-000000000001',
+     CURRENT_DATE - 4, CURRENT_DATE - 4 + INTERVAL '14 hours', CURRENT_DATE - 4 + INTERVAL '22 hours',
+     NOW(), NOW()),
+    ('sa000000-0000-0000-0000-000000000410', 0,
+     'f0000000-0000-0000-0000-000000000010',
+     'e0000000-0000-0000-0000-000000000001',
+     CURRENT_DATE - 4, CURRENT_DATE - 4 + INTERVAL '9 hours', CURRENT_DATE - 4 + INTERVAL '17 hours',
      NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET employee_id = EXCLUDED.employee_id,
@@ -168,6 +207,31 @@ VALUES
      'sa000000-0000-0000-0000-000000000210',
      CURRENT_DATE - 2 + INTERVAL '9 hours',
      CURRENT_DATE - 2 + INTERVAL '17 hours',
+     'ON_TIME', NOW(), NOW()),
+    ('a0000000-0000-0000-0000-000000000308', 0,
+     'sa000000-0000-0000-0000-000000000308',
+     CURRENT_DATE - 3 + INTERVAL '7 hours 57 minutes',
+     CURRENT_DATE - 3 + INTERVAL '16 hours',
+     'ON_TIME', NOW(), NOW()),
+    ('a0000000-0000-0000-0000-000000000309', 0,
+     'sa000000-0000-0000-0000-000000000309',
+     CURRENT_DATE - 3 + INTERVAL '14 hours 12 minutes',
+     CURRENT_DATE - 3 + INTERVAL '22 hours 5 minutes',
+     'LATE', NOW(), NOW()),
+    ('a0000000-0000-0000-0000-000000000310', 0,
+     'sa000000-0000-0000-0000-000000000310',
+     CURRENT_DATE - 3 + INTERVAL '8 hours 59 minutes',
+     CURRENT_DATE - 3 + INTERVAL '17 hours',
+     'ON_TIME', NOW(), NOW()),
+    ('a0000000-0000-0000-0000-000000000408', 0,
+     'sa000000-0000-0000-0000-000000000408',
+     CURRENT_DATE - 4 + INTERVAL '8 hours 9 minutes',
+     CURRENT_DATE - 4 + INTERVAL '16 hours',
+     'LATE', NOW(), NOW()),
+    ('a0000000-0000-0000-0000-000000000409', 0,
+     'sa000000-0000-0000-0000-000000000409',
+     CURRENT_DATE - 4 + INTERVAL '13 hours 55 minutes',
+     CURRENT_DATE - 4 + INTERVAL '22 hours',
      'ON_TIME', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET shift_assignment_id = EXCLUDED.shift_assignment_id,
@@ -203,6 +267,42 @@ VALUES
      'f0000000-0000-0000-0000-000000000010',
      'e0000000-0000-0000-0000-000000000001',
      CURRENT_DATE + 1, '09:00', '18:00', 'Chef next-day shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000005', 0,
+      'f0000000-0000-0000-0000-000000000010',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE, '09:00', '17:00', 'Chef day shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000006', 0,
+      'f0000000-0000-0000-0000-000000000008',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 1, '08:00', '16:00', 'Chef morning shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000007', 0,
+      'f0000000-0000-0000-0000-000000000009',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 1, '14:00', '22:00', 'Waiter afternoon shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000008', 0,
+      'f0000000-0000-0000-0000-000000000008',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 2, '08:00', '16:00', 'Chef morning shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000009', 0,
+      'f0000000-0000-0000-0000-000000000009',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 2, '14:00', '22:00', 'Waiter afternoon shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000010', 0,
+      'f0000000-0000-0000-0000-000000000010',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 2, '09:00', '17:00', 'Chef day shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000011', 0,
+      'f0000000-0000-0000-0000-000000000008',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 3, '08:00', '16:00', 'Chef morning shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000012', 0,
+      'f0000000-0000-0000-0000-000000000009',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 3, '14:00', '22:00', 'Waiter afternoon shift', NOW(), NOW())
+    ,('77000000-0000-0000-0000-000000000013', 0,
+      'f0000000-0000-0000-0000-000000000010',
+      'e0000000-0000-0000-0000-000000000001',
+      CURRENT_DATE + 3, '09:00', '17:00', 'Chef day shift', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET employee_id = EXCLUDED.employee_id,
     branch_id = EXCLUDED.branch_id,
@@ -218,7 +318,10 @@ INSERT INTO org_permissions (id, version, permission_name, created_at, updated_a
 VALUES
     ('p0000000-0000-0000-0000-000000000101', 0, 'TABLE_MAP_READ', NOW(), NOW()),
     ('p0000000-0000-0000-0000-000000000102', 0, 'TABLE_SEARCH_READ', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000103', 0, 'TABLE_SESSION_CREATE', NOW(), NOW())
+    ('p0000000-0000-0000-0000-000000000103', 0, 'TABLE_SESSION_CREATE', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000104', 0, 'RESTAURANT_TABLE_ADD', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000105', 0, 'RESTAURANT_TABLE_UPDATE', NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000106', 0, 'RESTAURANT_TABLE_DELETE', NOW(), NOW())
 ON CONFLICT (permission_name) DO NOTHING;
 
 INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
@@ -229,6 +332,8 @@ WHERE (role.role_name IN ('OWNER', 'MANAGER', 'CASHIER', 'WAITER', 'CHEF')
        AND permission.permission_name IN ('TABLE_MAP_READ', 'TABLE_SEARCH_READ'))
    OR (role.role_name IN ('OWNER', 'MANAGER', 'CASHIER', 'WAITER')
        AND permission.permission_name = 'TABLE_SESSION_CREATE')
+   OR (role.role_name IN ('OWNER', 'MANAGER')
+       AND permission.permission_name IN ('RESTAURANT_TABLE_ADD', 'RESTAURANT_TABLE_UPDATE', 'RESTAURANT_TABLE_DELETE'))
 ON CONFLICT DO NOTHING;
 
 -- UC-SW: Booking permissions seed.
@@ -236,17 +341,15 @@ ON CONFLICT DO NOTHING;
 INSERT INTO org_permissions (id, version, permission_name, created_at, updated_at)
 VALUES
     ('p0000000-0000-0000-0000-000000000301', 0, 'BOOKING_CREATE', NOW(), NOW()),
-    ('p0000000-0000-0000-0000-000000000302', 0, 'BOOKING_READ',   NOW(), NOW()),
+    ('p0000000-0000-0000-0000-000000000302', 0, 'BOOKING_READ', NOW(), NOW()),
     ('p0000000-0000-0000-0000-000000000303', 0, 'BOOKING_UPDATE', NOW(), NOW())
 ON CONFLICT (permission_name) DO NOTHING;
 
--- Owner/manager handle reservations from the table-management screen.
--- Grant BOOKING_CREATE + BOOKING_READ + BOOKING_UPDATE to OWNER and MANAGER.
 INSERT INTO org_roles_org_permissions (org_role_id, org_permissions_id)
 SELECT role.id, permission.id
 FROM org_roles role
 CROSS JOIN org_permissions permission
-WHERE role.role_name IN ('OWNER', 'MANAGER')
+WHERE role.role_name IN ('OWNER', 'MANAGER', 'WAITER')
   AND permission.permission_name IN ('BOOKING_CREATE', 'BOOKING_READ', 'BOOKING_UPDATE')
 ON CONFLICT DO NOTHING;
 
@@ -296,7 +399,34 @@ VALUES
      'Bàn 08', 6, 'RESERVED', 3, 0, NOW(), NOW()),
     ('t0000000-0000-0000-0000-000000000009', 0,
      'a0000000-0000-0000-0000-000000000002',
-     'Bàn 09', 8, 'RESERVED', 4, 0, NOW(), NOW())
+     'Bàn 09', 8, 'RESERVED', 4, 0, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000010', 0,
+     'a0000000-0000-0000-0000-000000000001',
+     'Bàn 10', 2, 'AVAILABLE', 4, 0, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000011', 0,
+     'a0000000-0000-0000-0000-000000000001',
+     'Bàn 11', 4, 'AVAILABLE', 0, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000012', 0,
+     'a0000000-0000-0000-0000-000000000001',
+     'Bàn 12', 6, 'AVAILABLE', 1, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000013', 0,
+     'a0000000-0000-0000-0000-000000000001',
+     'Bàn 13', 8, 'AVAILABLE', 2, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000014', 0,
+     'a0000000-0000-0000-0000-000000000001',
+     'Bàn 14', 4, 'AVAILABLE', 3, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000015', 0,
+     'a0000000-0000-0000-0000-000000000002',
+     'Bàn 15', 2, 'AVAILABLE', 0, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000016', 0,
+     'a0000000-0000-0000-0000-000000000002',
+     'Bàn 16', 4, 'AVAILABLE', 1, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000017', 0,
+     'a0000000-0000-0000-0000-000000000002',
+     'Bàn 17', 6, 'AVAILABLE', 2, 1, NOW(), NOW()),
+    ('t0000000-0000-0000-0000-000000000018', 0,
+     'a0000000-0000-0000-0000-000000000002',
+     'Bàn 18', 8, 'AVAILABLE', 3, 1, NOW(), NOW())
 ON CONFLICT (table_id) DO UPDATE
 SET area_id = EXCLUDED.area_id,
     table_number = EXCLUDED.table_number,
@@ -401,11 +531,6 @@ WHERE EXISTS (
 -- CRM LOYALTY & VOUCHERS SEED DATA
 -- =============================================================================
 
-ALTER TABLE vouchers DROP COLUMN IF EXISTS restaurant_id;
-ALTER TABLE customer_point DROP COLUMN IF EXISTS restaurant_id;
-ALTER TABLE customer_point_history DROP COLUMN IF EXISTS restaurant_id;
-ALTER TABLE customer_vouchers DROP COLUMN IF EXISTS restaurant_id;
-
 -- Seed Vouchers for Branch Phở Việt Q1 ('e0000000-0000-0000-0000-000000000001')
 INSERT INTO vouchers (id, version, branch_id, title, discount_percent, min_bill_amount, points_required, is_active, expired_at, created_at, updated_at)
 VALUES
@@ -422,10 +547,10 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Customer Point Wallets for Phở Việt Organization ('d0000000-0000-0000-0000-000000000001')
-INSERT INTO customer_point (id, version, customer_id, organization_id, current_points, lifetime_points, created_at, updated_at)
+INSERT INTO customer_point (id, version, customer_id, organization_id, status, current_points, lifetime_points, created_at, updated_at)
 VALUES
-    ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 500, 500, NOW(), NOW()),
-    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 200, 200, NOW(), NOW())
+    ('cp000000-0000-0000-0000-000000000099', 0, 'c0000000-0000-0000-0000-000000000099', 'd0000000-0000-0000-0000-000000000001', 0, 500, 500, NOW(), NOW()),
+    ('cp000000-0000-0000-0000-000000000098', 0, 'c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 0, 200, 200, NOW(), NOW())
 ON CONFLICT (customer_id, organization_id) DO NOTHING;
 
 -- Seed Customer Vouchers
@@ -495,5 +620,7 @@ INSERT INTO combo_items (combo_item_id, version, combo_id, product_id, quantity,
     ('cbi00000-0000-0000-0000-000000000005', 0, 'cmb00000-0000-0000-0000-000000000003', 'prd00000-0000-0000-0000-000000000101', 1, NOW(), NOW()),
     ('cbi00000-0000-0000-0000-000000000006', 0, 'cmb00000-0000-0000-0000-000000000003', 'prd00000-0000-0000-0000-000000000113', 1, NOW(), NOW())
     ON CONFLICT (combo_item_id) DO NOTHING;
+
+COMMIT;
 
 

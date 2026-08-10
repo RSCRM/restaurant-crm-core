@@ -60,13 +60,14 @@ public class ScheduleController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String branchId
     ) {
         LocalDate effectiveFrom = from == null ? LocalDate.now() : from;
         LocalDate effectiveTo = to == null ? effectiveFrom : to;
         return ResponseEntity.ok(ApiResponse.<List<PersonalScheduleResponse>>builder()
                 .success(true)
-                .data(scheduleService.getStaffSchedule(employeeId, effectiveFrom, effectiveTo))
+                .data(scheduleService.getStaffSchedule(employeeId, effectiveFrom, effectiveTo, branchId))
                 .build());
     }
 
@@ -76,22 +77,24 @@ public class ScheduleController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String branchId
     ) {
         LocalDate effectiveFrom = from == null ? LocalDate.now() : from;
         LocalDate effectiveTo = to == null ? effectiveFrom : to;
         return ResponseEntity.ok(ApiResponse.<List<PersonalScheduleResponse>>builder()
                 .success(true)
-                .data(scheduleService.getManagedSchedules(effectiveFrom, effectiveTo))
+                .data(scheduleService.getManagedSchedules(effectiveFrom, effectiveTo, branchId))
                 .build());
     }
 
     @GetMapping("/staff/employees")
     @PreAuthorize("hasAuthority('" + SchedulePermissionConstants.SCHEDULE_MANAGE + "')")
-    public ResponseEntity<ApiResponse<List<ScheduleEmployeeResponse>>> getManagedEmployees() {
+    public ResponseEntity<ApiResponse<List<ScheduleEmployeeResponse>>> getManagedEmployees(
+            @RequestParam(required = false) String branchId) {
         return ResponseEntity.ok(ApiResponse.<List<ScheduleEmployeeResponse>>builder()
                 .success(true)
-                .data(scheduleService.getManagedEmployees())
+                .data(scheduleService.getManagedEmployees(branchId))
                 .build());
     }
 

@@ -16,6 +16,7 @@ import com.restaurant.crm.modules.erp.table.mapper.TableManagementMapper;
 import com.restaurant.crm.modules.erp.table.repository.RestaurantTableRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableAreaRepository;
 import com.restaurant.crm.modules.erp.table.repository.TableSessionRepository;
+import com.restaurant.crm.modules.erp.table.security.TableBranchGuard;
 import com.restaurant.crm.modules.identity.utils.AuthUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +50,8 @@ class TableReservationManagementServiceImplTest {
     TableSessionRepository tableSessionRepository;
     @Mock
     TableManagementMapper mapper;
+    @Mock
+    TableBranchGuard tableBranchGuard;
     @InjectMocks
     TableManagementServiceImpl tableManagementService;
 

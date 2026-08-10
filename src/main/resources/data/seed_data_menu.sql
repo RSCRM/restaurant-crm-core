@@ -15,6 +15,12 @@ INSERT INTO categories (category_id, version, branch_id, category_name, descript
                                                                                                                                 ('cat00000-0000-0000-0000-000000000008', 0, 'e0000000-0000-0000-0000-000000000003', 'Đồ Uống',       'Rượu Sake, Trà & Nước giải khát',         4, NOW(), NOW())
     ON CONFLICT (branch_id, category_name) DO NOTHING;
 
+-- Phở Việt - Chi nhánh Q1: categories required by the products below.
+INSERT INTO categories (category_id, version, branch_id, category_name, description, display_order, created_at, updated_at) VALUES
+    ('cat00000-0000-0000-0000-000000000102', 0, 'e0000000-0000-0000-0000-000000000001', 'Cơm',     'Các món cơm',         3, NOW(), NOW()),
+    ('cat00000-0000-0000-0000-000000000004', 0, 'e0000000-0000-0000-0000-000000000001', 'Món Phụ', 'Các món phụ ăn kèm', 4, NOW(), NOW())
+    ON CONFLICT (branch_id, category_name) DO NOTHING;
+
 -- =============================================================================
 -- 2. PRODUCTS
 -- =============================================================================

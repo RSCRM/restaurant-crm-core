@@ -25,11 +25,12 @@ public class TableMapController {
     @GetMapping("/map")
     @PreAuthorize("hasAuthority('" + StartDefinedOrgPermission.TABLE_MAP_READ + "')")
     public ResponseEntity<ApiResponse<TableMapResponse>> getTableMap(
-            @RequestParam(required = false) String areaId
+            @RequestParam(required = false) String areaId,
+            @RequestParam(required = false) String branchId
     ) {
         return ResponseEntity.ok(ApiResponse.<TableMapResponse>builder()
                 .success(true)
-                .data(tableMapService.getTableMap(areaId))
+                .data(tableMapService.getTableMap(areaId, branchId))
                 .build());
     }
 }
