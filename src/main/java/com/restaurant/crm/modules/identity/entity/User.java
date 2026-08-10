@@ -65,7 +65,7 @@ public class User extends BaseEntity {
         @Column(name = UserConstants.COL_ENABLED, nullable = false)
         boolean enabled = false;
 
-        @ManyToMany(fetch = FetchType.LAZY)
+        @ManyToMany()
         @JoinTable(name = "user_roles",
                 joinColumns = @JoinColumn(name = "user_id"),
                 inverseJoinColumns = @JoinColumn(name = "role_id"))

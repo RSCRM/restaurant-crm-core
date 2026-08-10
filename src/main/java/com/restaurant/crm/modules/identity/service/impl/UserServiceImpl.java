@@ -74,6 +74,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PagingResponse<UserResponse> getUsers(PagingRequest request) {
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariableConstant.PAGE_SIZE_INDEX,
@@ -95,6 +96,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PagingResponse<UserResponse> searchUsers(UserSearchRequest searchRequest, PagingRequest pagingRequest) {
         // Resolve data scope from JWT
         String orgId = null;
@@ -132,6 +134,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponse getById(String userId) {
         User user = usersRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
